@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "rag-medical"
+version = "0.1.0"
+description = ""
+authors = ["nguyen <nguyenhainguyen2606@gmail.com>"]
+readme = "README.md"
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+llama-index = "^0.12.30"
+fastapi = "^0.115.12"
+faiss-cpu = "^1.10.0"
+openai = "^1.73.0"
+pytest = "^8.3.5"
+ruff = "^0.11.5"
+sqlmodel = "^0.0.24"
+streamlit = "^1.44.1"
+pyarrow = "^19.0.1"
+uvicorn = "^0.34.0"
+python-dotenv = "^1.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
