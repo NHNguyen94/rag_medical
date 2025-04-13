@@ -1286,6 +1286,20 @@ llama-index-core = ">=0.12.0,<0.13.0"
 llama-parse = ">=0.5.0"
 
 [[package]]
+name = "llama-index-vector-stores-faiss"
+version = "0.3.0"
+description = "llama-index vector_stores faiss integration"
+optional = false
+python-versions = "<4.0,>=3.9"
+files = [
+    {file = "llama_index_vector_stores_faiss-0.3.0-py3-none-any.whl", hash = "sha256:2148163dba1222c855bd367a7b796bc35d46dc2e77d57bafd321ba14aac00177"},
+    {file = "llama_index_vector_stores_faiss-0.3.0.tar.gz", hash = "sha256:c9df99dd00fe7058606ef4fce113535fa30b73edd650136be87c9b5b240df3f9"},
+]
+
+[package.dependencies]
+llama-index-core = ">=0.12.0,<0.13.0"
+
+[[package]]
 name = "llama-parse"
 version = "0.6.12"
 description = "Parse files into RAG-Optimized formats."
@@ -3285,4 +3299,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8d83fe80a9e43f3f80b64f0a7105e63415c8335dbb402784a757d20b92efd430"
+content-hash = "609b4168470626f944447bd94ce849205f75b163f321a6b03c60d4c8545f883c"
