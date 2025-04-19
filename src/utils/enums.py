@@ -6,6 +6,6 @@ class ChatBotConfig:
 class LSTMConfig:
     LABEL_COL = "label"
     TEXT_COL = "text"
-    DTYPE_TEXT = "float32"
-    DTYPE_LABEL = "long"
+    FLOAT32 = "float32"
+    LONG = "long"
     MODEL_PATH = "src/ml_models/model_files/lstm_model.pth"

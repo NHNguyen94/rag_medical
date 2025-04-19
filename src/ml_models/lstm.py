@@ -1,4 +1,3 @@
-import pandas as pd
 import torch
 from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
 from torch.optim import Adam
@@ -6,35 +5,58 @@ from torch.optim import Adam
 
 class LSTMModel(Module):
     def __init__(
-        self,
-        input_dim: int,
-        hidden_dim: int,
-        layer_dim: int,
-        output_dim: int,
-        vocab_size: int = 10000,
-        embedding_dim: int = 100,
+            self,
+            hidden_dim: int,
+            layer_dim: int,
+            output_dim: int,
+            input_dim: int = None,
+            vocab_size: int = 10000,
+            embedding_dim: int = 100,
+            lr: float = 0.01
     ):
         super(LSTMModel, self).__init__()
+        # Select between input_dim and embedding_dim
+        self.input_dim = input_dim
+        if self.input_dim:
+            # print("Using input_dim")
+            self.lstm = LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+        else:
+            # print("Using embedding_dim")
+            self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
+            self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
-        self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
-        print(f"self.embedding: {self.embedding}")
-        self.lstm = LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+        # self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
+        # self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.output_layer = Linear(hidden_dim, output_dim)
         self.criterion = CrossEntropyLoss()
-        self.optimizer = Adam(self.parameters(), lr=0.01)
+        self.optimizer = Adam(self.parameters(), lr=lr)
 
     def forward(self, x: torch.Tensor, h0: int = None, c0: int = None):
-        if h0 is None or c0 is None:
-            h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
-            c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
+        if self.input_dim:
+            # print(f"x.dim(): {x.dim()}")
+            # print(f"x.size(): {x.size()}")
+            if h0 is None or c0 is None:
+                h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
+                c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
 
-        out, (hn, cn) = self.lstm(x, (h0, c0))
-        out = self.output_layer(out[:, -1, :])
-        return out, hn, cn
+            out, (hn, cn) = self.lstm(x, (h0, c0))
+            out = self.output_layer(out[:, -1, :])
+            return out, hn, cn
+        else:
+            # print(f"x.dim(): {x.dim()}")
+            # print(f"x.size(): {x.size()}")
+            x = self.embedding(x)
+            # x = x.squeeze(2)
+            if h0 is None or c0 is None:
+                h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
+                c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
+            out, (hn, cn) = self.lstm(x, (h0, c0))
+            out = self.output_layer(out[:, -1, :])
+            return out, hn, cn
 
     def train_model(
-        self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
+            self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
     ) -> None:
         for epoch in range(num_epochs):
             self.train()
@@ -67,34 +89,3 @@ class LSTMModel(Module):
 
         unique_predicted_labels = sorted(set(predicted_classes.tolist()))
         print(f"Unique Predicted Labels: {unique_predicted_labels}")
-
-
-#
-# num_classes = 6
-# model = LSTMModel(input_dim=1, hidden_dim=100, layer_dim=1, output_dim=num_classes)
-# df = pd.read_csv("src/data/emotion_data/test.csv")
-# texts = df['text'].tolist()
-# labels = df["label"].tolist()
-#
-#
-# def tokenize_texts(texts):
-#     tokenized_texts = []
-#     for text in texts:
-#         tokenized_text = [ord(char) for char in text]
-#         tokenized_texts.append(tokenized_text)
-#     return tokenized_texts
-#
-#
-# tokenized_texts = tokenize_texts(texts)
-# max_length = max(len(text) for text in tokenized_texts)
-# for i in range(len(tokenized_texts)):
-#     tokenized_texts[i] += [0] * (max_length - len(tokenized_texts[i]))
-#
-#
-# trainX = torch.tensor(tokenized_texts, dtype=torch.float32)
-#
-# trainY = torch.tensor(labels, dtype=torch.long)
-# trainX = trainX.view(-1, max_length, 1)
-#
-# model.train_model(trainX, trainY, num_epochs=3)
-# model.evaluate_model(trainX, trainY)
