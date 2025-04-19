@@ -8,3 +8,4 @@ class LSTMConfig:
     TEXT_COL = "text"
     DTYPE_TEXT = "float32"
     DTYPE_LABEL = "long"
+    MODEL_PATH = "src/ml_models/model_files/lstm_model.pth"
