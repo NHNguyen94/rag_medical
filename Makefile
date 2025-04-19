@@ -9,3 +9,6 @@ playground:
 
 dl:
 	PYTHONPATH=. python src/services/emotion_recognition_service.py
+
+format:
+	PYTHONPATH=. ruff format

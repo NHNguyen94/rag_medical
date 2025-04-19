@@ -15,14 +15,14 @@ from src.utils.enums import ChatBotConfig
 dotenv.load_dotenv()
 
 
-class AgentManager():
+class AgentManager:
     def __init__(
-            self,
-            # For vector database
-            index: BaseIndex,
-            chat_model: str = ChatBotConfig.DEFAULT_CHAT_MODEL,
-            memory: Optional[BaseMemory] = None,
-            chat_history: Optional[List[ChatMessage]] = None,
+        self,
+        # For vector database
+        index: BaseIndex,
+        chat_model: str = ChatBotConfig.DEFAULT_CHAT_MODEL,
+        memory: Optional[BaseMemory] = None,
+        chat_history: Optional[List[ChatMessage]] = None,
     ):
         self.query_engine = index.as_query_engine()
         self.tools = [
@@ -35,20 +35,17 @@ class AgentManager():
         self.agent = ReActAgent.from_tools(
             tools=self.tools,
             llm=OpenAI(
-                api_key=os.getenv("OPENAI_API_KEY"),
-                temperature=0,
-                model=chat_model
+                api_key=os.getenv("OPENAI_API_KEY"), temperature=0, model=chat_model
             ),
             memory=memory,
-            chat_history=chat_history
+            chat_history=chat_history,
         )
         self.chat_history = chat_history
 
     async def aget_stream_response(
-            self,
-            message: str,
+        self,
+        message: str,
     ) -> StreamingAgentChatResponse:
         return await self.agent.astream_chat(
-            message=message,
-            chat_history=self.chat_history
+            message=message, chat_history=self.chat_history
         )

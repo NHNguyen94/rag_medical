@@ -16,8 +16,8 @@ class VectorStoreManager:
         self.storage_context = self._initialize_storage()
 
     def _initialize_storage(
-            self,
-            dimension_for_embedding: Optional[int] = 1536,
+        self,
+        dimension_for_embedding: Optional[int] = 1536,
     ) -> StorageContext:
         faiss_index = faiss.IndexFlatL2(dimension_for_embedding)
         vector_store = FaissVectorStore(faiss_index=faiss_index)
@@ -25,9 +25,9 @@ class VectorStoreManager:
         return storage_context
 
     def build_index(
-            self,
-            documents: List[Document],
-            show_progress: bool = False,
+        self,
+        documents: List[Document],
+        show_progress: bool = False,
     ) -> BaseIndex:
         index = VectorStoreIndex.from_documents(
             documents=documents,

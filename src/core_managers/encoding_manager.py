@@ -3,10 +3,12 @@ from typing import List
 import torch
 from torch import Tensor
 
+from src.utils.enums import LSTMConfig
 
-class EncodingManager():
+
+class EncodingManager:
     def __init__(self):
-        pass
+        self.lstm_config = LSTMConfig()
 
     def tokenize_texts(self, texts: List[str]) -> (List[List[int]], int):
         tokenized_texts = []
@@ -26,9 +28,9 @@ class EncodingManager():
         return padded_tokenized_texts
 
     def to_tensor(self, tokens: List, data_type: str) -> Tensor:
-        if data_type == "float32":
+        if data_type == self.lstm_config.DTYPE_TEXT:
             return torch.tensor(tokens, dtype=torch.float32)
-        elif data_type == "long":
+        elif data_type == self.lstm_config.DTYPE_LABEL:
             return torch.tensor(tokens, dtype=torch.long)
         else:
-            raise ValueError("Unsupported data type. Only 'float32' and 'long' are allowed.")
+            raise ValueError("Unsupported data type")

@@ -6,13 +6,13 @@ from torch.optim import Adam
 
 class LSTMModel(Module):
     def __init__(
-            self,
-            input_dim: int,
-            hidden_dim: int,
-            layer_dim: int,
-            output_dim: int,
-            vocab_size: int = 10000,
-            embedding_dim: int = 100,
+        self,
+        input_dim: int,
+        hidden_dim: int,
+        layer_dim: int,
+        output_dim: int,
+        vocab_size: int = 10000,
+        embedding_dim: int = 100,
     ):
         super(LSTMModel, self).__init__()
         self.hidden_dim = hidden_dim
@@ -24,12 +24,7 @@ class LSTMModel(Module):
         self.criterion = CrossEntropyLoss()
         self.optimizer = Adam(self.parameters(), lr=0.01)
 
-    def forward(
-            self,
-            x: torch.Tensor,
-            h0: int = None,
-            c0: int = None
-    ):
+    def forward(self, x: torch.Tensor, h0: int = None, c0: int = None):
         if h0 is None or c0 is None:
             h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
             c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
@@ -39,10 +34,7 @@ class LSTMModel(Module):
         return out, hn, cn
 
     def train_model(
-            self,
-            trainX: torch.Tensor,
-            trainY: torch.Tensor,
-            num_epochs: int
+        self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
     ) -> None:
         for epoch in range(num_epochs):
             self.train()
@@ -54,7 +46,7 @@ class LSTMModel(Module):
             loss.backward()
             self.optimizer.step()
 
-            print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
 
     def predict_class(self, x: torch.Tensor) -> torch.Tensor:
         self.eval()
@@ -75,6 +67,7 @@ class LSTMModel(Module):
 
         unique_predicted_labels = sorted(set(predicted_classes.tolist()))
         print(f"Unique Predicted Labels: {unique_predicted_labels}")
+
 
 #
 # num_classes = 6

@@ -1,8 +1,4 @@
-from src.core_managers import (
-    AgentManager,
-    VectorStoreManager,
-    ResponseManager
-)
+from src.core_managers import AgentManager, VectorStoreManager, ResponseManager
 
 
 class ChatBotService:
