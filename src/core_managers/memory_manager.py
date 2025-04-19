@@ -1,3 +1,3 @@
-class MemoryManager():
+class MemoryManager:
     def __init__(self):
         pass

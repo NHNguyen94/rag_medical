@@ -6,3 +6,9 @@ run-backend:
 
 playground:
 	PYTHONPATH=. python tests/playground.py
+
+dl:
+	PYTHONPATH=. python src/services/emotion_recognition_service.py
+
+format:
+	PYTHONPATH=. ruff format

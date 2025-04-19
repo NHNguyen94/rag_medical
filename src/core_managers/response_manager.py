@@ -1,7 +1,7 @@
 from llama_index.core.chat_engine.types import StreamingAgentChatResponse
 
 
-class ResponseManager():
+class ResponseManager:
     def __init__(self):
         pass
 
