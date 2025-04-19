@@ -5,14 +5,14 @@ from torch.optim import Adam
 
 class LSTMModel(Module):
     def __init__(
-            self,
-            hidden_dim: int,
-            layer_dim: int,
-            output_dim: int,
-            input_dim: int = None,
-            vocab_size: int = 10000,
-            embedding_dim: int = 100,
-            lr: float = 0.01
+        self,
+        hidden_dim: int,
+        layer_dim: int,
+        output_dim: int,
+        input_dim: int = None,
+        vocab_size: int = 10000,
+        embedding_dim: int = 100,
+        lr: float = 0.01,
     ):
         super(LSTMModel, self).__init__()
         # Select between input_dim and embedding_dim
@@ -37,8 +37,12 @@ class LSTMModel(Module):
             # print(f"x.dim(): {x.dim()}")
             # print(f"x.size(): {x.size()}")
             if h0 is None or c0 is None:
-                h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
-                c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
+                h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
+                    x.device
+                )
+                c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
+                    x.device
+                )
 
             out, (hn, cn) = self.lstm(x, (h0, c0))
             out = self.output_layer(out[:, -1, :])
@@ -49,14 +53,18 @@ class LSTMModel(Module):
             x = self.embedding(x)
             # x = x.squeeze(2)
             if h0 is None or c0 is None:
-                h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
-                c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(x.device)
+                h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
+                    x.device
+                )
+                c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
+                    x.device
+                )
             out, (hn, cn) = self.lstm(x, (h0, c0))
             out = self.output_layer(out[:, -1, :])
             return out, hn, cn
 
     def train_model(
-            self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
+        self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
     ) -> None:
         for epoch in range(num_epochs):
             self.train()

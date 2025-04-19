@@ -10,14 +10,14 @@ from src.utils.enums import LSTMConfig
 
 class EmotionRecognitionService:
     def __init__(
-            self,
-            num_classes: int = 6,
-            # input_dim is to input data directly => float32
-            # embedding_dim is to input token indices => long
-            use_embedding: bool = False,
-            embedding_dim: int = 100,
-            hidden_dim: int = 10,
-            layer_dim: int = 2
+        self,
+        num_classes: int = 6,
+        # input_dim is to input data directly => float32
+        # embedding_dim is to input token indices => long
+        use_embedding: bool = False,
+        embedding_dim: int = 100,
+        hidden_dim: int = 10,
+        layer_dim: int = 2,
     ):
         self.use_embedding = use_embedding
         if self.use_embedding:
@@ -26,7 +26,7 @@ class EmotionRecognitionService:
                 hidden_dim=hidden_dim,
                 layer_dim=layer_dim,
                 output_dim=num_classes,
-                embedding_dim=embedding_dim
+                embedding_dim=embedding_dim,
             )
         else:
             # Always 1 for input_dim
@@ -34,7 +34,7 @@ class EmotionRecognitionService:
                 input_dim=1,
                 hidden_dim=hidden_dim,
                 layer_dim=layer_dim,
-                output_dim=num_classes
+                output_dim=num_classes,
             )
         self.lstm_config = LSTMConfig()
         self.encoder = EncodingManager()
@@ -43,7 +43,6 @@ class EmotionRecognitionService:
         if self.use_embedding:
             return data.view(-1, max_length)
         return data.view(-1, max_length, 1)
-
 
     def prepare_data(self, data_path) -> (torch.Tensor, torch.Tensor):
         df = pd.read_csv(data_path)
