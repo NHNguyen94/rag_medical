@@ -8,4 +8,4 @@ playground:
 	PYTHONPATH=. python tests/playground.py
 
 dl:
-	PYTHONPATH=. python src/ml_models/lstm.py
+	PYTHONPATH=. python src/services/emotion_recognition_service.py

@@ -42,8 +42,8 @@ class LSTMModel(Module):
             self,
             trainX: torch.Tensor,
             trainY: torch.Tensor,
-            num_epochs: int = 3
-    ):
+            num_epochs: int
+    ) -> None:
         for epoch in range(num_epochs):
             self.train()
             self.optimizer.zero_grad()
@@ -56,50 +56,52 @@ class LSTMModel(Module):
 
             print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
 
-    def evaluate_model(self):
+    def predict_class(self, x: torch.Tensor) -> torch.Tensor:
         self.eval()
         with torch.no_grad():
-            outputs, _, _ = self(trainX)
+            outputs, _, _ = self(x)
             predicted_classes = torch.argmax(outputs, dim=1)
+        return predicted_classes
 
-            correct = (predicted_classes == trainY).sum().item()
-            accuracy = correct / len(trainY)
+    def evaluate_model(self, x: torch.Tensor, y: torch.Tensor) -> None:
+        predicted_classes = self.predict_class(x)
 
-            print(f"\nPredicted: {predicted_classes}")
-            print(f"Actual:    {trainY}")
-            print(f"Accuracy:  {accuracy:.4f}")
+        correct = (predicted_classes == y).sum().item()
+        accuracy = correct / len(y)
 
-            unique_predicted_labels = sorted(set(predicted_classes.tolist()))
-            print(f"Unique Predicted Labels: {unique_predicted_labels}")
+        print(f"\nPredicted: {predicted_classes}")
+        print(f"Actual:    {y}")
+        print(f"Accuracy:  {accuracy:.4f}")
 
+        unique_predicted_labels = sorted(set(predicted_classes.tolist()))
+        print(f"Unique Predicted Labels: {unique_predicted_labels}")
 
-num_classes = 6
-model = LSTMModel(input_dim=1, hidden_dim=100, layer_dim=1, output_dim=num_classes)
-df = pd.read_csv("src/data/emotion_data/test.csv")
-texts = df['text'].tolist()
-labels = df["label"].tolist()
-
-
-def tokenize_texts(texts):
-    tokenized_texts = []
-    for text in texts:
-        tokenized_text = [ord(char) for char in text]
-        tokenized_texts.append(tokenized_text)
-    return tokenized_texts
-
-
-tokenized_texts = tokenize_texts(texts)
-max_length = max(len(text) for text in tokenized_texts)
-for i in range(len(tokenized_texts)):
-    tokenized_texts[i] += [0] * (max_length - len(tokenized_texts[i]))
-trainX = torch.tensor(tokenized_texts, dtype=torch.float32)
-
-unique_labels = sorted(set(labels))
-label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
-indexed_labels = [label_to_index[label] for label in labels]
-
-trainY = torch.tensor(indexed_labels, dtype=torch.long)
-trainX = trainX.view(-1, max_length, 1)
-
-model.train_model(trainX, trainY, num_epochs=3)
-model.evaluate_model()
+#
+# num_classes = 6
+# model = LSTMModel(input_dim=1, hidden_dim=100, layer_dim=1, output_dim=num_classes)
+# df = pd.read_csv("src/data/emotion_data/test.csv")
+# texts = df['text'].tolist()
+# labels = df["label"].tolist()
+#
+#
+# def tokenize_texts(texts):
+#     tokenized_texts = []
+#     for text in texts:
+#         tokenized_text = [ord(char) for char in text]
+#         tokenized_texts.append(tokenized_text)
+#     return tokenized_texts
+#
+#
+# tokenized_texts = tokenize_texts(texts)
+# max_length = max(len(text) for text in tokenized_texts)
+# for i in range(len(tokenized_texts)):
+#     tokenized_texts[i] += [0] * (max_length - len(tokenized_texts[i]))
+#
+#
+# trainX = torch.tensor(tokenized_texts, dtype=torch.float32)
+#
+# trainY = torch.tensor(labels, dtype=torch.long)
+# trainX = trainX.view(-1, max_length, 1)
+#
+# model.train_model(trainX, trainY, num_epochs=3)
+# model.evaluate_model(trainX, trainY)
