@@ -16,8 +16,10 @@ class EmotionRecognitionService:
         # embedding_dim is to input token indices => long
         use_embedding: bool = False,
         embedding_dim: int = 100,
+        vocab_size: int = 10000,
         hidden_dim: int = 10,
         layer_dim: int = 2,
+        lr: float = 0.01,
     ):
         self.use_embedding = use_embedding
         if self.use_embedding:
@@ -26,7 +28,9 @@ class EmotionRecognitionService:
                 hidden_dim=hidden_dim,
                 layer_dim=layer_dim,
                 output_dim=num_classes,
-                embedding_dim=embedding_dim,
+                lr=lr,
+                vocab_size=vocab_size,
+                embedding_dim=embedding_dim
             )
         else:
             # Always 1 for input_dim
@@ -35,6 +39,7 @@ class EmotionRecognitionService:
                 hidden_dim=hidden_dim,
                 layer_dim=layer_dim,
                 output_dim=num_classes,
+                lr=lr
             )
         self.lstm_config = LSTMConfig()
         self.encoder = EncodingManager()
@@ -90,7 +95,7 @@ class EmotionRecognitionService:
 
 
 if __name__ == "__main__":
-    emotion_recognition_service = EmotionRecognitionService(use_embedding=False)
+    emotion_recognition_service = EmotionRecognitionService(use_embedding=True)
     emotion_recognition_service.train_model("src/data/emotion_data/test.csv", 3)
     emotion_recognition_service.load_model()
     predictions = emotion_recognition_service.predict(["I am happy", "I am sad"])
