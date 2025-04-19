@@ -11,7 +11,7 @@ from src.utils.enums import LSTMConfig
 class EmotionRecognitionService:
     def __init__(
             self,
-            num_classes: int,
+            num_classes: int = 6,
             input_dim: int = 1,
             hidden_dim: int = 10,
             layer_dim: int = 2
