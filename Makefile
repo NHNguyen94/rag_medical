@@ -6,3 +6,6 @@ run-backend:
 
 playground:
 	PYTHONPATH=. python tests/playground.py
+
+dl:
+	PYTHONPATH=. python src/ml_models/lstm.py
