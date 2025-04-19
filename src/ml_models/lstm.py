@@ -1,6 +1,7 @@
-import torch
-from torch.nn import Module, LSTM, Linear, Embedding
 import pandas as pd
+import torch
+from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
+from torch.optim import Adam
 
 
 class LSTMModel(Module):
@@ -20,6 +21,8 @@ class LSTMModel(Module):
         print(f"self.embedding: {self.embedding}")
         self.lstm = LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
         self.output_layer = Linear(hidden_dim, output_dim)
+        self.criterion = CrossEntropyLoss()
+        self.optimizer = Adam(self.parameters(), lr=0.01)
 
     def forward(
             self,
@@ -35,19 +38,55 @@ class LSTMModel(Module):
         out = self.output_layer(out[:, -1, :])
         return out, hn, cn
 
+    def train_model(
+            self,
+            trainX: torch.Tensor,
+            trainY: torch.Tensor,
+            num_epochs: int = 3
+    ):
+        for epoch in range(num_epochs):
+            self.train()
+            self.optimizer.zero_grad()
+
+            outputs, _, _ = self(trainX)
+            loss = self.criterion(outputs, trainY)
+
+            loss.backward()
+            self.optimizer.step()
+
+            print(f'Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}')
+
+    def evaluate_model(self):
+        self.eval()
+        with torch.no_grad():
+            outputs, _, _ = self(trainX)
+            predicted_classes = torch.argmax(outputs, dim=1)
+
+            correct = (predicted_classes == trainY).sum().item()
+            accuracy = correct / len(trainY)
+
+            print(f"\nPredicted: {predicted_classes}")
+            print(f"Actual:    {trainY}")
+            print(f"Accuracy:  {accuracy:.4f}")
+
+            unique_predicted_labels = sorted(set(predicted_classes.tolist()))
+            print(f"Unique Predicted Labels: {unique_predicted_labels}")
+
+
 num_classes = 6
 model = LSTMModel(input_dim=1, hidden_dim=100, layer_dim=1, output_dim=num_classes)
-criterion = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
 df = pd.read_csv("src/data/emotion_data/test.csv")
 texts = df['text'].tolist()
 labels = df["label"].tolist()
+
+
 def tokenize_texts(texts):
     tokenized_texts = []
     for text in texts:
         tokenized_text = [ord(char) for char in text]
         tokenized_texts.append(tokenized_text)
     return tokenized_texts
+
 
 tokenized_texts = tokenize_texts(texts)
 max_length = max(len(text) for text in tokenized_texts)
@@ -60,38 +99,7 @@ label_to_index = {label: idx for idx, label in enumerate(unique_labels)}
 indexed_labels = [label_to_index[label] for label in labels]
 
 trainY = torch.tensor(indexed_labels, dtype=torch.long)
-
 trainX = trainX.view(-1, max_length, 1)
 
-num_epochs = 3
-for epoch in range(num_epochs):
-    model.train()
-    optimizer.zero_grad()
-
-    outputs, _, _ = model(trainX)
-    loss = criterion(outputs, trainY)
-
-    loss.backward()
-    optimizer.step()
-
-    print(f'Epoch [{epoch+1}/{num_epochs}], Loss: {loss.item():.4f}')
-
-# Inference & Evaluation
-model.eval()
-with torch.no_grad():
-    outputs, _, _ = model(trainX)
-    predicted_classes = torch.argmax(outputs, dim=1)
-
-    correct = (predicted_classes == trainY).sum().item()
-    accuracy = correct / len(trainY)
-
-    print(f"\nPredicted: {predicted_classes}")
-    print(f"Actual:    {trainY}")
-    print(f"Accuracy:  {accuracy:.4f}")
-
-unique_predicted_labels = sorted(set(predicted_classes.tolist()))
-print(f"Unique Predicted Labels: {unique_predicted_labels}")
-
-# predicted_classes = torch.argmax(outputs, dim=1)
-# print(f"Predicted: {predicted_classes}")
-# print(f"Actual:    {trainY}")
+model.train_model(trainX, trainY, num_epochs=3)
+model.evaluate_model()
