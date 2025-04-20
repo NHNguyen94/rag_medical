@@ -27,6 +27,5 @@ def get_engine():
 
 
 async def create_tables():
-    engine = SessionManager().engine
-    async with engine.begin() as conn:
+    async with get_engine().begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)

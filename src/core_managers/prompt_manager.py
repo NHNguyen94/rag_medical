@@ -9,13 +9,12 @@ from src.utils.helpers import load_yml_configs
 class PromptConfig:
     system_prompt: str
     reasoning_effort: Literal["low", "medium", "high"]
-    temperature: int
+    temperature: float
 
 
 class PromptManager:
     def __init__(self, prompt_path: str):
         self.prompt = PromptConfig(**load_yml_configs(prompt_path))
-        print(f"PromptManager: {self.prompt}")
 
     def get_system_prompt(self) -> str:
 
@@ -24,5 +23,5 @@ class PromptManager:
     def get_reasoning_effort(self) -> Literal["low", "medium", "high"]:
         return self.prompt.reasoning_effort
 
-    def get_temperature(self) -> int:
+    def get_temperature(self) -> float:
         return self.prompt.temperature
