@@ -5,7 +5,7 @@ from sqlmodel import SQLModel, Field, Column, JSON
 
 from src.database.session_manager import SessionManager
 
-
+# https://github.com/fastapi/sqlmodel/issues/178
 class ChatHistory(SQLModel, table=True):
     __tablename__ = "chat_history"
 
