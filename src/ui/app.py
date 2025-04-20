@@ -1,14 +1,14 @@
 import os
-import sys
+# import sys
 
 import dotenv
 import streamlit as st
 
 from src.clients.chat_client import ChatClient
 
-current_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(current_dir)
-sys.path.append(parent_dir)
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# parent_dir = os.path.dirname(current_dir)
+# sys.path.append(parent_dir)
 
 dotenv.load_dotenv()
 
