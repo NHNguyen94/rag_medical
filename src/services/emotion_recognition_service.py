@@ -30,7 +30,7 @@ class EmotionRecognitionService:
                 output_dim=num_classes,
                 lr=lr,
                 vocab_size=vocab_size,
-                embedding_dim=embedding_dim
+                embedding_dim=embedding_dim,
             )
         else:
             # Always 1 for input_dim
@@ -39,7 +39,7 @@ class EmotionRecognitionService:
                 hidden_dim=hidden_dim,
                 layer_dim=layer_dim,
                 output_dim=num_classes,
-                lr=lr
+                lr=lr,
             )
         self.lstm_config = LSTMConfig()
         self.encoder = EncodingManager()
