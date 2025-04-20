@@ -17,7 +17,6 @@ class PromptManager:
         self.prompt = PromptConfig(**load_yml_configs(prompt_path))
 
     def get_system_prompt(self) -> str:
-
         return self.prompt.system_prompt
 
     def get_reasoning_effort(self) -> Literal["low", "medium", "high"]:
