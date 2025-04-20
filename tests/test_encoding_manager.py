@@ -15,7 +15,10 @@ class TestEncodingManager:
     def test_pad_sequences(self):
         tokenized_texts = [[104, 101, 108, 108, 111], [119, 111, 114, 108, 100]]
         padded_tokenized_texts = self.encoding_manager.pad_sequences(tokenized_texts)
-        assert padded_tokenized_texts == [[104, 101, 108, 108, 111], [119, 111, 114, 108, 100]]
+        assert padded_tokenized_texts == [
+            [104, 101, 108, 108, 111],
+            [119, 111, 114, 108, 100],
+        ]
 
     def test_to_tensor_float32(self):
         tokens = [1.0, 2.0, 3.0]

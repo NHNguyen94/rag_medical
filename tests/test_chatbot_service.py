@@ -1,6 +1,7 @@
 from src.services.chat_bot_service import ChatBotService
 import pytest
 
+
 @pytest.mark.asyncio
 class TestChatBotService:
     chat_bot_service = ChatBotService("test_user")
