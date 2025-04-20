@@ -3,7 +3,7 @@ import torch
 from src.core_managers.encoding_manager import EncodingManager
 
 
-class TestEncondingManager:
+class TestEncodingManager:
     encoding_manager = EncodingManager()
 
     def test_tokenize_texts(self):
