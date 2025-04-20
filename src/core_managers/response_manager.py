@@ -9,7 +9,6 @@ class ResponseManager:
         response_str = ""
         async for token in response.async_response_gen():
             # Append token to UI later
-            print(token, end="", flush=True)
             response_str += token
         print()
         return response_str

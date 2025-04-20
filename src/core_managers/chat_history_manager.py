@@ -47,6 +47,19 @@ class ChatHistoryManager:
                     },
                 )
             )
+            messages.append(
+                ChatMessage(
+                    role=MessageRole.ASSISTANT,
+                    content=chat.response,
+                    additional_kwargs={
+                        "response": "",
+                        "closest_documents": [],
+                        "predicted_topic": "",
+                        "recommended_questions": [],
+                        "predicted_emotion": "",
+                    },
+                )
+            )
         return messages
 
     async def get_chat_history(self, user_id: str) -> List[ChatMessage]:
