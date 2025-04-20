@@ -1,5 +1,5 @@
 import os
-from typing import Optional, List
+from typing import Optional, List, Literal
 
 import dotenv
 from llama_index.core.agent import ReActAgent
@@ -21,6 +21,10 @@ class AgentManager:
         # For vector database
         index: BaseIndex,
         chat_model: str = ChatBotConfig.DEFAULT_CHAT_MODEL,
+        system_prompt: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        reasoning_effort: Optional[Literal["low", "medium", "high"]] = None,
+        temperature: Optional[float] = 0.7,
         memory: Optional[BaseMemory] = None,
         chat_history: Optional[List[ChatMessage]] = None,
     ):
@@ -35,7 +39,12 @@ class AgentManager:
         self.agent = ReActAgent.from_tools(
             tools=self.tools,
             llm=OpenAI(
-                api_key=os.getenv("OPENAI_API_KEY"), temperature=0, model=chat_model
+                api_key=os.getenv("OPENAI_API_KEY"),
+                temperature=temperature,
+                model=chat_model,
+                max_tokens=max_tokens,
+                reasoning_effort=reasoning_effort,
+                system_prompt=system_prompt,
             ),
             memory=memory,
             chat_history=chat_history,

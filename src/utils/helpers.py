@@ -1,5 +1,8 @@
-import os
+from typing import Dict
+
+import yaml
 
 
-def check_if_dir_exists(dir: str) -> bool:
-    return os.path.exists(dir)
+def load_yml_configs(config_path: str) -> Dict:
+    with open(config_path, "r") as file:
+        return yaml.safe_load(file)

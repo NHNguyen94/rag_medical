@@ -9,11 +9,8 @@ from src.database.models import create_tables
 # https://fastapi.tiangolo.com/advanced/events/#startup-and-shutdown-together
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        create_tables()
-        yield
-    finally:
-        pass
+    await create_tables()
+    yield
 
 
 app = FastAPI(lifespan=lifespan)
