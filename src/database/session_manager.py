@@ -8,15 +8,13 @@ dotenv.load_dotenv()
 
 
 class SessionManager:
-    # https://sqlmodel.tiangolo.com/tutorial/fastapi/session-with-dependency/#use-the-dependency
     def __init__(self):
-        # self.engine = create_engine(os.getenv("DATABASE_URL"))
         self.engine = create_async_engine(
             os.getenv("DATABASE_URL"),
             future=True,
             # echo=True,
         )
-        self.async_session = sessionmaker(
+        self._async_sessionmaker = sessionmaker(
             bind=self.engine,
             class_=AsyncSession,
             expire_on_commit=False,
@@ -30,9 +28,6 @@ class SessionManager:
     def connect(self):
         return self.engine.connect()
 
-    # def session(self):
-    #     return self.Session()
-
     async def get_async_session(self):
-        async with self.async_session() as session:
+        async with self._async_sessionmaker() as session:
             yield session
