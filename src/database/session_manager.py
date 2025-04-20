@@ -1,4 +1,6 @@
 import os
+from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
 
 import dotenv
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -28,6 +30,7 @@ class SessionManager:
     def connect(self):
         return self.engine.connect()
 
-    async def get_async_session(self):
+    @asynccontextmanager
+    async def get_async_session(self) -> AsyncGenerator[Any, Any]:
         async with self._async_sessionmaker() as session:
             yield session
