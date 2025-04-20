@@ -1,25 +1,31 @@
+from typing import List
+
 from llama_index.core.base.llms.types import ChatMessage, MessageRole
 
 
 class MessageManager:
-    def __init__(self, user_id: str):
-        self.chat_history = []
-        self.user_id = user_id
-        # Handle system message later
-        self.system_message = self._construct_message(
-            message="You are a helpful assistant", role=MessageRole.SYSTEM
+    def __init__(self):
+        pass
+
+    def construct_message(
+            self,
+            message: str,
+            response: str = "N/A",
+            closest_documents: List[str] = List["doc_1"],
+            predicted_topic: str = "topic_1",
+            recommended_questions: List[str] = List["question_1"],
+            predicted_emotion: str = "happy",
+            role: str = MessageRole.USER
+    ) -> ChatMessage:
+        additional_kwargs = {
+            "response": response,
+            "closest_documents": closest_documents,
+            "predicted_topic": predicted_topic,
+            "recommended_questions": recommended_questions,
+            "predicted_emotion": predicted_emotion,
+        }
+        return ChatMessage.from_str(
+            role=role,
+            content=message,
+            additional_kwargs=additional_kwargs
         )
-
-    def _append_message(self, message: ChatMessage):
-        self.chat_history.append(message)
-
-    def _construct_message(self, message: str, role: str) -> ChatMessage:
-        return ChatMessage.from_str(role=role, content=message)
-
-    def construct_user_message(self, message: str) -> ChatMessage:
-        user_msg = self._construct_message(message=message, role=MessageRole.USER)
-        self._append_message(user_msg)
-        return user_msg
-
-    def get_chat_history(self) -> list[ChatMessage]:
-        return self.chat_history

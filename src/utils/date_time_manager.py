@@ -15,6 +15,11 @@ class DateTimeManager:
         return datetime.now()
 
     @staticmethod
+    def get_current_utc_time() -> datetime:
+        # Return UTC time without tzinfo
+        return datetime.now(timezone.utc).replace(tzinfo=None)
+
+    @staticmethod
     def get_hours_ago_str(hours_ago: int) -> str:
         return (datetime.now() - timedelta(hours=hours_ago)).strftime(
             "%Y-%m-%d %H:%M:%S"

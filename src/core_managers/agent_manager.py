@@ -25,8 +25,7 @@ class AgentManager:
         max_tokens: Optional[int] = None,
         reasoning_effort: Optional[Literal["low", "medium", "high"]] = None,
         temperature: Optional[float] = 0.7,
-        memory: Optional[BaseMemory] = None,
-        chat_history: Optional[List[ChatMessage]] = None,
+        memory: Optional[BaseMemory] = None
     ):
         self.query_engine = index.as_query_engine()
         self.tools = [
@@ -47,14 +46,14 @@ class AgentManager:
                 system_prompt=system_prompt,
             ),
             memory=memory,
-            chat_history=chat_history,
         )
-        self.chat_history = chat_history
 
     async def aget_stream_response(
         self,
         message: str,
+        chat_history: Optional[List[ChatMessage]] = None,
     ) -> StreamingAgentChatResponse:
         return await self.agent.astream_chat(
-            message=message, chat_history=self.chat_history
+            message=message,
+            chat_history=chat_history
         )
