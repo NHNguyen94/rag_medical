@@ -1,8 +1,7 @@
 import os
 
 import dotenv
-from sqlalchemy import create_async_engine
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 dotenv.load_dotenv()
@@ -17,9 +16,12 @@ class SessionManager:
             future=True,
             # echo=True,
         )
-        self.Session = sessionmaker(bind=self.engine)
-        self.AsyncSession = sessionmaker(
-            bind=self.engine, class_=AsyncSession, expire_on_commit=False
+        self.async_session = sessionmaker(
+            bind=self.engine,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            autoflush=False,
+            autocommit=False,
         )
 
     def close(self):
@@ -28,9 +30,9 @@ class SessionManager:
     def connect(self):
         return self.engine.connect()
 
-    def session(self):
-        return self.Session()
+    # def session(self):
+    #     return self.Session()
 
-    async def async_session(self):
-        async with self.AsyncSession() as session:
+    async def get_async_session(self):
+        async with self.async_session() as session:
             yield session

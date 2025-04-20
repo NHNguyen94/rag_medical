@@ -5,6 +5,7 @@ from sqlmodel import SQLModel, Field, Column, JSON
 
 from src.database.session_manager import SessionManager
 
+
 # https://github.com/fastapi/sqlmodel/issues/178
 class ChatHistory(SQLModel, table=True):
     __tablename__ = "chat_history"
@@ -25,6 +26,7 @@ def get_engine():
     return session_manager.engine
 
 
-def create_tables():
-    engine = get_engine()
-    SQLModel.metadata.create_all(engine)
+async def create_tables():
+    engine = SessionManager().engine
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
