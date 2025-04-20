@@ -12,3 +12,6 @@ dl:
 
 format:
 	PYTHONPATH=. ruff format
+
+test:
+	PYTHONPATH=. pytest -s -p no:warnings tests/
