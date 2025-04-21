@@ -8,14 +8,14 @@ class MessageManager:
         pass
 
     def construct_message(
-            self,
-            message: str,
-            response: str = "N/A",
-            closest_documents: List[str] = List["doc_1"],
-            predicted_topic: str = "topic_1",
-            recommended_questions: List[str] = List["question_1"],
-            predicted_emotion: str = "happy",
-            role: str = MessageRole.USER
+        self,
+        message: str,
+        response: str,
+        closest_documents: List[str],
+        predicted_topic: str,
+        recommended_questions: List[str],
+        predicted_emotion: str,
+        role: str = MessageRole.USER,
     ) -> ChatMessage:
         additional_kwargs = {
             "response": response,
@@ -25,7 +25,5 @@ class MessageManager:
             "predicted_emotion": predicted_emotion,
         }
         return ChatMessage.from_str(
-            role=role,
-            content=message,
-            additional_kwargs=additional_kwargs
+            role=role, content=message, additional_kwargs=additional_kwargs
         )

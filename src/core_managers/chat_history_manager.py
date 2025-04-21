@@ -31,7 +31,9 @@ class ChatHistoryManager:
     async def _get_chat_history_from_db(self, user_id: str) -> List[ChatHistory]:
         return await self.db_service_manager.get_n_chat_history(user_id, self.n_chats)
 
-    def _construct_chat_history(self, chat_history: List[ChatHistory]) -> List[ChatMessage]:
+    def _construct_chat_history(
+        self, chat_history: List[ChatHistory]
+    ) -> List[ChatMessage]:
         messages = []
         for chat in chat_history:
             messages.append(
@@ -70,14 +72,14 @@ class ChatHistoryManager:
         return self._construct_chat_history(chat_history)
 
     async def append_chat_history_to_db(
-            self,
-            user_id: str,
-            message: str,
-            response: str,
-            closest_documents: List[str],
-            predicted_topic: str,
-            recommended_questions: List[str],
-            predicted_emotion: str,
+        self,
+        user_id: str,
+        message: str,
+        response: str,
+        closest_documents: List[str],
+        predicted_topic: str,
+        recommended_questions: List[str],
+        predicted_emotion: str,
     ) -> None:
         await self.db_service_manager.append_chat_history(
             user_id=user_id,

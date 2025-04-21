@@ -9,7 +9,7 @@ class MemoryManager:
         self.token_limit = token_limit
 
     def initialize_chat_memory(
-            self, user_id: str, chat_store: BaseChatStore
+        self, user_id: str, chat_store: BaseChatStore
     ) -> ChatMemoryBuffer:
         chat_memory = ChatMemoryBuffer.from_defaults(
             token_limit=self.token_limit,

@@ -1,6 +1,8 @@
 from dataclasses import dataclass
-
 from typing import Literal
+
+from llama_index.core import PromptTemplate
+from llama_index.core.prompts import PromptType
 
 from src.utils.helpers import load_yml_configs
 
@@ -24,3 +26,6 @@ class PromptManager:
 
     def get_temperature(self) -> float:
         return self.prompt.temperature
+
+    def make_system_prompt(self, system_prompt: str) -> PromptTemplate:
+        return PromptTemplate(template=system_prompt, prompt_type=PromptType.CUSTOM)
