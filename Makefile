@@ -4,8 +4,8 @@ run-frontend:
 run-backend:
 	PYTHONPATH=. uvicorn src.main:app --reload --port 8000 --log-level debug
 
-dl:
-	PYTHONPATH=. python src/services/emotion_recognition_service.py
+train-lstm:
+	PYTHONPATH=. python src/ml_pipelines/emotion_recognition/train.py
 
 format:
 	PYTHONPATH=. ruff format

@@ -22,6 +22,7 @@ class EmotionRecognitionService:
         hidden_dim: int = 10,
         layer_dim: int = 2,
         lr: float = 0.01,
+        dropout: float = 0.2,
     ):
         self.use_embedding = use_embedding
         if self.use_embedding:
@@ -42,6 +43,7 @@ class EmotionRecognitionService:
                 layer_dim=layer_dim,
                 output_dim=num_classes,
                 lr=lr,
+                dropout=dropout
             )
         self.lstm_config = LSTMConfig()
         self.encoder = EncodingManager()
@@ -104,11 +106,3 @@ class EmotionRecognitionService:
         testX, testY = self.prepare_data(test_data_path)
         self.model.evaluate_model(testX, testY)
 
-
-if __name__ == "__main__":
-    emotion_recognition_service = EmotionRecognitionService(use_embedding=True)
-    emotion_recognition_service.train_model("src/data/emotion_data/test.csv", 3)
-    emotion_recognition_service.load_model()
-    predictions = emotion_recognition_service.predict(["I am happy", "I am sad"])
-    print(f"Predictions: {predictions}")
-    emotion_recognition_service.evaluate_model("src/data/emotion_data/test.csv")

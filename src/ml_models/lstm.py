@@ -13,13 +13,20 @@ class LSTMModel(Module):
         vocab_size: int = 10000,
         embedding_dim: int = 100,
         lr: float = 0.01,
+        dropout: float = 0.2,
     ):
         super(LSTMModel, self).__init__()
         # Select between input_dim and embedding_dim
         self.input_dim = input_dim
         if self.input_dim:
             # print("Using input_dim")
-            self.lstm = LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+            self.lstm = LSTM(
+                input_dim,
+                hidden_dim,
+                layer_dim,
+                batch_first=True,
+                dropout=dropout
+            )
         else:
             # print("Using embedding_dim")
             self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
