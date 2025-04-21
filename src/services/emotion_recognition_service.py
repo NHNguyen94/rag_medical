@@ -1,7 +1,9 @@
+import asyncio
 from typing import List
 
 import pandas as pd
 import torch
+from concurrent.futures import ThreadPoolExecutor
 
 from src.core_managers.encoding_manager import EncodingManager
 from src.ml_models.lstm import LSTMModel
@@ -43,6 +45,7 @@ class EmotionRecognitionService:
             )
         self.lstm_config = LSTMConfig()
         self.encoder = EncodingManager()
+        self.executor = ThreadPoolExecutor(max_workers=1)
 
     def _reshape(self, data: torch.Tensor, max_length: int) -> torch.Tensor:
         if self.use_embedding:
@@ -75,8 +78,14 @@ class EmotionRecognitionService:
     def load_model(self, model_path: str = None) -> LSTMModel:
         if model_path is None:
             model_path = self.lstm_config.MODEL_PATH
-        self.model.load_state_dict(torch.load(model_path))
+        with torch.no_grad():
+            self.model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
         self.model.eval()
+        return self.model
+
+    async def async_load_model(self, model_path: str = None) -> LSTMModel:
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(self.executor, self.load_model, model_path)
         return self.model
 
     def predict(self, texts: List) -> torch.Tensor:
