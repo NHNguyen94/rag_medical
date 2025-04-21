@@ -43,7 +43,7 @@ class EmotionRecognitionService:
                 layer_dim=layer_dim,
                 output_dim=num_classes,
                 lr=lr,
-                dropout=dropout
+                dropout=dropout,
             )
         self.lstm_config = LSTMConfig()
         self.encoder = EncodingManager()
@@ -69,12 +69,16 @@ class EmotionRecognitionService:
         return self._reshape(X, max_length), y
 
     def train_model(
-        self, train_data_path: str, num_epochs: int, model_path: str = None
+        self,
+        train_data_path: str,
+        num_epochs: int,
+        model_path: str = None,
+        batch_size: int = 32,
     ) -> None:
         trainX, trainY = self.prepare_data(train_data_path)
         if model_path is None:
             model_path = self.lstm_config.MODEL_PATH
-        self.model.train_model(trainX, trainY, num_epochs)
+        self.model.train_model(trainX, trainY, num_epochs, batch_size)
         torch.save(self.model.state_dict(), model_path)
 
     def load_model(self, model_path: str = None) -> LSTMModel:
@@ -105,4 +109,3 @@ class EmotionRecognitionService:
     def evaluate_model(self, test_data_path: str) -> None:
         testX, testY = self.prepare_data(test_data_path)
         self.model.evaluate_model(testX, testY)
-

@@ -14,8 +14,7 @@ async def chat(chat_request: ChatRequest, request: Request):
 
     chat_bot_service = ChatBotService(user_id=chat_request.user_id)
     response = await chat_bot_service.achat(
-        message=chat_request.message,
-        predicted_emotion=str(predicted_emotion.item())
+        message=chat_request.message, predicted_emotion=str(predicted_emotion.item())
     )
     return ChatResponse(response=response)
 

@@ -1,6 +1,7 @@
 import torch
 from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
 from torch.optim import Adam
+from torch.utils.data import DataLoader, TensorDataset
 
 
 class LSTMModel(Module):
@@ -21,11 +22,7 @@ class LSTMModel(Module):
         if self.input_dim:
             # print("Using input_dim")
             self.lstm = LSTM(
-                input_dim,
-                hidden_dim,
-                layer_dim,
-                batch_first=True,
-                dropout=dropout
+                input_dim, hidden_dim, layer_dim, batch_first=True, dropout=dropout
             )
         else:
             # print("Using embedding_dim")
@@ -38,6 +35,13 @@ class LSTMModel(Module):
         self.output_layer = Linear(hidden_dim, output_dim)
         self.criterion = CrossEntropyLoss()
         self.optimizer = Adam(self.parameters(), lr=lr)
+
+    def create_dataloader(
+        self, X_train: torch.Tensor, y_train: torch.Tensor, batch_size: int
+    ) -> DataLoader:
+        dataset = TensorDataset(X_train, y_train)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return dataloader
 
     def forward(self, x: torch.Tensor, h0: int = None, c0: int = None):
         if self.input_dim:
@@ -71,19 +75,38 @@ class LSTMModel(Module):
             return out, hn, cn
 
     def train_model(
-        self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
+        self,
+        trainX: torch.Tensor,
+        trainY: torch.Tensor,
+        num_epochs: int,
+        batch_size: int,
     ) -> None:
+        dataloader = self.create_dataloader(trainX, trainY, batch_size)
+
         for epoch in range(num_epochs):
             self.train()
-            self.optimizer.zero_grad()
+            for batch_X, batch_Y in dataloader:
+                self.optimizer.zero_grad()
 
-            outputs, _, _ = self(trainX)
-            loss = self.criterion(outputs, trainY)
+                outputs, _, _ = self(batch_X)
+                loss = self.criterion(outputs, batch_Y)
 
-            loss.backward()
-            self.optimizer.step()
+                loss.backward()
+                self.optimizer.step()
 
             print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
+
+        # for epoch in range(num_epochs):
+        #     self.train()
+        #     self.optimizer.zero_grad()
+        #
+        #     outputs, _, _ = self(trainX)
+        #     loss = self.criterion(outputs, trainY)
+        #
+        #     loss.backward()
+        #     self.optimizer.step()
+        #
+        #     print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
 
     def predict_class(self, x: torch.Tensor) -> torch.Tensor:
         self.eval()
