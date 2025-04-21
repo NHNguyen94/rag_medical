@@ -17,24 +17,28 @@ class ChatBotService:
         self.vector_store_manager = VectorStoreManager(user_id)
         # Handle the vector store initialization later
         self.prompt_manager = PromptManager(chat_bot_config.DEFAULT_PROMPT_PATH)
+        self.system_prompt_template = self.prompt_manager.make_system_prompt(
+            self.prompt_manager.get_system_prompt()
+        )
         self.index = self.vector_store_manager.build_index([])
         self.agent = AgentManager(
             index=self.index,
             chat_model=chat_bot_config.DEFAULT_CHAT_MODEL,
-            system_prompt=self.prompt_manager.get_system_prompt(),
+            system_prompt_template=self.system_prompt_template,
             reasoning_effort=self.prompt_manager.get_reasoning_effort(),
             temperature=self.prompt_manager.get_temperature(),
         )
         self.response_manager = ResponseManager()
 
     async def achat(
-            self,
-            message: str,
+        self,
+        message: str,
     ) -> str:
         chat_history = await self.chat_history_manager.get_chat_history(self.user_id)
         # print(f"Chat history: {chat_history}")
         response = await self.agent.aget_stream_response(message, chat_history)
         response_str = await self.response_manager.parse_stream_response(response)
+        # TODO: Implement the features here
         await self.chat_history_manager.append_chat_history_to_db(
             user_id=self.user_id,
             message=message,
