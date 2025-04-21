@@ -79,7 +79,9 @@ class EmotionRecognitionService:
         if model_path is None:
             model_path = self.lstm_config.MODEL_PATH
         with torch.no_grad():
-            self.model.load_state_dict(torch.load(model_path, map_location=torch.device("cpu")))
+            self.model.load_state_dict(
+                torch.load(model_path, map_location=torch.device("cpu"))
+            )
         self.model.eval()
         return self.model
 

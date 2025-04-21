@@ -15,6 +15,7 @@ logging.basicConfig(level=logging.INFO)
 async def load_model_background(emotion_recognition_service: EmotionRecognitionService):
     await emotion_recognition_service.async_load_model()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     emotion_recognition_service = EmotionRecognitionService(use_embedding=True)

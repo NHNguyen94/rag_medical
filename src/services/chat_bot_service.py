@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from src.core_managers import (
     AgentManager,
     VectorStoreManager,
@@ -33,6 +35,10 @@ class ChatBotService:
     async def achat(
         self,
         message: str,
+        closest_documents: Optional[List] = [],
+        predicted_topic: Optional[str] = "",
+        recommended_questions: Optional[List] = [],
+        predicted_emotion: Optional[str] = "",
     ) -> str:
         chat_history = await self.chat_history_manager.get_chat_history(self.user_id)
         # print(f"Chat history: {chat_history}")
@@ -43,9 +49,9 @@ class ChatBotService:
             user_id=self.user_id,
             message=message,
             response=response_str,
-            closest_documents=[],
-            predicted_topic="",
-            recommended_questions=[],
-            predicted_emotion="",
+            closest_documents=closest_documents,
+            predicted_topic=predicted_topic,
+            recommended_questions=recommended_questions,
+            predicted_emotion=predicted_emotion,
         )
         return response_str
