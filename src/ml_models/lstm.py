@@ -1,3 +1,5 @@
+from audioop import avgpp
+
 import torch
 from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
 from torch.optim import Adam
@@ -34,7 +36,7 @@ class LSTMModel(Module):
         # self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.output_layer = Linear(hidden_dim, output_dim)
         self.criterion = CrossEntropyLoss()
-        self.optimizer = Adam(self.parameters(), lr=lr)
+        self.optimizer = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
 
     def create_dataloader(
         self, X_train: torch.Tensor, y_train: torch.Tensor, batch_size: int
@@ -75,38 +77,28 @@ class LSTMModel(Module):
             return out, hn, cn
 
     def train_model(
-        self,
-        trainX: torch.Tensor,
-        trainY: torch.Tensor,
-        num_epochs: int,
-        batch_size: int,
+            self,
+            trainX: torch.Tensor,
+            trainY: torch.Tensor,
+            num_epochs: int,
+            batch_size: int,
     ) -> None:
         dataloader = self.create_dataloader(trainX, trainY, batch_size)
 
         for epoch in range(num_epochs):
             self.train()
+            total_loss = 0.0
+            num_batches = 0
             for batch_X, batch_Y in dataloader:
                 self.optimizer.zero_grad()
-
                 outputs, _, _ = self(batch_X)
                 loss = self.criterion(outputs, batch_Y)
-
                 loss.backward()
                 self.optimizer.step()
-
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
-
-        # for epoch in range(num_epochs):
-        #     self.train()
-        #     self.optimizer.zero_grad()
-        #
-        #     outputs, _, _ = self(trainX)
-        #     loss = self.criterion(outputs, trainY)
-        #
-        #     loss.backward()
-        #     self.optimizer.step()
-        #
-        #     print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
+                total_loss += loss.item()
+                num_batches += 1
+            avg_loss = total_loss / num_batches
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Avg Loss: {avg_loss:.4f}")
 
     def predict_class(self, x: torch.Tensor) -> torch.Tensor:
         self.eval()
