@@ -1,8 +1,12 @@
-from typing import Optional, List
+from http.client import responses
+from typing import Optional, List, Dict
 
 import os
 import faiss
 import dotenv
+import numpy as np
+import pandas as pd
+from llama_index.core.base.embeddings.base import similarity
 from llama_index.core.indices import VectorStoreIndex
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser.interface import TextSplitter
@@ -11,6 +15,9 @@ from llama_index.core.service_context import ServiceContext
 from llama_index.core.storage import StorageContext
 from llama_index.vector_stores.faiss import FaissVectorStore
 from openai import OpenAI
+from sqlalchemy.engine import row
+
+from src.utils.helpers import sample_qa_data
 
 dotenv.load_dotenv()
 
@@ -57,16 +64,98 @@ class VectorStoreManager:
         :param file_path: Path to dataset.
         :return List[Document]: LlamaIndex documents.
         """
-        pass
+        try:
+            data = sample_qa_data()
+            df = pd.DataFrame()
+            df["text"] = data["question"] + " " + data["answer"]
+
+            # Convert to Documents
+            documents = [
+                Document(
+                    text=row["text"],
+                    metadata={
+                        "question": row["question"],
+                        "answer": row["answer"],
+                        "topic": row["topic"]
+                    }
+                )
+                for _, row in df.iterrows()
+            ]
+            return documents
+        except Exception as e:
+            print(f"Error loading dataset: {e}")
+            return []
+
 
     def build_index(
         self,
         documents: List[Document],
         show_progress: bool = False,
+        batch_size: int = 100
     ) -> BaseIndex:
-        index = VectorStoreIndex.from_documents(
-            documents=documents,
-            storage_context=self.storage_context,
-            show_progress=show_progress,
-        )
-        return index
+        """
+        Build a vector store index from documents using OpenAI's text-embedding-ada-002.
+        :param documents: List of document objects.
+        :param show_progress:
+        :param batch_size: Batch size for embedding to manage API rate limiting.
+        :return: BaseIndex: LlamaIndex vector store index.
+        """
+        try:
+            # Embed doucments in batches
+            for i in range(0, len(documents), batch_size):
+                batch_docs = documents[i : i + batch_size]
+                texts = [doc.text for doc in batch_docs]
+                embeddings = []
+                for text in texts:
+                    embedding = self._get_embedding(text)
+                    if embedding:
+                        embeddings.append(embedding)
+                    else:
+                        raise ValueError(f"Failed to embed text: {text}")
+                for doc, embedding in zip(batch_docs, embeddings):
+                    doc.embedding = embedding
+
+            # Train FAISS index
+            embeddings = np.array([doc.embedding for doc in documents], dtype=np.float32)
+            self.storage_context.vector_store.faiss_index.train(embeddings)
+
+            index = VectorStoreIndex.from_documents(
+                documents=documents,
+                storage_context=self.storage_context,
+                show_progress=show_progress,
+            )
+            return index
+        except Exception as e:
+            print(f"Error building index: {e}")
+            return None
+
+    def query_index(
+            self,
+            index: BaseIndex,
+            query: str,
+            top_k: int = 5,
+            topic_filter: Optional[str] = None
+    ) -> Dict:
+
+        try:
+            query_engine = index.as_query_engine(similarity_top_k=top_k)
+            if topic_filter:
+                query_engine.filters = { 'topic': topic_filter }
+
+            response = query_engine.query(query)
+            return {
+                "response": response.response,
+                "sources": [
+                    {
+                        "text": node.node.text,
+                        "metadata": node.node.metadata,
+                        "score": node.score
+                    }
+                    for node in response.source_nodes
+                ]
+            }
+        except Exception as e:
+            print(f"Error querying index: {e}")
+            return { "response": None, "sources": [] }
+
+
