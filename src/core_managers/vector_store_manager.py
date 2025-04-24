@@ -1,3 +1,5 @@
+import hashlib
+import pickle
 from http.client import responses
 from typing import Optional, List, Dict
 
@@ -22,10 +24,36 @@ from src.utils.helpers import sample_qa_data
 dotenv.load_dotenv()
 
 class VectorStoreManager:
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str, cache_path: str = "embedding_cache.pkl"):
         self.user_id = user_id
+        self.cache_path = cache_path
         self.storage_context = self._initialize_storage()
+        self.embedding_cache =  self._load_embedding_cache()
         self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    def _load_embedding_cache(self) -> Dict[str, List[float]]:
+        """
+        Load the embedding from the cache path
+        :return:
+        """
+        try:
+            if os.path.exists(self.cache_path):
+                with open(self.cache_path, "rb") as f:
+                    return pickle.load(f)
+            return {}
+        except Exception as e:
+            print(f"Failed to load embedding cache: {e}")
+            return {}
+
+    def _save_embedding_cache(self) -> None:
+        """
+        Save the embedding to the cache path
+        """
+        try:
+            with open(self.cache_path, "wb") as f:
+                pickle.dump(self.embedding_cache, f)
+        except Exception as e:
+            print(f"Failed to save embedding cache: {e}")
 
     def _initialize_storage(
         self,
@@ -48,12 +76,23 @@ class VectorStoreManager:
         :param text: Text to embed.
         :return List[float]: Embedding vector.
         """
+
+        text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+        #Check cache
+        if text_hash in self.embedding_cache:
+            return self.embedding_cache[text_hash]
         try:
             response = self.client.embeddings.create(
                 input=text,
                 model="text-embedding-ada-002"
             )
-            return response.data[0].embedding
+            embedding = response.data[0].embedding
+            # Store in cache
+            self.embedding_cache[text_hash] = embedding
+            # Save cache immediately
+            self._save_embedding_cache()
+            return embedding
         except Exception as e:
             print(f"Error getting embedding: {e}")
             return []
@@ -157,5 +196,35 @@ class VectorStoreManager:
         except Exception as e:
             print(f"Error querying index: {e}")
             return { "response": None, "sources": [] }
+
+
+    def save_index(self, index: BaseIndex, path: str="faiss_index") -> None:
+        """
+        Save index to disk.
+        :param index: LlamaIndex index.
+        :param path: Path to save index.
+        :return: none
+        """
+
+        try:
+            index.storage_context.vector_store.save_to_disk(path)
+        except Exception as e:
+            print(f"Error saving index: {e}")
+
+    def load_index(self, path: str="faiss_index") -> BaseIndex:
+        """
+        Load index from disk.
+        :param path: Directory to load index from.
+        :return: Loaded LlamaIndex index.
+        """
+
+        try:
+            vector_store = FaissVectorStore.from_persist_dir(path)
+            storage_context = StorageContext.from_defaults(vector_store=vector_store)
+            index = VectorStoreIndex.from_vector_store(vector_store, storage_context=storage_context)
+            return index
+        except Exception as e:
+            print(f"Error loading index: {e}")
+            return None
 
 
