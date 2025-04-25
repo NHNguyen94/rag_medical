@@ -35,11 +35,16 @@ def mock_sample_qa_dataset(mocker):
 #Mock OpenAI client
 @pytest.fixture
 def mock_openai_client(mocker):
-    mock_client = MagicMock(spec=OpenAI)
+    mock_client = MagicMock()
+    mock_embeddings = MagicMock()
     mock_response = MagicMock()
     mock_response.data = [MagicMock(embedding=[0.1]*1536)]
-    mock_client.embeddings.create = AsyncMock(return_value=mock_response)
-    mocker.patch("openai.OpenAI", return_value = mock_client)
+    mock_embeddings.create = AsyncMock(return_value=mock_response)
+    mock_client.embeddings = mock_embeddings
+    # Patch globally
+    mocker.patch("openai.OpenAI", return_value=mock_client)
+    # Patch locally in vector_store_manager
+    mocker.patch("src.core_managers.vector_store_manager.OpenAI", return_value=mock_client)
     return mock_client
 
 #Mock FAISS and LlamaIndex dependencies
@@ -80,17 +85,17 @@ def test_initialization(vector_store_manager):
 def test_load_embedding_cache_empty(vector_store_manager, mocker):
     """ Test loading an empty or non-existent embedding cache """
     mocker.patch("os.path.exists", return_value=False)
-    cache = vector_store_manager.load_embedding_cache()
+    cache = vector_store_manager._load_embedding_cache()
     assert cache == {}
 
-def test_load_embedding_cache_existing(vector_store_manager, mocker):
+def test_load_embedding_cache_existing(vector_store_manager, mocker, tmp_path):
     """ Test loading an existing embedding cache """
     cache_file = tmp_path / "test_embedding_cache.pkl"
     cache_data = { "hash1": [0.1] * 1536 }
     with open(cache_file, "wb") as f:
         pickle.dump(cache_data, f)
     vector_store_manager.cache_path = str(cache_file)
-    cache = vector_store_manager.load_embedding_cache()
+    cache = vector_store_manager._load_embedding_cache()
     assert cache == cache_data
 
 def test_save_embedding_cache(vector_store_manager, tmp_path):
@@ -114,12 +119,11 @@ def test_get_embedding_cache_hit(vector_store_manager, mocker):
     assert result == embedding
     assert not vector_store_manager.client.embeddings.create.called
 
-@pytest.mark.asyncio
-async def test_get_embedding_cache_miss(vector_store_manager, mock_openai_client):
+def test_get_embedding_cache_miss(vector_store_manager, mock_openai_client):
     """ Test generating an embedding from on cache miss """
     text = "Test text"
     embedding = [0.1] * 1536
-    result = await vector_store_manager._get_embedding(text)
+    result = vector_store_manager._get_embedding(text)
     assert result == embedding
     mock_openai_client.embeddings.create.assert_called_once()
     text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
@@ -129,8 +133,7 @@ async def test_get_embedding_cache_miss(vector_store_manager, mock_openai_client
         saved_cache = pickle.load(f)
     assert saved_cache[text_hash] == embedding
 
-@pytest.mark.asyncio
-async def test_get_embedding_api_error(vector_store_manager, mock_openai_client):
+def test_get_embedding_api_error(vector_store_manager, mock_openai_client):
     """ Test handling OpenAI API errors """
     text = "Test text"
     mock_openai_client.embeddings.create.side_effect = Exception("Mock Exception")
@@ -140,7 +143,9 @@ async def test_get_embedding_api_error(vector_store_manager, mock_openai_client)
 
 def test_load_and_preprocess_data(vector_store_manager, mock_sample_qa_dataset):
     """ Test loading and preprocessing sample data """
+    print(f"Mocked sample_qa_data: {mock_sample_qa_dataset}, {len(mock_sample_qa_dataset)}")
     documents = vector_store_manager.load_and_preprocess_data(file_path="dummy_path")
+    print(f"Documents: {len(documents)}")
     assert len(documents) == 2
     assert all(isinstance(doc, Document) for doc in documents)
     assert documents[0].text == ("What are the symptoms of diabetes? Common symptoms include increased thirst "
@@ -217,6 +222,6 @@ def test_load_index(vector_store_manager, mock_faiss_and_llama_index, tmp_path):
 
 def test_load_index_error(vector_store_manager, mocker):
     """ Test handling load index errors """
-    mocker.patch("llama_index.vector_stores.faiss.FaissVectorStore.from_persis_dir", side_effect=Exception("Load error"))
+    mocker.patch("llama_index.vector_stores.faiss.FaissVectorStore.from_persist_dir", side_effect=Exception("Load error"))
     index = vector_store_manager.load_index(path="invalid_path")
     assert index is None

@@ -105,8 +105,8 @@ class VectorStoreManager:
         """
         try:
             data = sample_qa_data()
-            df = pd.DataFrame()
-            df["text"] = data["question"] + " " + data["answer"]
+            df = pd.DataFrame(data).dropna()
+            df["text"] = df["question"] + " " + df["answer"]
 
             # Convert to Documents
             documents = [
