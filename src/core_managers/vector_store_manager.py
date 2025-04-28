@@ -76,7 +76,6 @@ class VectorStoreManager:
         :param text: Text to embed.
         :return List[float]: Embedding vector.
         """
-
         text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
 
         #Check cache
@@ -94,6 +93,7 @@ class VectorStoreManager:
             self._save_embedding_cache()
             return embedding
         except Exception as e:
+            print(type(e))
             print(f"Error getting embedding: {e}")
             return []
 
@@ -157,7 +157,6 @@ class VectorStoreManager:
             # Train FAISS index
             embeddings = np.array([doc.embedding for doc in documents], dtype=np.float32)
             self.storage_context.vector_store.faiss_index.train(embeddings)
-
             index = VectorStoreIndex.from_documents(
                 documents=documents,
                 storage_context=self.storage_context,
@@ -226,5 +225,3 @@ class VectorStoreManager:
         except Exception as e:
             print(f"Error loading index: {e}")
             return None
-
-
