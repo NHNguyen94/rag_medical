@@ -21,3 +21,6 @@ run-db:
 
 clear-db:
 	docker compose down -v && rm -rf postgres_data
+
+ingest-data:
+	PYTHONPATH=. python src/pipelines/ingest_data/ingest_to_vt_store.py
