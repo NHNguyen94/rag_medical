@@ -1,6 +1,7 @@
 import torch
 from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
 from torch.optim import Adam
+from torch.utils.data import DataLoader, TensorDataset
 
 
 class LSTMModel(Module):
@@ -9,28 +10,43 @@ class LSTMModel(Module):
         hidden_dim: int,
         layer_dim: int,
         output_dim: int,
+        lr: float,
         input_dim: int = None,
         vocab_size: int = 10000,
         embedding_dim: int = 100,
-        lr: float = 0.01,
+        dropout: float = 0.2,
+        padding_idx: int = 0,
     ):
         super(LSTMModel, self).__init__()
         # Select between input_dim and embedding_dim
         self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.vocab_size = vocab_size
+        self.dropout = dropout
+        self.lr = lr
         if self.input_dim:
             # print("Using input_dim")
-            self.lstm = LSTM(input_dim, hidden_dim, layer_dim, batch_first=True)
+            self.lstm = LSTM(
+                input_dim, hidden_dim, layer_dim, batch_first=True, dropout=dropout
+            )
         else:
             # print("Using embedding_dim")
-            self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
+            self.embedding = Embedding(
+                vocab_size, embedding_dim, padding_idx=padding_idx
+            )
             self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
-        # self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
-        # self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.output_layer = Linear(hidden_dim, output_dim)
         self.criterion = CrossEntropyLoss()
-        self.optimizer = Adam(self.parameters(), lr=lr)
+        self.optimizer = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
+
+    def create_dataloader(
+        self, X_train: torch.Tensor, y_train: torch.Tensor, batch_size: int
+    ) -> DataLoader:
+        dataset = TensorDataset(X_train, y_train)
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return dataloader
 
     def forward(self, x: torch.Tensor, h0: int = None, c0: int = None):
         if self.input_dim:
@@ -64,19 +80,28 @@ class LSTMModel(Module):
             return out, hn, cn
 
     def train_model(
-        self, trainX: torch.Tensor, trainY: torch.Tensor, num_epochs: int
+        self,
+        trainX: torch.Tensor,
+        trainY: torch.Tensor,
+        num_epochs: int,
+        batch_size: int,
     ) -> None:
+        dataloader = self.create_dataloader(trainX, trainY, batch_size)
+
         for epoch in range(num_epochs):
             self.train()
-            self.optimizer.zero_grad()
-
-            outputs, _, _ = self(trainX)
-            loss = self.criterion(outputs, trainY)
-
-            loss.backward()
-            self.optimizer.step()
-
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {loss.item():.4f}")
+            total_loss = 0.0
+            num_batches = 0
+            for batch_X, batch_Y in dataloader:
+                self.optimizer.zero_grad()
+                outputs, _, _ = self(batch_X)
+                loss = self.criterion(outputs, batch_Y)
+                loss.backward()
+                self.optimizer.step()
+                total_loss += loss.item()
+                num_batches += 1
+            avg_loss = total_loss / num_batches
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Avg Loss: {avg_loss:.4f}")
 
     def predict_class(self, x: torch.Tensor) -> torch.Tensor:
         self.eval()
