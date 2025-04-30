@@ -22,8 +22,9 @@ class ChatBotService:
         self.system_prompt_template = self.prompt_manager.make_system_prompt(
             self.prompt_manager.get_system_prompt()
         )
-        self.index = self.vector_store_manager.build_or_load_index("indices")
+        self.index = self.vector_store_manager.build_or_load_index("src/indices")
         self.agent = AgentManager(
+            # TODO: Load index at the lifespan of the app
             index=self.index,
             chat_model=chat_bot_config.DEFAULT_CHAT_MODEL,
             system_prompt_template=self.system_prompt_template,

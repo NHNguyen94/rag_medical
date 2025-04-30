@@ -48,3 +48,22 @@ class DirectoryManager:
             ]
         else:
             return None
+
+    @staticmethod
+    def get_all_recursive_files(folder_path: str, file_extension: str) -> List[str]:
+        files = []
+        for root, _, filenames in os.walk(folder_path):
+            for filename in filenames:
+                if filename.endswith(file_extension):
+                    files.append(os.path.join(root, filename))
+        return files
+
+    @staticmethod
+    def delete_non_empty_dir(path: str) -> None:
+        if os.path.exists(path):
+            for root, dirs, files in os.walk(path, topdown=False):
+                for name in files:
+                    os.remove(os.path.join(root, name))
+                for name in dirs:
+                    os.rmdir(os.path.join(root, name))
+            os.rmdir(path)
