@@ -5,7 +5,11 @@ from unittest.mock import MagicMock, AsyncMock
 
 @pytest.fixture
 def agent_manager():
-    return AgentManager(index=MagicMock(), chat_model="gpt-3.5-turbo")
+    return AgentManager(
+        index=MagicMock(),
+        system_prompt_template=MagicMock(),
+        chat_model="gpt-3.5-turbo",
+    )
 
 
 @pytest.mark.asyncio

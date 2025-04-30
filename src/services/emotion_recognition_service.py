@@ -24,6 +24,8 @@ class EmotionRecognitionService:
         lr: float = 0.01,
         dropout: float = 0.2,
     ):
+        self.encoder = EncodingManager()
+        self.executor = ThreadPoolExecutor(max_workers=1)
         self.use_embedding = use_embedding
         if self.use_embedding:
             self.input_dim = None
@@ -32,7 +34,8 @@ class EmotionRecognitionService:
                 layer_dim=layer_dim,
                 output_dim=num_classes,
                 lr=lr,
-                vocab_size=vocab_size,
+                vocab_size=len(self.encoder.tokenizer),
+                padding_idx=self.encoder.tokenizer.pad_token_id,
                 embedding_dim=embedding_dim,
             )
         else:
@@ -46,24 +49,22 @@ class EmotionRecognitionService:
                 dropout=dropout,
             )
         self.lstm_config = LSTMConfig()
-        self.encoder = EncodingManager()
-        self.executor = ThreadPoolExecutor(max_workers=1)
 
     def _reshape(self, data: torch.Tensor, max_length: int) -> torch.Tensor:
         if self.use_embedding:
             return data.view(-1, max_length)
         return data.view(-1, max_length, 1)
 
-    def prepare_data(self, data_path) -> (torch.Tensor, torch.Tensor):
+    def prepare_data(self, data_path: str) -> (torch.Tensor, torch.Tensor):
         df = pd.read_csv(data_path)
         texts = df[self.lstm_config.TEXT_COL].tolist()
         labels = df[self.lstm_config.LABEL_COL].tolist()
         (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
-        padded_tokenized_texts = self.encoder.pad_sequences(tokenized_texts)
+        # padded_tokenized_texts = self.encoder.pad_sequences(tokenized_texts)
         if self.use_embedding:
-            X = self.encoder.to_tensor(padded_tokenized_texts, self.lstm_config.LONG)
+            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
         else:
-            X = self.encoder.to_tensor(padded_tokenized_texts, self.lstm_config.FLOAT32)
+            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
         y = self.encoder.to_tensor(labels, self.lstm_config.LONG)
 
         return self._reshape(X, max_length), y
@@ -79,17 +80,44 @@ class EmotionRecognitionService:
         if model_path is None:
             model_path = self.lstm_config.MODEL_PATH
         self.model.train_model(trainX, trainY, num_epochs, batch_size)
-        torch.save(self.model.state_dict(), model_path)
+        model_config = {
+            "num_classes": self.model.output_dim,
+            "input_dim": self.model.input_dim,
+            "hidden_dim": self.model.hidden_dim,
+            "layer_dim": self.model.layer_dim,
+            "lr": self.model.lr,
+            "dropout": self.model.dropout,
+            "vocab_size": len(self.encoder.tokenizer),
+        }
+        torch.save(
+            {
+                "model_state_dict": self.model.state_dict(),
+                "model_config": model_config,
+            },
+            model_path,
+        )
 
     def load_model(self, model_path: str = None) -> LSTMModel:
         if model_path is None:
             model_path = self.lstm_config.MODEL_PATH
-        with torch.no_grad():
-            self.model.load_state_dict(
-                torch.load(model_path, map_location=torch.device("cpu"))
-            )
-        self.model.eval()
-        return self.model
+        checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
+        config = checkpoint["model_config"]
+        model = LSTMModel(
+            input_dim=config["input_dim"],
+            hidden_dim=config["hidden_dim"],
+            layer_dim=config["layer_dim"],
+            output_dim=config["num_classes"],
+            lr=config["lr"],
+            dropout=config["dropout"],
+            vocab_size=config["vocab_size"],
+        )
+        # with torch.no_grad():
+        #     self.model.load_state_dict(
+        #         torch.load(model_path, map_location=torch.device("cpu"))
+        #     )
+        model.load_state_dict(checkpoint["model_state_dict"])
+        model.eval()
+        return model
 
     async def async_load_model(self, model_path: str = None) -> LSTMModel:
         loop = asyncio.get_event_loop()
@@ -98,11 +126,11 @@ class EmotionRecognitionService:
 
     def predict(self, texts: List) -> torch.Tensor:
         (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
-        padded_tokenized_texts = self.encoder.pad_sequences(tokenized_texts)
+        # padded_tokenized_texts = self.encoder.pad_sequences(tokenized_texts)
         if self.use_embedding:
-            X = self.encoder.to_tensor(padded_tokenized_texts, self.lstm_config.LONG)
+            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
         else:
-            X = self.encoder.to_tensor(padded_tokenized_texts, self.lstm_config.FLOAT32)
+            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
         X = self._reshape(X, max_length)
         return self.model.predict_class(X)
 

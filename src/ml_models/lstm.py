@@ -1,5 +1,3 @@
-from audioop import avgpp
-
 import torch
 from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
 from torch.optim import Adam
@@ -17,10 +15,15 @@ class LSTMModel(Module):
         embedding_dim: int = 100,
         lr: float = 0.01,
         dropout: float = 0.2,
+        padding_idx: int = 0,
     ):
         super(LSTMModel, self).__init__()
         # Select between input_dim and embedding_dim
         self.input_dim = input_dim
+        self.output_dim = output_dim
+        self.vocab_size = vocab_size
+        self.dropout = dropout
+        self.lr = lr
         if self.input_dim:
             # print("Using input_dim")
             self.lstm = LSTM(
@@ -28,7 +31,9 @@ class LSTMModel(Module):
             )
         else:
             # print("Using embedding_dim")
-            self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
+            self.embedding = Embedding(
+                vocab_size, embedding_dim, padding_idx=padding_idx
+            )
             self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
@@ -77,11 +82,11 @@ class LSTMModel(Module):
             return out, hn, cn
 
     def train_model(
-            self,
-            trainX: torch.Tensor,
-            trainY: torch.Tensor,
-            num_epochs: int,
-            batch_size: int,
+        self,
+        trainX: torch.Tensor,
+        trainY: torch.Tensor,
+        num_epochs: int,
+        batch_size: int,
     ) -> None:
         dataloader = self.create_dataloader(trainX, trainY, batch_size)
 

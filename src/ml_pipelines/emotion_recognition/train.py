@@ -3,7 +3,7 @@ from src.utils.directory_manager import DirectoryManager
 
 
 def main(train_data_path: str, model_path: str):
-    num_epochs = 20
+    num_epochs = 2
     emotion_recognition_service = EmotionRecognitionService(
         use_embedding=True,
         embedding_dim=100,

@@ -7,6 +7,9 @@ run-backend:
 train-lstm:
 	PYTHONPATH=. python src/ml_pipelines/emotion_recognition/train.py
 
+eval-lstm:
+	PYTHONPATH=. python src/ml_pipelines/emotion_recognition/eval.py
+
 format:
 	PYTHONPATH=. ruff format
 
