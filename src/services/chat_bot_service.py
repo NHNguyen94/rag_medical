@@ -24,6 +24,7 @@ class ChatBotService:
         )
         self.index = self.vector_store_manager.build_or_load_index("indices")
         self.agent = AgentManager(
+            # TODO: Load index at the lifespan of the app
             index=self.index,
             chat_model=chat_bot_config.DEFAULT_CHAT_MODEL,
             system_prompt_template=self.system_prompt_template,

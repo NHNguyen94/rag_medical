@@ -1,32 +1,23 @@
-import os
 from typing import Optional, List
 
-import dotenv
 import faiss
-from llama_index.core.indices import VectorStoreIndex
-from llama_index.core.indices import (
-    load_index_from_storage,
-)
+from llama_index.core.indices import (load_index_from_storage, VectorStoreIndex)
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser.interface import TextSplitter
 from llama_index.core.schema import Document, TransformComponent
 from llama_index.core.storage import StorageContext
 from llama_index.vector_stores.faiss import FaissVectorStore
-from openai import OpenAI
 
 from src.utils.directory_manager import DirectoryManager
-
-dotenv.load_dotenv()
 
 
 class VectorStoreManager:
     def __init__(self, user_id: str):
         self.user_id = user_id
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
     def _initialize_storage(
-        self,
-        dimension_for_embedding: Optional[int] = 1536,
+            self,
+            dimension_for_embedding: Optional[int] = 1536,
     ) -> StorageContext:
         """Initialize index with documents."""
         faiss_index = faiss.IndexFlatL2(dimension_for_embedding)
@@ -35,10 +26,10 @@ class VectorStoreManager:
         return storage_context
 
     def build_index(
-        self,
-        documents: List[Document],
-        storage_context: StorageContext,
-        show_progress: bool = False,
+            self,
+            documents: List[Document],
+            storage_context: StorageContext,
+            show_progress: bool = False,
     ) -> BaseIndex:
         index = VectorStoreIndex.from_documents(
             documents=documents,
@@ -62,12 +53,12 @@ class VectorStoreManager:
         return index
 
     def build_or_load_index(
-        self,
-        storage_path: str,
-        documents: Optional[List[Document]] = None,
-        # Later might need to use text_splitter and transformations
-        text_splitter: Optional[TextSplitter] = None,
-        transformations: Optional[List[TransformComponent]] = None,
+            self,
+            storage_path: str,
+            documents: Optional[List[Document]] = None,
+            # Later might need to use text_splitter and transformations
+            text_splitter: Optional[TextSplitter] = None,
+            transformations: Optional[List[TransformComponent]] = None,
     ) -> BaseIndex:
         if documents is None:
             documents = []
