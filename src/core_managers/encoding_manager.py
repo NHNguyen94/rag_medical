@@ -16,7 +16,7 @@ class EncodingManager:
         for text in texts:
             yield self.tokenizer(text)
 
-    def build_vocab(self, texts: List[str]) -> Dict[str, int]:
+    def build_vocab(self) -> Dict[str, int]:
         return self.tokenizer.get_vocab()
 
     def tokenize_texts(self, texts: List[str]) -> (List[List[int]], int):
