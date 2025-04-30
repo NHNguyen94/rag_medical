@@ -10,10 +10,10 @@ class LSTMModel(Module):
         hidden_dim: int,
         layer_dim: int,
         output_dim: int,
+        lr: float,
         input_dim: int = None,
         vocab_size: int = 10000,
         embedding_dim: int = 100,
-        lr: float = 0.01,
         dropout: float = 0.2,
         padding_idx: int = 0,
     ):
@@ -37,8 +37,6 @@ class LSTMModel(Module):
             self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
-        # self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=0)
-        # self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
         self.output_layer = Linear(hidden_dim, output_dim)
         self.criterion = CrossEntropyLoss()
         self.optimizer = Adam(self.parameters(), lr=lr, weight_decay=1e-5)

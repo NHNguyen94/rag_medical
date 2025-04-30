@@ -18,7 +18,6 @@ class EmotionRecognitionService:
         # embedding_dim is to input token indices => long
         use_embedding: bool = False,
         embedding_dim: int = 100,
-        vocab_size: int = 10000,
         hidden_dim: int = 10,
         layer_dim: int = 2,
         lr: float = 0.01,
@@ -37,6 +36,7 @@ class EmotionRecognitionService:
                 vocab_size=len(self.encoder.tokenizer),
                 padding_idx=self.encoder.tokenizer.pad_token_id,
                 embedding_dim=embedding_dim,
+                dropout=dropout,
             )
         else:
             # Always 1 for input_dim
@@ -60,7 +60,6 @@ class EmotionRecognitionService:
         texts = df[self.lstm_config.TEXT_COL].tolist()
         labels = df[self.lstm_config.LABEL_COL].tolist()
         (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
-        # padded_tokenized_texts = self.encoder.pad_sequences(tokenized_texts)
         if self.use_embedding:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
         else:
@@ -111,10 +110,6 @@ class EmotionRecognitionService:
             dropout=config["dropout"],
             vocab_size=config["vocab_size"],
         )
-        # with torch.no_grad():
-        #     self.model.load_state_dict(
-        #         torch.load(model_path, map_location=torch.device("cpu"))
-        #     )
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
         return model
@@ -126,7 +121,6 @@ class EmotionRecognitionService:
 
     def predict(self, texts: List) -> torch.Tensor:
         (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
-        # padded_tokenized_texts = self.encoder.pad_sequences(tokenized_texts)
         if self.use_embedding:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
         else:
