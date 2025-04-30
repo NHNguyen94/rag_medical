@@ -25,3 +25,18 @@ class TestEncodingManager:
         tensor = self.encoding_manager.to_tensor(tokens, "float32")
         assert tensor.dtype == torch.float32
         assert tensor.tolist() == [1.0, 2.0, 3.0]
+
+    def test_tokenize_into_words(self):
+        text = "Hello world! This is a test."
+        tokens = self.encoding_manager.tokenize_into_words(text)
+        assert tokens == ["hello", "world", "this", "is", "a", "test"]
+
+    def test_build_vocab(self):
+        texts = ["hello world", "hello", "world"]
+        vocab = self.encoding_manager.build_vocab(texts, min_freq=1)
+        assert vocab == {
+            "<pad>": 0,
+            "<unk>": 1,
+            "hello": 2,
+            "world": 3,
+        }
