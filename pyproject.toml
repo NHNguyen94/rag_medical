@@ -34,6 +34,7 @@ psycopg2 = "^2.9.10"
 asyncpg = "^0.30.0"
 watchdog = "^6.0.0"
 numpy = "^2.2.5"
+tomlkit = "^0.13.2"
 
 
 [tool.poetry.group.dev.dependencies]

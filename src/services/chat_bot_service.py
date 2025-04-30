@@ -22,7 +22,7 @@ class ChatBotService:
         self.system_prompt_template = self.prompt_manager.make_system_prompt(
             self.prompt_manager.get_system_prompt()
         )
-        self.index = self.vector_store_manager.build_index([])
+        self.index = self.vector_store_manager.build_or_load_index("indices")
         self.agent = AgentManager(
             index=self.index,
             chat_model=chat_bot_config.DEFAULT_CHAT_MODEL,
