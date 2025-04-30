@@ -36,6 +36,10 @@ watchdog = "^6.0.0"
 numpy = "^2.2.5"
 
 
+[tool.poetry.group.dev.dependencies]
+pytest-cov = "^6.1.1"
+pytest-mock = "^3.14.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
