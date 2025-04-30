@@ -1,4 +1,5 @@
 import os
+import asyncio
 # import sys
 
 import dotenv
@@ -14,7 +15,9 @@ dotenv.load_dotenv()
 
 
 # TODO: Add and save chat history
-def main(user_id: str, default_welcome_message: str, chat_client: ChatClient) -> None:
+async def main(
+    user_id: str, default_welcome_message: str, chat_client: ChatClient
+) -> None:
     st.title("AI-powered medical assistant")
     if "messages" not in st.session_state:
         st.session_state.messages = [
@@ -30,7 +33,7 @@ def main(user_id: str, default_welcome_message: str, chat_client: ChatClient) ->
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         try:
-            response = chat_client.chat(user_id, prompt)
+            response = await chat_client.achat(user_id, prompt)
             with st.chat_message("assistant"):
                 st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
@@ -40,10 +43,10 @@ def main(user_id: str, default_welcome_message: str, chat_client: ChatClient) ->
                 st.error(f"An error occurred: {e}")
 
 
-if __name__ == "__main__":
-    chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
-    user_id = "default_user_id"  # TODO: Work on this later for different users
-    default_welcome_message = (
-        "Hello, I'm your AI medical assistant. How can I help you today?"
-    )
-    main(user_id, default_welcome_message, chat_client)
+# if __name__ == "__main__":
+chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
+user_id = "default_user_id"  # TODO: Work on this later for different users
+default_welcome_message = (
+    "Hello, I'm your AI medical assistant. How can I help you today?"
+)
+asyncio.run(main(user_id, default_welcome_message, chat_client))
