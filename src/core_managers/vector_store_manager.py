@@ -1,7 +1,7 @@
 from typing import Optional, List
 
 import faiss
-from llama_index.core.indices import (load_index_from_storage, VectorStoreIndex)
+from llama_index.core.indices import load_index_from_storage, VectorStoreIndex
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.node_parser.interface import TextSplitter
 from llama_index.core.schema import Document, TransformComponent
@@ -16,8 +16,8 @@ class VectorStoreManager:
         self.user_id = user_id
 
     def _initialize_storage(
-            self,
-            dimension_for_embedding: Optional[int] = 1536,
+        self,
+        dimension_for_embedding: Optional[int] = 1536,
     ) -> StorageContext:
         """Initialize index with documents."""
         faiss_index = faiss.IndexFlatL2(dimension_for_embedding)
@@ -26,10 +26,10 @@ class VectorStoreManager:
         return storage_context
 
     def build_index(
-            self,
-            documents: List[Document],
-            storage_context: StorageContext,
-            show_progress: bool = False,
+        self,
+        documents: List[Document],
+        storage_context: StorageContext,
+        show_progress: bool = False,
     ) -> BaseIndex:
         index = VectorStoreIndex.from_documents(
             documents=documents,
@@ -53,12 +53,12 @@ class VectorStoreManager:
         return index
 
     def build_or_load_index(
-            self,
-            storage_path: str,
-            documents: Optional[List[Document]] = None,
-            # Later might need to use text_splitter and transformations
-            text_splitter: Optional[TextSplitter] = None,
-            transformations: Optional[List[TransformComponent]] = None,
+        self,
+        storage_path: str,
+        documents: Optional[List[Document]] = None,
+        # Later might need to use text_splitter and transformations
+        text_splitter: Optional[TextSplitter] = None,
+        transformations: Optional[List[TransformComponent]] = None,
     ) -> BaseIndex:
         if documents is None:
             documents = []
@@ -71,3 +71,19 @@ class VectorStoreManager:
             )
             self.store_index(index, storage_path)
             return index
+
+    def append_document(
+        self,
+        storage_path: str,
+        document: Document,
+    ) -> None:
+        if DirectoryManager.check_if_dir_exists(storage_path):
+            index = self.load_index(storage_path)
+            index.insert(document)
+            self.store_index(index, storage_path)
+        else:
+            index = self.build_index(
+                documents=[document],
+                storage_context=self._initialize_storage(),
+            )
+            self.store_index(index, storage_path)
