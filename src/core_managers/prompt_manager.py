@@ -12,6 +12,7 @@ class PromptConfig:
     system_prompt: str
     reasoning_effort: Literal["low", "medium", "high"]
     temperature: float
+    similarity_top_k: int
 
 
 class PromptManager:
@@ -26,6 +27,9 @@ class PromptManager:
 
     def get_temperature(self) -> float:
         return self.prompt.temperature
+
+    def get_similarity_top_k(self) -> int:
+        return self.prompt.similarity_top_k
 
     def make_system_prompt(self, system_prompt: str) -> PromptTemplate:
         return PromptTemplate(template=system_prompt, prompt_type=PromptType.CUSTOM)

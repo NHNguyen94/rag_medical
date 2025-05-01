@@ -2,6 +2,8 @@ class ChatBotConfig:
     DEFAULT_CHAT_MODEL = "gpt-4o-mini"
     GPT_4O = "gpt-4o"
     DEFAULT_PROMPT_PATH = "src/prompts/base_prompt.yml"
+    QUERY_ENGINE_TOOL = "query_engine"
+    QUERY_ENGINE_DESCRIPTION = "Query engine for the index"
 
 class IngestionConfig:
     DATA_PATH = "src/data/cancer"

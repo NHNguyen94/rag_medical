@@ -15,7 +15,7 @@ chat_bot_config = ChatBotConfig()
 
 
 class ChatBotService:
-    def __init__(self, user_id: str, index: BaseIndex):
+    def __init__(self, user_id: str, index: BaseIndex, force_use_tools: bool = True):
         self.user_id = user_id
         self.chat_history_manager = ChatHistoryManager()
         self.vector_store_manager = VectorStoreManager()
@@ -32,6 +32,7 @@ class ChatBotService:
             system_prompt_template=self.system_prompt_template,
             reasoning_effort=self.prompt_manager.get_reasoning_effort(),
             temperature=self.prompt_manager.get_temperature(),
+            force_use_tools=force_use_tools
         )
         self.response_manager = ResponseManager()
 

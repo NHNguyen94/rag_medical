@@ -6,7 +6,6 @@ from llama_index.agent.openai import OpenAIAgentWorker
 from llama_index.core import PromptTemplate
 from llama_index.core.agent import AgentRunner
 from llama_index.core.base.llms.types import ChatMessage
-from llama_index.core.base.response.schema import AsyncStreamingResponse
 from llama_index.core.chat_engine.types import StreamingAgentChatResponse
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.response_synthesizers import ResponseMode
@@ -28,9 +27,11 @@ class AgentManager:
             max_tokens: Optional[int] = None,
             reasoning_effort: Optional[Literal["low", "medium", "high"]] = None,
             temperature: Optional[float] = 0.7,
+            similarity_top_k: Optional[int] = 5,
+            force_use_tools: Optional[bool] = True,
     ):
         self.query_engine = index.as_query_engine(
-            similarity_top_k=1,
+            similarity_top_k=similarity_top_k,
             response_mode=ResponseMode.CONTEXT_ONLY,
             use_async=True,
             verbose=False,
@@ -39,10 +40,14 @@ class AgentManager:
         self.tools = [
             QueryEngineTool.from_defaults(
                 query_engine=self.query_engine,
-                name="query_engine",
-                description="Query engine for the index",
+                name=ChatBotConfig.QUERY_ENGINE_TOOL,
+                description=ChatBotConfig.QUERY_ENGINE_DESCRIPTION,
             )
         ]
+        if force_use_tools:
+            self.tool_choice = {"type": "function", "function": {"name": ChatBotConfig.QUERY_ENGINE_TOOL}}
+        else:
+            self.tool_choice = None
         self.llm = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             temperature=temperature,
@@ -76,7 +81,7 @@ class AgentManager:
             message=message,
             chat_history=chat_history,
             # Force the agent to use the query engine all the time
-            tool_choice={"type": "function", "function": {"name": "query_engine"}},
+            tool_choice=self.tool_choice,
         )
 
     async def aget_nearest_documents(
