@@ -176,3 +176,5 @@ cython_debug/
 /postgres_data/
 /indices/
 /src/indices/
+
+.DS_Store
