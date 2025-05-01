@@ -20,8 +20,8 @@ class TestAgentManager:
         assert response == "Mocked Response"
         agent_manager.aget_stream_response.assert_awaited_once_with("Hello")
 
-    async def test_aget_matched_documents(self, agent_manager):
-        agent_manager.aget_matched_documents = AsyncMock(return_value="Mocked Matched Documents")
-        response = await agent_manager.aget_matched_documents("Hello")
+    async def test_aget_nearest_documents(self, agent_manager):
+        agent_manager.aget_nearest_documents = AsyncMock(return_value="Mocked Matched Documents")
+        response = await agent_manager.aget_nearest_documents("Hello")
         assert response == "Mocked Matched Documents"
-        agent_manager.aget_matched_documents.assert_awaited_once_with("Hello")
+        agent_manager.aget_nearest_documents.assert_awaited_once_with("Hello")

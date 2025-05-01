@@ -12,8 +12,8 @@ from src.utils.directory_manager import DirectoryManager
 
 
 class VectorStoreManager:
-    def __init__(self, user_id: str):
-        self.user_id = user_id
+    def __init__(self):
+        pass
 
     def _initialize_storage(
         self,

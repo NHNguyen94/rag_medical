@@ -1,5 +1,7 @@
 from typing import Optional, List
 
+from llama_index.core.indices.base import BaseIndex
+
 from src.core_managers import (
     AgentManager,
     VectorStoreManager,
@@ -13,18 +15,18 @@ chat_bot_config = ChatBotConfig()
 
 
 class ChatBotService:
-    def __init__(self, user_id: str):
+    def __init__(self, user_id: str, index: BaseIndex):
         self.user_id = user_id
         self.chat_history_manager = ChatHistoryManager()
-        self.vector_store_manager = VectorStoreManager(user_id)
+        self.vector_store_manager = VectorStoreManager()
         # Handle the vector store initialization later
         self.prompt_manager = PromptManager(chat_bot_config.DEFAULT_PROMPT_PATH)
         self.system_prompt_template = self.prompt_manager.make_system_prompt(
             self.prompt_manager.get_system_prompt()
         )
-        self.index = self.vector_store_manager.build_or_load_index("src/indices")
+        # self.index = self.vector_store_manager.build_or_load_index("src/indices")
+        self.index = index
         self.agent = AgentManager(
-            # TODO: Load index at the lifespan of the app
             index=self.index,
             chat_model=chat_bot_config.DEFAULT_CHAT_MODEL,
             system_prompt_template=self.system_prompt_template,
@@ -33,26 +35,32 @@ class ChatBotService:
         )
         self.response_manager = ResponseManager()
 
-    async def achat(
-        self,
-        message: str,
-        closest_documents: Optional[List] = [],
-        predicted_topic: Optional[str] = "",
-        recommended_questions: Optional[List] = [],
-        predicted_emotion: Optional[str] = "",
-    ) -> str:
+    async def achat(self, message: str) -> str:
         chat_history = await self.chat_history_manager.get_chat_history(self.user_id)
         # print(f"Chat history: {chat_history}")
         response = await self.agent.aget_stream_response(message, chat_history)
         response_str = await self.response_manager.parse_stream_response(response)
-        # TODO: Implement the features here
+        return response_str
+
+    async def aget_nearest_documents(self, message: str) -> List[str]:
+        matched_documents = await self.agent.aget_nearest_documents(message)
+        return matched_documents
+
+    async def append_history(
+            self,
+            message: str,
+            response_str: str,
+            nearest_documents: Optional[List] = [],
+            predicted_topic: Optional[str] = "",
+            recommended_questions: Optional[List] = [],
+            predicted_emotion: Optional[str] = "",
+    ) -> None:
         await self.chat_history_manager.append_chat_history_to_db(
             user_id=self.user_id,
             message=message,
             response=response_str,
-            closest_documents=closest_documents,
+            nearest_documents=nearest_documents,
             predicted_topic=predicted_topic,
             recommended_questions=recommended_questions,
             predicted_emotion=predicted_emotion,
         )
-        return response_str

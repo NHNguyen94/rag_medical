@@ -3,6 +3,12 @@ class ChatBotConfig:
     GPT_4O = "gpt-4o"
     DEFAULT_PROMPT_PATH = "src/prompts/base_prompt.yml"
 
+class IngestionConfig:
+    DATA_PATH = "src/data/cancer"
+    INDEX_PATH = "src/indices"
+    COL_NAME_TO_INGEST = "Answer"
+    CSV_FILE_EXTENSION = ".csv"
+
 
 class LSTMConfig:
     LABEL_COL = "label"
