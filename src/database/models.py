@@ -20,7 +20,7 @@ class ChatHistory(SQLModel, table=True):
     user_id: str = Field(nullable=False)
     message: str = Field(nullable=False)
     response: str = Field(nullable=False)
-    closest_documents: List[str] = Field(sa_column=Column(JSON))
+    nearest_documents: List[str] = Field(sa_column=Column(JSON))
     predicted_topic: str = Field(nullable=False)
     recommended_questions: List[str] = Field(sa_column=Column(JSON))
     predicted_emotion: str = Field(nullable=False)
