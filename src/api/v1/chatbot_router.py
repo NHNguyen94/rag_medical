@@ -16,7 +16,10 @@ async def chat(chat_request: ChatRequest, request: Request):
     response = await chat_bot_service.achat(
         message=chat_request.message, predicted_emotion=str(predicted_emotion.item())
     )
-    return ChatResponse(response=response)
+    response = ChatResponse(response=response)
+    # print(f"Chat response: {response}")
+
+    return response
 
 
 @router.post("/summarize")

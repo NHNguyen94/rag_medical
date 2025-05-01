@@ -1,4 +1,5 @@
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, BackgroundTasks
@@ -9,6 +10,9 @@ from src.services.emotion_recognition_service import EmotionRecognitionService
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+# Disable parallelism for tokenizers to avoid warnings
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 # https://fastapi.tiangolo.com/advanced/events/#startup-and-shutdown-together
