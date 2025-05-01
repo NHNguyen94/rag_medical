@@ -9,14 +9,18 @@ class IngestionService:
         self.doc_manager = DocumentManager()
         self.vt_store_manager = VectorStoreManager()
 
-    def ingest_data(self, data_path: str, index_path: str, col_name_to_ingest: str) -> None:
+    def ingest_data(
+        self, data_path: str, index_path: str, col_name_to_ingest: str
+    ) -> None:
         all_csv_files = DirectoryManager.get_all_recursive_files(
-            data_path,
-            IngestionConfig.CSV_FILE_EXTENSION
+            data_path, IngestionConfig.CSV_FILE_EXTENSION
         )
+        print(f"All CSV files: {all_csv_files}")
         for csv_file in all_csv_files:
             print(f"Ingesting {csv_file}")
-            documents = self.doc_manager.load_csv_to_documents(csv_file, col_name_to_ingest)
+            documents = self.doc_manager.load_csv_to_documents(
+                csv_file, col_name_to_ingest
+            )
             if DirectoryManager.check_if_dir_exists(index_path):
                 print(f"Loading index for {csv_file}")
                 for doc in documents:

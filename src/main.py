@@ -5,10 +5,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, BackgroundTasks
 
 from src.api.v1.api import router as v1_router
+from src.core_managers.vector_store_manager import VectorStoreManager
 from src.database.models import create_tables
 from src.services.emotion_recognition_service import EmotionRecognitionService
-from src.utils.enums import ChatBotConfig
-from src.core_managers.vector_store_manager import VectorStoreManager
+from src.utils.enums import IngestionConfig, ChatBotConfig
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -28,12 +28,49 @@ async def load_model_background(emotion_recognition_service: EmotionRecognitionS
 async def lifespan(app: FastAPI):
     emotion_recognition_service = EmotionRecognitionService(use_embedding=True)
     app.state.emotion_recognition_service = emotion_recognition_service
-    index = vt_store.build_or_load_index("src/indices")
-    app.state.index = index
+
+    index_path = IngestionConfig.INDEX_PATH
+    index_cancer = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.CANCER}"
+    )
+    index_diabetes = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.DIABETES}"
+    )
+    index_genetic = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.GENETIC_AND_RARE_DISEASES}"
+    )
+    index_hormone = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.GROWTH_HORMONE_RECEPTOR}"
+    )
+    index_heart_lung_blood = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.HEART_LUNG_AND_BLOOD}"
+    )
+    index_neuro_disorders_and_stroke = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.NEUROLOGICAL_DISORDERS_AND_STROKE}"
+    )
+    index_senior_health = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.SENIOR_HEALTH}"
+    )
+    index_others = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.OTHERS}"
+    )
+    app.state.index_cancer = index_cancer
+    app.state.index_diabetes = index_diabetes
+    app.state.index_genetic = index_genetic
+    app.state.index_hormone = index_hormone
+    app.state.index_heart_lung_blood = index_heart_lung_blood
+    app.state.index_neuro_disorders_and_stroke = (
+        index_neuro_disorders_and_stroke
+    )
+    app.state.index_senior_health = index_senior_health
+    app.state.index_others = index_others
 
     # Start background task to load the model after the app starts
     background_tasks = BackgroundTasks()
-    background_tasks.add_task(load_model_background, emotion_recognition_service)
+    background_tasks.add_task(
+        load_model_background,
+        emotion_recognition_service,
+    )
 
     await create_tables()
     yield

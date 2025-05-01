@@ -32,7 +32,7 @@ class ChatBotService:
             system_prompt_template=self.system_prompt_template,
             reasoning_effort=self.prompt_manager.get_reasoning_effort(),
             temperature=self.prompt_manager.get_temperature(),
-            force_use_tools=force_use_tools
+            force_use_tools=force_use_tools,
         )
         self.response_manager = ResponseManager()
 
@@ -48,13 +48,13 @@ class ChatBotService:
         return matched_documents
 
     async def append_history(
-            self,
-            message: str,
-            response_str: str,
-            nearest_documents: Optional[List] = [],
-            predicted_topic: Optional[str] = "",
-            recommended_questions: Optional[List] = [],
-            predicted_emotion: Optional[str] = "",
+        self,
+        message: str,
+        response_str: str,
+        nearest_documents: Optional[List] = [],
+        predicted_topic: Optional[str] = "",
+        recommended_questions: Optional[List] = [],
+        predicted_emotion: Optional[str] = "",
     ) -> None:
         await self.chat_history_manager.append_chat_history_to_db(
             user_id=self.user_id,
