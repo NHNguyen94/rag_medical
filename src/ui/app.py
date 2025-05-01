@@ -4,11 +4,16 @@ import dotenv
 import streamlit as st
 
 from src.clients.chat_client import ChatClient
+from src.utils.enums import ChatBotConfig
 
 dotenv.load_dotenv()
 
+
 def run():
     st.title("AI-powered medical assistant")
+
+    domain_options = ChatBotConfig.DOMAINS
+    selected_domain = st.selectbox("Select a medical domain", domain_options)
 
     chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
     user_id = "default_user_id"
@@ -31,7 +36,9 @@ def run():
 
         try:
             # response = asyncio.run(chat_client.achat(user_id, prompt))
-            response = chat_client.chat(user_id, prompt)
+            response = chat_client.chat(
+                user_id=user_id, message=prompt, selected_domain=selected_domain
+            )
 
             with st.chat_message("assistant"):
                 st.markdown(response)
@@ -40,6 +47,7 @@ def run():
         except Exception as e:
             with st.chat_message("assistant"):
                 st.error(f"An error occurred: {e}")
+
 
 if __name__ == "__main__":
     run()

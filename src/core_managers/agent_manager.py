@@ -19,16 +19,16 @@ dotenv.load_dotenv()
 
 class AgentManager:
     def __init__(
-            self,
-            # For vector database
-            index: BaseIndex,
-            chat_model: str = ChatBotConfig.DEFAULT_CHAT_MODEL,
-            system_prompt_template: Optional[PromptTemplate] = None,
-            max_tokens: Optional[int] = None,
-            reasoning_effort: Optional[Literal["low", "medium", "high"]] = None,
-            temperature: Optional[float] = 0.7,
-            similarity_top_k: Optional[int] = 5,
-            force_use_tools: Optional[bool] = True,
+        self,
+        # For vector database
+        index: BaseIndex,
+        chat_model: str = ChatBotConfig.DEFAULT_CHAT_MODEL,
+        system_prompt_template: Optional[PromptTemplate] = None,
+        max_tokens: Optional[int] = None,
+        reasoning_effort: Optional[Literal["low", "medium", "high"]] = None,
+        temperature: Optional[float] = 0.7,
+        similarity_top_k: Optional[int] = 5,
+        force_use_tools: Optional[bool] = True,
     ):
         self.query_engine = index.as_query_engine(
             similarity_top_k=similarity_top_k,
@@ -45,7 +45,10 @@ class AgentManager:
             )
         ]
         if force_use_tools:
-            self.tool_choice = {"type": "function", "function": {"name": ChatBotConfig.QUERY_ENGINE_TOOL}}
+            self.tool_choice = {
+                "type": "function",
+                "function": {"name": ChatBotConfig.QUERY_ENGINE_TOOL},
+            }
         else:
             self.tool_choice = None
         self.llm = OpenAI(
@@ -73,9 +76,9 @@ class AgentManager:
         # )
 
     async def aget_stream_response(
-            self,
-            message: str,
-            chat_history: Optional[List[ChatMessage]] = None,
+        self,
+        message: str,
+        chat_history: Optional[List[ChatMessage]] = None,
     ) -> StreamingAgentChatResponse:
         return await self.agent.astream_chat(
             message=message,
@@ -84,10 +87,7 @@ class AgentManager:
             tool_choice=self.tool_choice,
         )
 
-    async def aget_nearest_documents(
-            self,
-            messages: str
-    ) -> List[str]:
+    async def aget_nearest_documents(self, messages: str) -> List[str]:
         response = await self.query_engine.aquery(messages)
 
         return [node.text for node in response.source_nodes]
