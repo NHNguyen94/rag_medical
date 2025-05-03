@@ -4,6 +4,7 @@ from sqlmodel import select
 
 from src.database.models import ChatHistory, Users
 from src.database.session_manager import SessionManager
+from src.utils.helpers import hash_string, get_unique_id
 
 
 class ServiceManager:
@@ -11,14 +12,14 @@ class ServiceManager:
         self.session_manager = SessionManager()
 
     async def append_chat_history(
-        self,
-        user_id: str,
-        message: str,
-        response: str,
-        nearest_documents: List[str],
-        predicted_topic: str,
-        recommended_questions: List[str],
-        predicted_emotion: str,
+            self,
+            user_id: str,
+            message: str,
+            response: str,
+            nearest_documents: List[str],
+            predicted_topic: str,
+            recommended_questions: List[str],
+            predicted_emotion: str,
     ) -> ChatHistory:
         async with self.session_manager.get_async_session() as session:
             chat_history = ChatHistory(
@@ -53,9 +54,19 @@ class ServiceManager:
             )
             return result.scalars().first() is not None
 
-    async def append_user_id(self, user_id: str) -> Users:
+    async def get_hashed_password(self, user_id: str) -> str:
         async with self.session_manager.get_async_session() as session:
-            user = Users(user_id=user_id)
+            result = await session.execute(
+                select(Users.hashed_password).where(Users.user_id == user_id)
+            )
+            return result.scalars().first()
+
+    async def append_user(self, user_id: str, hashed_password: str = None) -> Users:
+        async with self.session_manager.get_async_session() as session:
+            if hashed_password is None:
+                random_id = str(get_unique_id())
+                hashed_password = hash_string(random_id)
+            user = Users(user_id=user_id, hashed_password=hashed_password)
             session.add(user)
             await session.commit()
             await session.refresh(user)

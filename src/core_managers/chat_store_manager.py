@@ -1,12 +1,13 @@
 from abc import ABC
 from typing import List
-from typing import Optional
-from pydantic import PrivateAttr
+
 from llama_index.core.base.llms.types import ChatMessage
 from llama_index.core.storage.chat_store import BaseChatStore
+from pydantic import PrivateAttr
 
 from src.database.models import ChatHistory
 from src.database.service_manager import ServiceManager
+from src.utils.enums import ChatBotConfig
 
 
 class ChatStoreManager(BaseChatStore, ABC):
@@ -16,12 +17,12 @@ class ChatStoreManager(BaseChatStore, ABC):
     def __init__(self):
         super().__init__()
         self._db_service_manager = ServiceManager()
-        self._n_chats = 10
+        self._n_chats = ChatBotConfig.N_HISTORY_CHATS
 
     async def aget_messages(self, key: str) -> List[ChatHistory]:
         has_user_id = await self._db_service_manager.check_existing_user_id(key)
         if not has_user_id:
-            await self._db_service_manager.append_user_id(key)
+            await self._db_service_manager.append_user(key)
             # Add the first message to the chat history
             await self._db_service_manager.append_chat_history(
                 user_id=key,
@@ -36,9 +37,9 @@ class ChatStoreManager(BaseChatStore, ABC):
         return messages
 
     async def async_add_message(
-        self,
-        key: str,
-        message: ChatMessage,
+            self,
+            key: str,
+            message: ChatMessage,
     ) -> None:
         metadata = message.additional_kwargs
         await self._db_service_manager.append_chat_history(
