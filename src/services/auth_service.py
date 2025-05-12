@@ -3,7 +3,7 @@ from passlib.context import CryptContext
 from src.database.service_manager import ServiceManager
 
 
-class AuthenticationManager:
+class AuthenticationService:
     def __init__(self):
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
         self.db_service_manager = ServiceManager()

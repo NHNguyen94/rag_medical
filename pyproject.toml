@@ -36,6 +36,7 @@ watchdog = "^6.0.0"
 numpy = "^2.2.5"
 tomlkit = "^0.13.2"
 passlib = "^1.7.4"
+bcrypt = "<4.0"
 
 
 [tool.poetry.group.dev.dependencies]
