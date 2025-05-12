@@ -60,6 +60,13 @@ def login_or_signup():
 def main_app():
     st.title("AI-powered medical assistant")
 
+    col1, col2 = st.columns([7, 1])
+    with col2:
+        if st.button("Logout"):
+            st.session_state.authenticated = False
+            st.session_state.messages = []
+            st.rerun()
+
     domain_options = ChatBotConfig.DOMAINS
     selected_domain = st.selectbox("Select a medical domain", domain_options)
 
@@ -94,11 +101,6 @@ def main_app():
         except Exception as e:
             with st.chat_message("assistant"):
                 st.error(f"An error occurred: {e}")
-
-    if st.button("Logout"):
-        st.session_state.authenticated = False
-        st.session_state.messages = []
-        st.rerun()
 
 
 def run():
