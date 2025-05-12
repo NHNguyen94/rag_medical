@@ -1,3 +1,4 @@
+import hashlib
 from typing import Dict, List
 from uuid import UUID, uuid4
 
@@ -11,6 +12,10 @@ def load_yml_configs(config_path: str) -> Dict:
 
 def get_unique_id() -> UUID:
     return uuid4()
+
+
+def hash_string(string: str) -> str:
+    return hashlib.sha256(string.encode()).hexdigest()
 
 
 def sample_qa_data() -> List[Dict]:

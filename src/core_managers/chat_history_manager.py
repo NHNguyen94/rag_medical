@@ -15,7 +15,7 @@ class ChatHistoryManager:
         return await self.db_service_manager.check_existing_user_id(user_id)
 
     async def _append_user_id(self, user_id: str) -> None:
-        await self.db_service_manager.append_user_id(user_id)
+        await self.db_service_manager.append_user(user_id)
 
     async def _append_first_message_to_db(self, user_id: str) -> None:
         await self.db_service_manager.append_chat_history(
