@@ -7,11 +7,10 @@ from llama_index.core import PromptTemplate
 from llama_index.core import get_response_synthesizer
 from llama_index.core.agent import AgentRunner
 from llama_index.core.base.llms.types import ChatMessage
-from llama_index.core.base.response.schema import RESPONSE_TYPE
+from llama_index.core.base.response.schema import RESPONSE_TYPE, Response
 from llama_index.core.chat_engine.types import StreamingAgentChatResponse
 from llama_index.core.indices.base import BaseIndex
 from llama_index.core.response_synthesizers import ResponseMode
-from llama_index.core.tools import FunctionTool
 from llama_index.core.tools.query_engine import QueryEngineTool
 from llama_index.llms.openai import OpenAI
 
@@ -31,8 +30,8 @@ class AgentManager:
         reasoning_effort: Optional[Literal["low", "medium", "high"]] = None,
         temperature: Optional[float] = 0.7,
         similarity_top_k: Optional[int] = 5,
-        force_use_tools: Optional[bool] = True,
-        use_cot: Optional[bool] = True,
+        # Disable tool to manually retrieve documents
+        force_use_tools: Optional[bool] = False,
     ):
         self.query_engine = index.as_query_engine(
             similarity_top_k=similarity_top_k,
@@ -41,19 +40,21 @@ class AgentManager:
             verbose=False,
             return_source=True,
         )
-        self.tools = [
-            QueryEngineTool.from_defaults(
-                query_engine=self.query_engine,
-                name=ChatBotConfig.QUERY_ENGINE_TOOL,
-                description=ChatBotConfig.QUERY_ENGINE_DESCRIPTION,
-            )
-        ]
         if force_use_tools:
+            self.tools = [
+                QueryEngineTool.from_defaults(
+                    query_engine=self.query_engine,
+                    name=ChatBotConfig.QUERY_ENGINE_TOOL,
+                    description=ChatBotConfig.QUERY_ENGINE_DESCRIPTION,
+                )
+            ]
+            # Able to use 1 tool at a time
             self.tool_choice = {
                 "type": "function",
                 "function": {"name": ChatBotConfig.QUERY_ENGINE_TOOL},
             }
         else:
+            self.tools = None
             self.tool_choice = None
         self.llm = OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
@@ -91,20 +92,18 @@ class AgentManager:
             tool_choice=self.tool_choice,
         )
 
-    async def _retrive_related_documents(self, messages: str) -> RESPONSE_TYPE:
-        return await self.query_engine.aquery(messages)
+    async def retrieve_related_nodes(self, message: str) -> RESPONSE_TYPE:
+        return await self.query_engine.aquery(message)
 
-    async def aget_nearest_documents(self, messages: str) -> List[str]:
-        response = await self._retrive_related_documents(messages)
-
-        return [node.text for node in response.source_nodes]
+    async def aget_nearest_documents(self, nearest_nodes: RESPONSE_TYPE) -> List[str]:
+        return [node.text for node in nearest_nodes.source_nodes]
 
     async def asynthesize_response(
         self,
         message: str,
-    ):
-        response = await self._retrive_related_documents(message)
-        retrieved_nodes = response.source_nodes
+        nearest_nodes: RESPONSE_TYPE,
+    ) -> Response:
+        retrieved_nodes = nearest_nodes.source_nodes
         response_synthesizer = get_response_synthesizer(
             llm=self.llm,
             response_mode=ResponseMode.REFINE,
