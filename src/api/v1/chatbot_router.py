@@ -32,7 +32,7 @@ async def chat(
         index_others = request.app.state.index_others
 
         domain = ChatBotConfig.DOMAIN_MAPPING[chat_request.selected_domain]
-        print(f"Domain: {domain}")
+        # print(f"Domain: {domain}")
         match domain:
             case ChatBotConfig.CANCER:
                 index = index_cancer
