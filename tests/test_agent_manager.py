@@ -27,3 +27,15 @@ class TestAgentManager:
         response = await agent_manager.aget_nearest_documents("Hello")
         assert response == "Mocked Matched Documents"
         agent_manager.aget_nearest_documents.assert_awaited_once_with("Hello")
+
+    async def test_asynthesize_response(self, agent_manager):
+        agent_manager.asynthesize_response = AsyncMock(
+            return_value="Mocked Synthesized Response"
+        )
+        response = await agent_manager.asynthesize_response(
+            "Hello", "Matched Documents"
+        )
+        assert response == "Mocked Synthesized Response"
+        agent_manager.asynthesize_response.assert_awaited_once_with(
+            "Hello", "Matched Documents"
+        )

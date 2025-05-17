@@ -14,8 +14,9 @@ router = APIRouter(tags=["chatbot"])
 async def chat(
     chat_request: ChatRequest,
     request: Request,
-    force_use_tools: bool = True,
-    use_cot: bool = False,
+    # Disable tool to manually retrieve documents
+    force_use_tools: bool = False,
+    use_cot: bool = True,
 ):
     try:
         # TODO: Implement the all the features here
@@ -63,12 +64,21 @@ async def chat(
         )
 
         predicted_emotion = lstm_model.predict([chat_request.message])
-        nearest_documents = await chat_bot_service.aget_nearest_documents(
+        nearest_nodes = await chat_bot_service.retrieve_related_nodes(
             message=chat_request.message
+        )
+        nearest_documents = await chat_bot_service.aget_nearest_documents(
+            nearest_nodes=nearest_nodes
+        )
+        synthesized_response = await chat_bot_service.asynthesize_response(
+            message=chat_request.message,
+            nearest_nodes=nearest_nodes,
         )
         response = await chat_bot_service.achat(
             message=chat_request.message,
             customer_emotion=int(predicted_emotion),
+            nearest_documents=nearest_documents,
+            synthesized_response=synthesized_response,
         )
 
         await chat_bot_service.append_history(

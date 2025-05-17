@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Literal, Optional, List
 
 from llama_index.core import PromptTemplate
 from llama_index.core.prompts import PromptType
@@ -42,29 +42,45 @@ class PromptManager:
         current_prompt: str,
         customer_emotion: Optional[int] = None,
         synthesized_response: Optional[str] = None,
+        nearest_documents: Optional[List[str]] = None,
     ) -> str:
         # Put all services that require to update the system prompt here
-        if synthesized_response:
-            reasoning_prompt = f"""
-            \n
-            This is the synthesized response from the retrieved documents,
-            use this to refine your response,
-            
-            Synthesized response:
-            {synthesized_response}
-            """
-            current_prompt = current_prompt + reasoning_prompt
-
         if customer_emotion:
             emotion_str = chat_bot_config.EMOTION_MAPPING[customer_emotion]
             emotion_prompt = f"""
-            \n
+            -----------
             This is the emotion of the user,
             use this to adjust your tone of voice,
-            
+
             User emotion:
             {emotion_str}
+            -----------
             """
             current_prompt = current_prompt + emotion_prompt
+
+        if nearest_documents:
+            documents_prompt = f"""
+            -----------
+            These are the retrieved documents,
+            summarize the content of these documents,
+            and use the information to answer the user question,
+            
+            Retrieved documents:
+            {nearest_documents}
+            -----------
+            """
+            current_prompt = current_prompt + documents_prompt
+
+        if synthesized_response:
+            reasoning_prompt = f"""
+            -----------
+            This is the synthesized response from the retrieved documents,
+            use this to refine your final response,
+
+            Synthesized response:
+            {synthesized_response}
+            -----------
+            """
+            current_prompt = current_prompt + reasoning_prompt
 
         return current_prompt

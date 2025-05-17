@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from llama_index.core.base.response.schema import RESPONSE_TYPE
 from llama_index.core.indices.base import BaseIndex
 
 from src.core_managers import (
@@ -41,7 +42,6 @@ class ChatBotService:
             temperature=self.prompt_manager.get_temperature(),
             similarity_top_k=self.prompt_manager.get_similarity_top_k(),
             force_use_tools=force_use_tools,
-            use_cot=use_cot,
         )
         self.response_manager = ResponseManager()
         self.use_cot = use_cot
@@ -50,12 +50,14 @@ class ChatBotService:
         self,
         customer_emotion: Optional[int] = None,
         synthesized_response: Optional[str] = None,
+        nearest_documents: Optional[List[str]] = None,
     ) -> None:
         current_prompt = self.prompt_manager.get_system_prompt()
         new_prompt = self.prompt_manager.add_prompts_for_additional_services(
             current_prompt=current_prompt,
             customer_emotion=customer_emotion,
             synthesized_response=synthesized_response,
+            nearest_documents=nearest_documents,
         )
         self.system_prompt_template = self.prompt_manager.make_system_prompt(new_prompt)
 
@@ -63,26 +65,34 @@ class ChatBotService:
         self,
         message: str,
         customer_emotion: Optional[int] = None,
+        synthesized_response: Optional[str] = None,
+        nearest_documents: Optional[List[str]] = None,
     ) -> str:
-        if self.use_cot:
-            synthesized_response = await self.agent.asynthesize_response(message)
-            synthesized_response = str(synthesized_response)
-        else:
-            synthesized_response = None
         self.update_system_prompt(
             customer_emotion=customer_emotion,
             synthesized_response=synthesized_response,
+            nearest_documents=nearest_documents,
         )
-        print(f"\nNew system prompt: {self.system_prompt_template}\n")
+        # print(f"\nNew system prompt: {self.system_prompt_template}\n")
         chat_history = await self.chat_history_manager.get_chat_history(self.user_id)
         # print(f"Chat history: {chat_history}")
         response = await self.agent.aget_stream_response(message, chat_history)
         response_str = await self.response_manager.parse_stream_response(response)
         return response_str
 
-    async def aget_nearest_documents(self, message: str) -> List[str]:
-        matched_documents = await self.agent.aget_nearest_documents(message)
-        return matched_documents
+    async def retrieve_related_nodes(self, message: str) -> RESPONSE_TYPE:
+        return await self.agent.retrieve_related_nodes(message)
+
+    async def aget_nearest_documents(self, nearest_nodes: RESPONSE_TYPE) -> List[str]:
+        return await self.agent.aget_nearest_documents(nearest_nodes)
+
+    async def asynthesize_response(
+        self,
+        message: str,
+        nearest_nodes: RESPONSE_TYPE,
+    ) -> str:
+        response = await self.agent.asynthesize_response(message, nearest_nodes)
+        return str(response)
 
     async def append_history(
         self,
