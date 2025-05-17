@@ -1,6 +1,7 @@
 import httpx
 import requests
 
+
 class AuthClient:
     def __init__(self, base_url: str, api_version: str = "v1"):
         self.api_url = f"{base_url.rstrip('/')}/{api_version}/auth"

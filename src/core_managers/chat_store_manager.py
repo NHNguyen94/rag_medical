@@ -37,9 +37,9 @@ class ChatStoreManager(BaseChatStore, ABC):
         return messages
 
     async def async_add_message(
-            self,
-            key: str,
-            message: ChatMessage,
+        self,
+        key: str,
+        message: ChatMessage,
     ) -> None:
         metadata = message.additional_kwargs
         await self._db_service_manager.append_chat_history(

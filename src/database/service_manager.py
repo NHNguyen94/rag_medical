@@ -12,14 +12,14 @@ class ServiceManager:
         self.session_manager = SessionManager()
 
     async def append_chat_history(
-            self,
-            user_id: str,
-            message: str,
-            response: str,
-            nearest_documents: List[str],
-            predicted_topic: str,
-            recommended_questions: List[str],
-            predicted_emotion: str,
+        self,
+        user_id: str,
+        message: str,
+        response: str,
+        nearest_documents: List[str],
+        predicted_topic: str,
+        recommended_questions: List[str],
+        predicted_emotion: str,
     ) -> ChatHistory:
         async with self.session_manager.get_async_session() as session:
             chat_history = ChatHistory(

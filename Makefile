@@ -13,7 +13,7 @@ eval-lstm:
 format:
 	PYTHONPATH=. ruff format
 
-test:
+unittest:
 	PYTHONPATH=. pytest -s -p no:warnings tests/
 
 run-db:

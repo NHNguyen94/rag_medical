@@ -9,7 +9,11 @@ class ChatClient:
 
     def chat(self, user_id: str, message: str, selected_domain: str) -> str:
         endpoint = f"{self.api_url}/chat"
-        payload = {"user_id": user_id, "message": message, "selected_domain": selected_domain}
+        payload = {
+            "user_id": user_id,
+            "message": message,
+            "selected_domain": selected_domain,
+        }
 
         response = requests.post(endpoint, json=payload)
 
@@ -17,6 +21,7 @@ class ChatClient:
             return response.json()["response"]
         else:
             raise Exception(f"Error {response.status_code}: {response.text}")
+
     #
     # async def achat(self, user_id: str, message: str, selected_domain: str) -> str:
     #     endpoint = f"{self.api_url}/chat"
