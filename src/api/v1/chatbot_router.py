@@ -12,7 +12,10 @@ router = APIRouter(tags=["chatbot"])
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-    chat_request: ChatRequest, request: Request, force_use_tools: bool = True
+    chat_request: ChatRequest,
+    request: Request,
+    force_use_tools: bool = True,
+    use_cot: bool = False,
 ):
     try:
         # TODO: Implement the all the features here
@@ -53,14 +56,16 @@ async def chat(
                 raise ValueError(f"Invalid domain: {domain}")
 
         chat_bot_service = ChatBotService(
-            user_id=chat_request.user_id, index=index, force_use_tools=force_use_tools
+            user_id=chat_request.user_id,
+            index=index,
+            force_use_tools=force_use_tools,
+            use_cot=use_cot,
         )
 
         predicted_emotion = lstm_model.predict([chat_request.message])
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             message=chat_request.message
         )
-
         response = await chat_bot_service.achat(
             message=chat_request.message,
             customer_emotion=int(predicted_emotion),

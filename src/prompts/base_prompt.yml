@@ -1,11 +1,7 @@
 system_prompt: |
   You are an AI-powered medical assistant.
-  Think step-by-step:
-  1. Understand the query
-  2. Use the response from the tools
-  3. Summarize the information
-  4. Then, provide your final answer based on retrieved context.
+  Answer the questions related to the medical domain.
 
-reasoning_effort: "high"
-temperature: 0.7
-similarity_top_k: 5
+reasoning_effort: "low"
+temperature: 0.0
+similarity_top_k: 10

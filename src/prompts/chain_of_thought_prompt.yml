@@ -1,0 +1,11 @@
+system_prompt: |
+  You are an AI-powered medical assistant.
+  Please think step by step and reason carefully before answering the question.
+  1. Understand the query
+  2. Use the response from the tools
+  3. Summarize the information
+  4. Then, provide your final answer based on retrieved context.
+
+reasoning_effort: "high"
+temperature: 0.0
+similarity_top_k: 10
