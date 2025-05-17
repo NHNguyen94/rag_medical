@@ -1,10 +1,13 @@
 from dataclasses import dataclass
-from typing import Literal
+from typing import Literal, Optional
 
 from llama_index.core import PromptTemplate
 from llama_index.core.prompts import PromptType
 
+from src.utils.enums import ChatBotConfig
 from src.utils.helpers import load_yml_configs
+
+chat_bot_config = ChatBotConfig
 
 
 @dataclass
@@ -33,3 +36,35 @@ class PromptManager:
 
     def make_system_prompt(self, system_prompt: str) -> PromptTemplate:
         return PromptTemplate(template=system_prompt, prompt_type=PromptType.CUSTOM)
+
+    def add_prompts_for_additional_services(
+        self,
+        current_prompt: str,
+        customer_emotion: Optional[int] = None,
+        synthesized_response: Optional[str] = None,
+    ) -> str:
+        # Put all services that require to update the system prompt here
+        if synthesized_response:
+            reasoning_prompt = f"""
+            \n
+            This is the synthesized response from the retrieved documents,
+            use this to refine your response,
+            
+            Synthesized response:
+            {synthesized_response}
+            """
+            current_prompt = current_prompt + reasoning_prompt
+
+        if customer_emotion:
+            emotion_str = chat_bot_config.EMOTION_MAPPING[customer_emotion]
+            emotion_prompt = f"""
+            \n
+            This is the emotion of the user,
+            use this to adjust your tone of voice,
+            
+            User emotion:
+            {emotion_str}
+            """
+            current_prompt = current_prompt + emotion_prompt
+
+        return current_prompt
