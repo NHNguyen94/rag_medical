@@ -1,4 +1,6 @@
 import hashlib
+import re
+import textwrap
 from typing import Dict, List
 from uuid import UUID, uuid4
 
@@ -16,6 +18,12 @@ def get_unique_id() -> UUID:
 
 def hash_string(string: str) -> str:
     return hashlib.sha256(string.encode()).hexdigest()
+
+
+def clean_document_text(doc: str) -> str:
+    cleaned = "\n".join(line.strip() for line in doc.strip().splitlines())
+    cleaned = re.sub(r'\s{2,}', ' ', cleaned)
+    return textwrap.dedent(cleaned).strip()
 
 
 def sample_qa_data() -> List[Dict]:

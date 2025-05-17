@@ -2,9 +2,11 @@ import os
 
 import dotenv
 import streamlit as st
+
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
 from src.utils.enums import ChatBotConfig
+from src.utils.helpers import clean_document_text
 
 dotenv.load_dotenv()
 
@@ -76,6 +78,9 @@ def main_app():
         "Hello, I'm your AI medical assistant. How can I help you today?"
     )
 
+    if "retrieved_documents" not in st.session_state:
+        st.session_state.retrieved_documents = []
+
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {"role": "assistant", "content": default_welcome_message}
@@ -90,10 +95,14 @@ def main_app():
         st.session_state.messages.append({"role": "user", "content": prompt})
 
         try:
-            response = chat_client.chat(
+            response_data = chat_client.chat(
                 user_id=user_id, message=prompt, selected_domain=selected_domain
             )
 
+            nearest_docs = response_data.get("nearest_documents", [])
+            st.session_state.retrieved_documents = nearest_docs
+
+            response = response_data.get("response", "No response from the assistant.")
             with st.chat_message("assistant"):
                 st.markdown(response)
             st.session_state.messages.append({"role": "assistant", "content": response})
@@ -101,6 +110,16 @@ def main_app():
         except Exception as e:
             with st.chat_message("assistant"):
                 st.error(f"An error occurred: {e}")
+
+    with st.sidebar:
+        st.header("Retrieved Documents")
+        if st.session_state.retrieved_documents:
+            for idx, doc in enumerate(st.session_state.retrieved_documents):
+                cleaned_doc = clean_document_text(doc)
+                # Fix size limit later
+                st.markdown(f"**Document {idx + 1}:**\n\n{cleaned_doc[::]}\n", unsafe_allow_html=True)
+        else:
+            st.markdown("_No documents retrieved yet._")
 
 
 def run():

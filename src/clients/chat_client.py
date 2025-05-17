@@ -1,4 +1,5 @@
-import httpx
+from typing import Dict
+
 import requests
 
 
@@ -7,7 +8,7 @@ class ChatClient:
         self.api_url = f"{base_url.rstrip('/')}/{api_version}/chatbot"
         # self.client = httpx.AsyncClient()
 
-    def chat(self, user_id: str, message: str, selected_domain: str) -> str:
+    def chat(self, user_id: str, message: str, selected_domain: str) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
             "user_id": user_id,
@@ -18,7 +19,7 @@ class ChatClient:
         response = requests.post(endpoint, json=payload)
 
         if response.status_code == 200:
-            return response.json()["response"]
+            return response.json()
         else:
             raise Exception(f"Error {response.status_code}: {response.text}")
 

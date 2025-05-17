@@ -88,7 +88,10 @@ async def chat(
             predicted_emotion=str(predicted_emotion.item()),
         )
 
-        response = ChatResponse(response=response)
+        response = ChatResponse(
+            response=response,
+            nearest_documents=nearest_documents,
+        )
         # print(f"Chat response: {response}")
 
         return response

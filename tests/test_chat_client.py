@@ -1,3 +1,5 @@
+from typing import Dict
+
 from src.clients.chat_client import ChatClient
 import pytest
 
@@ -13,7 +15,7 @@ class TestChatClient:
             user_id=user_id, message=message, selected_domain=selected_domain
         )
         print(f"Response: {response}")
-        assert isinstance(response, str)
+        assert isinstance(response, Dict)
         assert len(response) > 0
 
     # @pytest.mark.asyncio
