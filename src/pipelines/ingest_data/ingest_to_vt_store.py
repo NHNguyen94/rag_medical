@@ -6,7 +6,9 @@ def ingest_single_index(
     single_data_path: str, single_index_path: str, col_name_to_ingest: str
 ) -> None:
     ingestion_service = IngestionService()
-    ingestion_service.ingest_data(single_data_path, single_index_path, col_name_to_ingest)
+    ingestion_service.ingest_data(
+        single_data_path, single_index_path, col_name_to_ingest
+    )
 
 
 def main(data_path: str, index_path: str, col_name_to_ingest) -> None:

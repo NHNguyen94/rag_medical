@@ -30,9 +30,7 @@ async def lifespan(app: FastAPI):
     app.state.emotion_recognition_service = emotion_recognition_service
 
     index_path = IngestionConfig.INDEX_PATH
-    index_cancer = vt_store.build_or_load_index(
-        f"{index_path}/{ChatBotConfig.CANCER}"
-    )
+    index_cancer = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.CANCER}")
     index_diabetes = vt_store.build_or_load_index(
         f"{index_path}/{ChatBotConfig.DIABETES}"
     )
@@ -51,17 +49,13 @@ async def lifespan(app: FastAPI):
     index_senior_health = vt_store.build_or_load_index(
         f"{index_path}/{ChatBotConfig.SENIOR_HEALTH}"
     )
-    index_others = vt_store.build_or_load_index(
-        f"{index_path}/{ChatBotConfig.OTHERS}"
-    )
+    index_others = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.OTHERS}")
     app.state.index_cancer = index_cancer
     app.state.index_diabetes = index_diabetes
     app.state.index_genetic = index_genetic
     app.state.index_hormone = index_hormone
     app.state.index_heart_lung_blood = index_heart_lung_blood
-    app.state.index_neuro_disorders_and_stroke = (
-        index_neuro_disorders_and_stroke
-    )
+    app.state.index_neuro_disorders_and_stroke = index_neuro_disorders_and_stroke
     app.state.index_senior_health = index_senior_health
     app.state.index_others = index_others
 

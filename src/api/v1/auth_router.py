@@ -9,7 +9,7 @@ router = APIRouter(tags=["auth"])
 
 @router.post("/login")
 async def login(
-        request: UserLoginRequest,
+    request: UserLoginRequest,
 ) -> Any:
     auth_service = AuthenticationService()
     try:
@@ -21,7 +21,7 @@ async def login(
 
 @router.post("/register")
 async def register(
-        request: UserLoginRequest,
+    request: UserLoginRequest,
 ) -> Any:
     auth_service = AuthenticationService()
     try:

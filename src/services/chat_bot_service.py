@@ -36,7 +36,27 @@ class ChatBotService:
         )
         self.response_manager = ResponseManager()
 
-    async def achat(self, message: str) -> str:
+    def update_system_prompt(self, predicted_customer_emotion: int) -> None:
+        emotion_str = chat_bot_config.EMOTION_MAPPING[predicted_customer_emotion]
+        current_prompt = self.prompt_manager.get_system_prompt()
+        current_prompt = current_prompt + f"""
+        The customer is feeling: {emotion_str},
+        please adjust your response accordingly
+        """
+        self.system_prompt_template = self.prompt_manager.make_system_prompt(
+            current_prompt
+        )
+
+    async def achat(
+            self,
+            message: str,
+            customer_emotion: Optional[int] = None,
+    ) -> str:
+        # Put all services that require to update the system prompt here
+        if customer_emotion:
+            self.update_system_prompt(customer_emotion)
+            # print(f"\nNew system prompt: {self.system_prompt_template}\n")
+
         chat_history = await self.chat_history_manager.get_chat_history(self.user_id)
         # print(f"Chat history: {chat_history}")
         response = await self.agent.aget_stream_response(message, chat_history)

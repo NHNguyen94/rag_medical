@@ -56,14 +56,15 @@ async def chat(
             user_id=chat_request.user_id, index=index, force_use_tools=force_use_tools
         )
 
+        predicted_emotion = lstm_model.predict([chat_request.message])
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             message=chat_request.message
         )
-        print(f"nearest_documents: {nearest_documents}")
 
-        predicted_emotion = lstm_model.predict([chat_request.message])
-
-        response = await chat_bot_service.achat(message=chat_request.message)
+        response = await chat_bot_service.achat(
+            message=chat_request.message,
+            customer_emotion=int(predicted_emotion),
+        )
 
         await chat_bot_service.append_history(
             message=chat_request.message,
