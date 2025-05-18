@@ -6,7 +6,7 @@ import streamlit as st
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
 from src.utils.enums import ChatBotConfig
-from src.utils.helpers import clean_document_text
+from src.utils.helpers import clean_document_text, hash_string
 
 dotenv.load_dotenv()
 
@@ -52,7 +52,7 @@ def login_or_signup():
             try:
                 auth_client.login(username, password)
                 st.session_state.authenticated = True
-                st.session_state.username = username
+                st.session_state.hashed_username = hash_string(username)
                 st.success("Login successful!")
                 st.rerun()
             except Exception as e:
@@ -73,7 +73,7 @@ def main_app():
     selected_domain = st.selectbox("Select a medical domain", domain_options)
 
     chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
-    user_id = st.session_state.get("username", "default_user_id")
+    user_id = st.session_state.get("hashed_username", "default_user_id")
     default_welcome_message = (
         "Hello, I'm your AI medical assistant. How can I help you today?"
     )

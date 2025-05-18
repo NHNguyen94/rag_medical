@@ -32,7 +32,7 @@ class ChatHistory(SQLModel, table=True):
 class Users(SQLModel, table=True):
     __tablename__ = "users"
 
-    username: str = Field(primary_key=True, default_factory=None)
+    hashed_username: str = Field(primary_key=True, default_factory=None)
     hashed_password: str = Field(nullable=False)
     created_at: datetime = Field(
         nullable=False, default=DateTimeManager.get_current_utc_time()
