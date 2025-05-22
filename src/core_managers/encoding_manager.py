@@ -23,7 +23,7 @@ class EncodingManager:
         encodings = self.tokenizer(
             texts,
             padding=True,
-            truncation=False,
+            truncation=True,
             return_attention_mask=False,
             return_token_type_ids=False,
         )

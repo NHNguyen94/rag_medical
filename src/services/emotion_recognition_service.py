@@ -87,6 +87,7 @@ class EmotionRecognitionService:
             "lr": self.model.lr,
             "dropout": self.model.dropout,
             "vocab_size": len(self.encoder.tokenizer),
+            "embedding_dim": self.model.embedding.embedding_dim,
         }
         torch.save(
             {
@@ -109,6 +110,7 @@ class EmotionRecognitionService:
             lr=config["lr"],
             dropout=config["dropout"],
             vocab_size=config["vocab_size"],
+            embedding_dim=config["embedding_dim"]
         )
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
