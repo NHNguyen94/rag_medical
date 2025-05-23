@@ -4,6 +4,7 @@ import textwrap
 from typing import Dict, List
 from uuid import UUID, uuid4
 
+import pandas as pd
 import yaml
 
 
@@ -54,3 +55,8 @@ def sample_qa_data() -> List[Dict]:
             "topic": "heart disease",
         },
     ]
+
+
+def write_log_file(log_file_path: str, data: Dict) -> None:
+    df = pd.DataFrame(data)
+    df.to_csv(log_file_path, mode='a', index=False, header=False)

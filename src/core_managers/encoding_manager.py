@@ -24,11 +24,13 @@ class EncodingManager:
             texts,
             padding=True,
             truncation=True,
+            max_length=self.lstm_config.MAX_SEQ_LENGTH,
             return_attention_mask=False,
             return_token_type_ids=False,
         )
         tokenized_texts = encodings["input_ids"]
-        max_length = max(len(seq) for seq in tokenized_texts)
+        # max_length = max(len(seq) for seq in tokenized_texts)
+        max_length = self.lstm_config.MAX_SEQ_LENGTH
         return tokenized_texts, max_length
 
     def to_tensor(self, tokens: List, data_type: str) -> Tensor:

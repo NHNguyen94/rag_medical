@@ -1,7 +1,8 @@
 import torch
 from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
-from torch.optim import Adam
+from torch.optim import AdamW
 from torch.utils.data import DataLoader, TensorDataset
+from typing import Dict
 
 
 class LSTMModel(Module):
@@ -38,8 +39,20 @@ class LSTMModel(Module):
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
         self.output_layer = Linear(hidden_dim, output_dim)
-        self.criterion = CrossEntropyLoss()
-        self.optimizer = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
+        # self.criterion = CrossEntropyLoss()
+        self.optimizer = AdamW(self.parameters(), lr=lr, weight_decay=1e-5)
+
+    def compute_class_weights(self, y_train: torch.Tensor) -> torch.Tensor:
+        class_counts = torch.bincount(y_train, minlength=self.output_dim).float()
+        print(f"Class counts: {class_counts}")
+        weights = 1.0 / (class_counts + 1e-6)
+        weights = weights * (self.output_dim / weights.sum())
+        print(f"Weights after scaling: {weights}")
+        return weights
+
+    def get_criterion(self, y_train: torch.Tensor) -> CrossEntropyLoss:
+        class_weights = self.compute_class_weights(y_train)
+        return CrossEntropyLoss(weight=class_weights)
 
     def create_dataloader(
         self, X_train: torch.Tensor, y_train: torch.Tensor, batch_size: int
@@ -87,6 +100,7 @@ class LSTMModel(Module):
         batch_size: int,
     ) -> None:
         dataloader = self.create_dataloader(trainX, trainY, batch_size)
+        criterion = self.get_criterion(trainY)
 
         for epoch in range(num_epochs):
             self.train()
@@ -95,7 +109,7 @@ class LSTMModel(Module):
             for batch_X, batch_Y in dataloader:
                 self.optimizer.zero_grad()
                 outputs, _, _ = self(batch_X)
-                loss = self.criterion(outputs, batch_Y)
+                loss = criterion(outputs, batch_Y)
                 loss.backward()
                 self.optimizer.step()
                 total_loss += loss.item()
@@ -110,7 +124,7 @@ class LSTMModel(Module):
             predicted_classes = torch.argmax(outputs, dim=1)
         return predicted_classes
 
-    def evaluate_model(self, x: torch.Tensor, y: torch.Tensor) -> None:
+    def evaluate_model(self, x: torch.Tensor, y: torch.Tensor) -> Dict:
         predicted_classes = self.predict_class(x)
 
         correct = (predicted_classes == y).sum().item()
@@ -122,3 +136,9 @@ class LSTMModel(Module):
 
         unique_predicted_labels = sorted(set(predicted_classes.tolist()))
         print(f"Unique Predicted Labels: {unique_predicted_labels}")
+
+        return {
+            "predicted_classes": predicted_classes,
+            "accuracy": accuracy,
+            "unique_predicted_labels": unique_predicted_labels,
+        }

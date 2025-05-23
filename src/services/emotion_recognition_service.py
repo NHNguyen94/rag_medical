@@ -66,7 +66,18 @@ class EmotionRecognitionService:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
         y = self.encoder.to_tensor(labels, self.lstm_config.LONG)
 
-        return self._reshape(X, max_length), y
+        # print("Shape X:", X.shape)
+        # print("Shape y:", y.shape)
+        assert X.shape[0] == y.shape[0], "Mismatch"
+
+        # Use reshape if don't fix max length
+        # new_X, new_y = self._reshape(X, max_length), y
+        #
+        # print("Shape new_X:", new_X.shape)
+        # print("Shape new_y:", new_y.shape)
+        # assert new_X.shape[0] == new_y.shape[0], "Mismatch after reshape!"
+
+        return X, y
 
     def train_model(
         self,
@@ -127,7 +138,7 @@ class EmotionRecognitionService:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
         else:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
-        X = self._reshape(X, max_length)
+        # X = self._reshape(X, max_length)
         return self.model.predict_class(X)
 
     def evaluate_model(self, test_data_path: str) -> None:
