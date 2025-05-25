@@ -73,10 +73,10 @@ def download_nlkt() -> None:
 
 def clean_text(text: str) -> str:
     text = text.lower().strip()
-    text = re.sub(r'\d+', '', text)
+    text = re.sub(r"\d+", "", text)
     tokens = word_tokenize(text)
     tokens = [word for word in tokens if word.isalpha()]
-    stop_words = set(stopwords.words('english'))
+    stop_words = set(stopwords.words("english"))
     tokens = [word for word in tokens if word not in stop_words]
 
     return " ".join(tokens)
