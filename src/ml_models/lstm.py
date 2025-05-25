@@ -8,8 +8,12 @@ from torch.nn import (
     Dropout,
     # LSTMCell
 )
-from torch.optim import AdamW
+from torch.optim import AdamW, Adam
 from torch.utils.data import DataLoader, TensorDataset
+from torch.nn.utils import clip_grad_norm_
+from torch.nn.init import xavier_uniform_, zeros_
+
+TRAINING_DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class LSTMCell(Module):
@@ -29,6 +33,23 @@ class LSTMCell(Module):
 
         self.W_c = Linear(input_dim, hidden_dim)
         self.U_c = Linear(hidden_dim, hidden_dim)
+
+        self._init_weights()
+
+    def _init_weights(self) -> None:
+        for layer in [
+            self.W_i,
+            self.U_i,
+            self.W_f,
+            self.U_f,
+            self.W_o,
+            self.U_o,
+            self.W_c,
+            self.U_c,
+        ]:
+            xavier_uniform_(layer.weight)
+            if layer.bias is not None:
+                zeros_(layer.bias)
 
     def forward(
         self, x_t: torch.Tensor, h_prev: torch.Tensor, c_prev: torch.Tensor
@@ -71,6 +92,7 @@ class CustomLSTMCell(Module):
         for i, cell in enumerate(self.lstm_cells):
             h_i, c_i = cell(x, h_prev[i], c_prev[i])
             x = self.dropout_layer(h_i)
+            # x = h_i
             h_n.append(h_i)
             c_n.append(c_i)
 
@@ -151,6 +173,7 @@ class LSTMModel(Module):
         self.output_layer = Linear(hidden_dim, output_dim)
         # self.criterion = CrossEntropyLoss()
         self.optimizer = AdamW(self.parameters(), lr=lr, weight_decay=1e-5)
+        # self.optimizer = Adam(self.parameters(), lr=lr, weight_decay=1e-5)
 
     def compute_class_weights(self, y_train: torch.Tensor) -> torch.Tensor:
         class_counts = torch.bincount(y_train, minlength=self.output_dim).float()
@@ -162,7 +185,7 @@ class LSTMModel(Module):
 
     def get_criterion(self, y_train: torch.Tensor) -> CrossEntropyLoss:
         class_weights = self.compute_class_weights(y_train)
-        return CrossEntropyLoss(weight=class_weights)
+        return CrossEntropyLoss(weight=class_weights.to(TRAINING_DEVICE))
 
     def create_dataloader(
         self, X_train: torch.Tensor, y_train: torch.Tensor, batch_size: int
@@ -177,10 +200,10 @@ class LSTMModel(Module):
             # print(f"x.size(): {x.size()}")
             if h0 is None or c0 is None:
                 h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
-                    x.device
+                    TRAINING_DEVICE
                 )
                 c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
-                    x.device
+                    TRAINING_DEVICE
                 )
 
             out, (hn, cn) = self.lstm(x, (h0, c0))
@@ -193,10 +216,10 @@ class LSTMModel(Module):
             # x = x.squeeze(2)
             if h0 is None or c0 is None:
                 h0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
-                    x.device
+                    TRAINING_DEVICE
                 )
                 c0 = torch.zeros(self.layer_dim, x.size(0), self.hidden_dim).to(
-                    x.device
+                    TRAINING_DEVICE
                 )
             out, (hn, cn) = self.lstm(x, (h0, c0))
             out = self.output_layer(out[:, -1, :])
@@ -209,6 +232,9 @@ class LSTMModel(Module):
         num_epochs: int,
         batch_size: int,
     ) -> None:
+        trainX = trainX.to(TRAINING_DEVICE)
+        trainY = trainY.to(TRAINING_DEVICE)
+
         dataloader = self.create_dataloader(trainX, trainY, batch_size)
         criterion = self.get_criterion(trainY)
 
@@ -217,17 +243,23 @@ class LSTMModel(Module):
             total_loss = 0.0
             num_batches = 0
             for batch_X, batch_Y in dataloader:
+                batch_X = batch_X.to(TRAINING_DEVICE)
+                batch_Y = batch_Y.to(TRAINING_DEVICE)
+
                 self.optimizer.zero_grad()
                 outputs, _, _ = self(batch_X)
                 loss = criterion(outputs, batch_Y)
                 loss.backward()
+                clip_grad_norm_(self.parameters(), max_norm=5)
                 self.optimizer.step()
                 total_loss += loss.item()
                 num_batches += 1
+                # print("Batch output mean/std:", outputs.mean().item(), outputs.std().item())
             avg_loss = total_loss / num_batches
             print(f"Epoch [{epoch + 1}/{num_epochs}], Avg Loss: {avg_loss:.4f}")
 
     def predict(self, x: torch.Tensor) -> torch.Tensor:
+        x = x.to(TRAINING_DEVICE)
         self.eval()
         with torch.no_grad():
             outputs, _, _ = self(x)

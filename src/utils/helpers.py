@@ -3,6 +3,7 @@ import re
 import textwrap
 from typing import Dict, List
 from uuid import UUID, uuid4
+import csv
 
 import pandas as pd
 import yaml
@@ -58,5 +59,5 @@ def sample_qa_data() -> List[Dict]:
 
 
 def write_log_file(log_file_path: str, data: Dict, with_header: bool) -> None:
-    df = pd.DataFrame(data)
+    df = pd.DataFrame([data])
     df.to_csv(log_file_path, mode="a", index=False, header=with_header)

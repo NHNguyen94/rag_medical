@@ -1,9 +1,10 @@
 import asyncio
-from typing import List, Dict
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict
 
 import pandas as pd
 import torch
-from concurrent.futures import ThreadPoolExecutor
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
 from src.core_managers.encoding_manager import EncodingManager
 from src.ml_models.lstm import LSTMModel
@@ -147,14 +148,14 @@ class EmotionRecognitionService:
         texts = df[self.lstm_config.TEXT_COL].tolist()
         labels = df[self.lstm_config.LABEL_COL].tolist()
         predictions = []
-        unique_predictions = set()
         for text in texts:
             prediction = self.predict(text)
             predictions.append(prediction.item())
-            unique_predictions.add(prediction.item())
+
         return {
-            "unique_predicted_labels": sorted(unique_predictions),
-            "accuracy": 100
-            * sum(p == a for p, a in zip(predictions, labels))
-            / len(labels),
+            "unique_predicted_labels": sorted(set(predictions)),
+            "accuracy": 100 * accuracy_score(labels, predictions),
+            "precision": 100 * precision_score(labels, predictions, average="weighted"),
+            "recall": 100 * recall_score(labels, predictions, average="weighted"),
+            "f1_score": 100 * f1_score(labels, predictions, average="weighted"),
         }

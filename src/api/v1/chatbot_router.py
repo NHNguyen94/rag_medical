@@ -98,6 +98,7 @@ async def chat(
     except Exception as e:
         print(f"Error in chat endpoint: {e}")
 
+
 @router.post("/summarize")
 def summarize():
     pass

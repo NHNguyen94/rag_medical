@@ -88,6 +88,9 @@ def main(
     eval_result["lr"] = lr
     eval_result["dropout"] = dropout
     eval_result["batch_size"] = batch_size
+    eval_result["train_data_path"] = train_data_path
+    eval_result["eval_data_path"] = eval_data_path
+    eval_result["model_path"] = model_path
     print(f"Evaluation Result: {eval_result}")
 
     full_log_path = f"{log_path}/{log_file_name}"
@@ -102,7 +105,8 @@ def main(
 
 if __name__ == "__main__":
     train_data_path = "src/data/emotion_data/training.csv"
-    eval_data_path = "src/data/emotion_data/test.csv"
+    # train_data_path = "src/data/emotion_data/training_small.csv"
+    eval_data_path = "src/data/emotion_data/validation.csv"
     model_path = "src/ml_models/model_files/lstm_model.pth"
     log_path = "src/data/training_logs"
     log_file_name = "emotion_recognition.csv"
@@ -116,12 +120,12 @@ if __name__ == "__main__":
         model_path=model_path,
         log_path=log_path,
         log_file_name=log_file_name,
-        num_epochs=20,
+        num_epochs=30,
         use_embedding=True,
         embedding_dim=128,
         hidden_dim=256,
         layer_dim=3,
-        lr=0.001,
-        dropout=0.2,
-        batch_size=16,
+        lr=0.0005,
+        dropout=0.1,
+        batch_size=8,
     )
