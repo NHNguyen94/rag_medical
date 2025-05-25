@@ -11,11 +11,15 @@ class AuthenticationService:
 
     async def login(self, username: str, password: str) -> bool:
         hashed_username = hash_string(username)
-        existing_user = await self.db_service_manager.check_existing_user_id(hashed_username)
+        existing_user = await self.db_service_manager.check_existing_user_id(
+            hashed_username
+        )
         if not existing_user:
             raise ValueError("User does not exist")
 
-        hashed_password = await self.db_service_manager.get_hashed_password(hashed_username)
+        hashed_password = await self.db_service_manager.get_hashed_password(
+            hashed_username
+        )
         if not self.pwd_context.verify(password, hashed_password):
             raise ValueError("Invalid password")
 
@@ -23,7 +27,9 @@ class AuthenticationService:
 
     async def register(self, username: str, password: str) -> None:
         hashed_username = hash_string(username)
-        existing_user = await self.db_service_manager.check_existing_user_id(hashed_username)
+        existing_user = await self.db_service_manager.check_existing_user_id(
+            hashed_username
+        )
         if existing_user:
             raise ValueError("User already exists")
 

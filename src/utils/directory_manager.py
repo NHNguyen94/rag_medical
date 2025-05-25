@@ -1,5 +1,6 @@
 import os
 from typing import List, Union
+import pandas as pd
 
 
 class DirectoryManager:
@@ -67,3 +68,9 @@ class DirectoryManager:
                 for name in dirs:
                     os.rmdir(os.path.join(root, name))
             os.rmdir(path)
+
+    @staticmethod
+    def create_empty_csv_file(col_names: List, file_path: str) -> None:
+        df = pd.DataFrame(columns=col_names)
+        df.to_csv(file_path, index=False)
+        print("Empty CSV file created with columns:", col_names)

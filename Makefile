@@ -5,10 +5,10 @@ run-backend:
 	PYTHONPATH=. uvicorn src.main:app --reload --port 8000 --log-level debug
 
 train-lstm:
-	PYTHONPATH=. python src/ml_pipelines/emotion_recognition/train.py
+	PYTHONPATH=. python src/pipelines/emotion_recognition/train.py
 
 eval-lstm:
-	PYTHONPATH=. python src/ml_pipelines/emotion_recognition/eval.py
+	PYTHONPATH=. python src/pipelines/emotion_recognition/eval.py
 
 format:
 	PYTHONPATH=. ruff format

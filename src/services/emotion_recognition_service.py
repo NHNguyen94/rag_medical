@@ -1,13 +1,15 @@
 import asyncio
-from typing import List
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict
 
 import pandas as pd
 import torch
-from concurrent.futures import ThreadPoolExecutor
+from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
 from src.core_managers.encoding_manager import EncodingManager
 from src.ml_models.lstm import LSTMModel
 from src.utils.enums import LSTMConfig
+from src.utils.helpers import download_nlkt, clean_text
 
 
 class EmotionRecognitionService:
@@ -49,6 +51,7 @@ class EmotionRecognitionService:
                 dropout=dropout,
             )
         self.lstm_config = LSTMConfig()
+        download_nlkt()
 
     def _reshape(self, data: torch.Tensor, max_length: int) -> torch.Tensor:
         if self.use_embedding:
@@ -58,6 +61,7 @@ class EmotionRecognitionService:
     def prepare_data(self, data_path: str) -> (torch.Tensor, torch.Tensor):
         df = pd.read_csv(data_path)
         texts = df[self.lstm_config.TEXT_COL].tolist()
+        texts = [clean_text(text) for text in texts]
         labels = df[self.lstm_config.LABEL_COL].tolist()
         (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
         if self.use_embedding:
@@ -66,7 +70,18 @@ class EmotionRecognitionService:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
         y = self.encoder.to_tensor(labels, self.lstm_config.LONG)
 
-        return self._reshape(X, max_length), y
+        # print("Shape X:", X.shape)
+        # print("Shape y:", y.shape)
+        assert X.shape[0] == y.shape[0], "Mismatch"
+
+        # Use reshape if don't fix max length
+        # new_X, new_y = self._reshape(X, max_length), y
+        #
+        # print("Shape new_X:", new_X.shape)
+        # print("Shape new_y:", new_y.shape)
+        # assert new_X.shape[0] == new_y.shape[0], "Mismatch after reshape!"
+
+        return X, y
 
     def train_model(
         self,
@@ -87,6 +102,7 @@ class EmotionRecognitionService:
             "lr": self.model.lr,
             "dropout": self.model.dropout,
             "vocab_size": len(self.encoder.tokenizer),
+            "embedding_dim": self.model.embedding.embedding_dim,
         }
         torch.save(
             {
@@ -109,6 +125,7 @@ class EmotionRecognitionService:
             lr=config["lr"],
             dropout=config["dropout"],
             vocab_size=config["vocab_size"],
+            embedding_dim=config["embedding_dim"],
         )
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
@@ -119,15 +136,31 @@ class EmotionRecognitionService:
         await loop.run_in_executor(self.executor, self.load_model, model_path)
         return self.model
 
-    def predict(self, texts: List) -> torch.Tensor:
-        (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
+    def predict(self, text: str) -> torch.Tensor:
+        text = clean_text(text)
+        tokenized_text = self.encoder.tokenize_text(text)
         if self.use_embedding:
-            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
+            X = self.encoder.to_tensor(tokenized_text, self.lstm_config.LONG)
         else:
-            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
-        X = self._reshape(X, max_length)
-        return self.model.predict_class(X)
+            X = self.encoder.to_tensor(tokenized_text, self.lstm_config.FLOAT32)
+        X = X.to(next(self.model.parameters()).device)
+        # X = self._reshape(X, max_length)
+        return self.model.predict(X.unsqueeze(0))
 
-    def evaluate_model(self, test_data_path: str) -> None:
-        testX, testY = self.prepare_data(test_data_path)
-        self.model.evaluate_model(testX, testY)
+    def evaluate_model(self, test_data_path: str) -> Dict:
+        df = pd.read_csv(test_data_path)
+        texts = df[self.lstm_config.TEXT_COL].tolist()
+        texts = [clean_text(text) for text in texts]
+        labels = df[self.lstm_config.LABEL_COL].tolist()
+        predictions = []
+        for text in texts:
+            prediction = self.predict(text)
+            predictions.append(prediction.item())
+
+        return {
+            "unique_predicted_labels": sorted(set(predictions)),
+            "accuracy": 100 * accuracy_score(labels, predictions),
+            "precision": 100 * precision_score(labels, predictions, average="weighted"),
+            "recall": 100 * recall_score(labels, predictions, average="weighted"),
+            "f1_score": 100 * f1_score(labels, predictions, average="weighted"),
+        }
