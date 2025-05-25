@@ -97,7 +97,7 @@ def main(
             col_names=col_names, file_path=full_log_path
         )
 
-    write_log_file(full_log_path, eval_result, True)
+    write_log_file(full_log_path, eval_result, False)
 
 
 if __name__ == "__main__":
@@ -116,12 +116,12 @@ if __name__ == "__main__":
         model_path=model_path,
         log_path=log_path,
         log_file_name=log_file_name,
-        num_epochs=1,
+        num_epochs=20,
         use_embedding=True,
         embedding_dim=128,
         hidden_dim=256,
         layer_dim=3,
-        lr=0.01,
+        lr=0.001,
         dropout=0.2,
         batch_size=16,
     )
