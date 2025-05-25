@@ -19,6 +19,18 @@ class EncodingManager:
     def build_vocab(self) -> Dict[str, int]:
         return self.tokenizer.get_vocab()
 
+    def tokenize_text(self, text: str) -> List[int]:
+        encodings = self.tokenizer(
+            text,
+            padding=True,
+            truncation=True,
+            max_length=self.lstm_config.MAX_SEQ_LENGTH,
+            return_attention_mask=False,
+            return_token_type_ids=False,
+        )
+        tokenized_text = encodings["input_ids"]
+        return tokenized_text
+
     def tokenize_texts(self, texts: List[str]) -> (List[List[int]], int):
         encodings = self.tokenizer(
             texts,

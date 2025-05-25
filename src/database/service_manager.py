@@ -57,16 +57,22 @@ class ServiceManager:
     async def get_hashed_password(self, hashed_username: str) -> str:
         async with self.session_manager.get_async_session() as session:
             result = await session.execute(
-                select(Users.hashed_password).where(Users.hashed_username == hashed_username)
+                select(Users.hashed_password).where(
+                    Users.hashed_username == hashed_username
+                )
             )
             return result.scalars().first()
 
-    async def append_user(self, hashed_username: str, hashed_password: str = None) -> Users:
+    async def append_user(
+        self, hashed_username: str, hashed_password: str = None
+    ) -> Users:
         async with self.session_manager.get_async_session() as session:
             if hashed_password is None:
                 random_id = str(get_unique_id())
                 hashed_password = hash_string(random_id)
-            user = Users(hashed_username=hashed_username, hashed_password=hashed_password)
+            user = Users(
+                hashed_username=hashed_username, hashed_password=hashed_password
+            )
             session.add(user)
             await session.commit()
             await session.refresh(user)

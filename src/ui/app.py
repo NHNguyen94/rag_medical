@@ -117,7 +117,10 @@ def main_app():
             for idx, doc in enumerate(st.session_state.retrieved_documents):
                 cleaned_doc = clean_document_text(doc)
                 # Fix size limit later
-                st.markdown(f"**Document {idx + 1}:**\n\n{cleaned_doc[::]}\n", unsafe_allow_html=True)
+                st.markdown(
+                    f"**Document {idx + 1}:**\n\n{cleaned_doc[::]}\n",
+                    unsafe_allow_html=True,
+                )
         else:
             st.markdown("_No documents retrieved yet._")
 

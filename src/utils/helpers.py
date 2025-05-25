@@ -23,7 +23,7 @@ def hash_string(string: str) -> str:
 
 def clean_document_text(doc: str) -> str:
     cleaned = "\n".join(line.strip() for line in doc.strip().splitlines())
-    cleaned = re.sub(r'\s{2,}', ' ', cleaned)
+    cleaned = re.sub(r"\s{2,}", " ", cleaned)
     return textwrap.dedent(cleaned).strip()
 
 
@@ -59,4 +59,4 @@ def sample_qa_data() -> List[Dict]:
 
 def write_log_file(log_file_path: str, data: Dict) -> None:
     df = pd.DataFrame(data)
-    df.to_csv(log_file_path, mode='a', index=False, header=False)
+    df.to_csv(log_file_path, mode="a", index=False, header=False)

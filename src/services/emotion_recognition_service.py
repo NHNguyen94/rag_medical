@@ -1,5 +1,5 @@
 import asyncio
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 import torch
@@ -121,7 +121,7 @@ class EmotionRecognitionService:
             lr=config["lr"],
             dropout=config["dropout"],
             vocab_size=config["vocab_size"],
-            embedding_dim=config["embedding_dim"]
+            embedding_dim=config["embedding_dim"],
         )
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
@@ -132,15 +132,29 @@ class EmotionRecognitionService:
         await loop.run_in_executor(self.executor, self.load_model, model_path)
         return self.model
 
-    def predict(self, texts: List) -> torch.Tensor:
-        (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
+    def predict(self, text: str) -> torch.Tensor:
+        tokenized_text = self.encoder.tokenize_text(text)
         if self.use_embedding:
-            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
+            X = self.encoder.to_tensor(tokenized_text, self.lstm_config.LONG)
         else:
-            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
+            X = self.encoder.to_tensor(tokenized_text, self.lstm_config.FLOAT32)
+        X = X.to(next(self.model.parameters()).device)
         # X = self._reshape(X, max_length)
-        return self.model.predict_class(X)
+        return self.model.predict(X.unsqueeze(0))
 
-    def evaluate_model(self, test_data_path: str) -> None:
-        testX, testY = self.prepare_data(test_data_path)
-        self.model.evaluate_model(testX, testY)
+    def evaluate_model(self, test_data_path: str) -> Dict:
+        df = pd.read_csv(test_data_path)
+        texts = df[self.lstm_config.TEXT_COL].tolist()
+        labels = df[self.lstm_config.LABEL_COL].tolist()
+        predictions = []
+        unique_predictions = set()
+        for text in texts:
+            prediction = self.predict(text)
+            predictions.append(prediction.item())
+            unique_predictions.add(prediction.item())
+        return {
+            "unique_predicted_labels": sorted(unique_predictions),
+            "accuracy": 100
+            * sum(p == a for p, a in zip(predictions, labels))
+            / len(labels),
+        }

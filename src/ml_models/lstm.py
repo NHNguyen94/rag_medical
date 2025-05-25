@@ -1,8 +1,116 @@
 import torch
-from torch.nn import Module, LSTM, Linear, Embedding, CrossEntropyLoss
+from torch.nn import (
+    Module,
+    Linear,
+    Embedding,
+    CrossEntropyLoss,
+    ModuleList,
+    Dropout,
+    # LSTMCell
+)
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, TensorDataset
-from typing import Dict
+
+
+class LSTMCell(Module):
+    def __init__(self, input_dim: int, hidden_dim: int):
+        super(LSTMCell, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+
+        self.W_i = Linear(input_dim, hidden_dim)
+        self.U_i = Linear(hidden_dim, hidden_dim)
+
+        self.W_f = Linear(input_dim, hidden_dim)
+        self.U_f = Linear(hidden_dim, hidden_dim)
+
+        self.W_o = Linear(input_dim, hidden_dim)
+        self.U_o = Linear(hidden_dim, hidden_dim)
+
+        self.W_c = Linear(input_dim, hidden_dim)
+        self.U_c = Linear(hidden_dim, hidden_dim)
+
+    def forward(
+        self, x_t: torch.Tensor, h_prev: torch.Tensor, c_prev: torch.Tensor
+    ) -> (torch.Tensor, torch.Tensor):
+        i_t = torch.sigmoid(self.W_i(x_t) + self.U_i(h_prev))
+        f_t = torch.sigmoid(self.W_f(x_t) + self.U_f(h_prev))
+        o_t = torch.sigmoid(self.W_o(x_t) + self.U_o(h_prev))
+        c_hat = torch.tanh(self.W_c(x_t) + self.U_c(h_prev))
+
+        c_t = f_t * c_prev + i_t * c_hat
+        h_t = o_t * torch.tanh(c_t)
+
+        return h_t, c_t
+
+
+class CustomLSTMCell(Module):
+    def __init__(self, input_dim: int, hidden_dim: int, layer_dim: int, dropout: float):
+        super(CustomLSTMCell, self).__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.layer_dim = layer_dim
+        self.dropout = dropout
+
+        self.lstm_cells = ModuleList(
+            [
+                LSTMCell(input_dim if i == 0 else hidden_dim, hidden_dim)
+                for i in range(layer_dim)
+            ]
+        )
+        self.dropout_layer = Dropout(dropout)
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        hx: (torch.Tensor, torch.Tensor),
+    ) -> (torch.Tensor, (list, list)):
+        h_n, c_n = [], []
+        h_prev, c_prev = hx
+
+        for i, cell in enumerate(self.lstm_cells):
+            h_i, c_i = cell(x, h_prev[i], c_prev[i])
+            x = self.dropout_layer(h_i)
+            h_n.append(h_i)
+            c_n.append(c_i)
+
+        return x, (h_n, c_n)
+
+
+class CustomLSTMLayer(Module):
+    def __init__(self, input_dim: int, hidden_dim: int, layer_dim: int, dropout: float):
+        super(CustomLSTMLayer, self).__init__()
+        self.hidden_dim = hidden_dim
+        self.layer_dim = layer_dim
+        self.cell = CustomLSTMCell(input_dim, hidden_dim, layer_dim, dropout)
+
+    def forward(
+        self, x: torch.Tensor, hx: (torch.Tensor, torch.Tensor) = None
+    ) -> (torch.Tensor, (list, list)):
+        batch_size, seq_len, _ = x.size()
+
+        if hx is None:
+            h_0 = [
+                torch.zeros(batch_size, self.cell.hidden_dim, device=x.device)
+                for _ in range(self.cell.layer_dim)
+            ]
+            c_0 = [
+                torch.zeros(batch_size, self.cell.hidden_dim, device=x.device)
+                for _ in range(self.cell.layer_dim)
+            ]
+        else:
+            h_0, c_0 = hx
+
+        outputs = []
+        h_t, c_t = h_0, c_0
+
+        for t in range(seq_len):
+            x_t = x[:, t, :]  # (batch_size, input_dim)
+            out_t, (h_t, c_t) = self.cell(x_t, (h_t, c_t))
+            outputs.append(out_t.unsqueeze(1))  # (batch_size, 1, hidden_dim)
+
+        outputs = torch.cat(outputs, dim=1)  # (batch_size, seq_len, hidden_dim)
+        return outputs, (h_t, c_t)
 
 
 class LSTMModel(Module):
@@ -27,15 +135,17 @@ class LSTMModel(Module):
         self.lr = lr
         if self.input_dim:
             # print("Using input_dim")
-            self.lstm = LSTM(
-                input_dim, hidden_dim, layer_dim, batch_first=True, dropout=dropout
-            )
+            # self.lstm = LSTM(
+            #     input_dim, hidden_dim, layer_dim, batch_first=True, dropout=dropout
+            # )
+            self.lstm = CustomLSTMLayer(input_dim, hidden_dim, layer_dim, dropout)
         else:
             # print("Using embedding_dim")
             self.embedding = Embedding(
                 vocab_size, embedding_dim, padding_idx=padding_idx
             )
-            self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
+            # self.lstm = LSTM(embedding_dim, hidden_dim, layer_dim, batch_first=True)
+            self.lstm = CustomLSTMLayer(embedding_dim, hidden_dim, layer_dim, dropout)
         self.hidden_dim = hidden_dim
         self.layer_dim = layer_dim
         self.output_layer = Linear(hidden_dim, output_dim)
@@ -117,28 +227,9 @@ class LSTMModel(Module):
             avg_loss = total_loss / num_batches
             print(f"Epoch [{epoch + 1}/{num_epochs}], Avg Loss: {avg_loss:.4f}")
 
-    def predict_class(self, x: torch.Tensor) -> torch.Tensor:
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
         self.eval()
         with torch.no_grad():
             outputs, _, _ = self(x)
             predicted_classes = torch.argmax(outputs, dim=1)
         return predicted_classes
-
-    def evaluate_model(self, x: torch.Tensor, y: torch.Tensor) -> Dict:
-        predicted_classes = self.predict_class(x)
-
-        correct = (predicted_classes == y).sum().item()
-        accuracy = correct / len(y)
-
-        print(f"\nPredicted: {predicted_classes}")
-        print(f"Actual:    {y}")
-        print(f"Accuracy:  {accuracy:.4f}")
-
-        unique_predicted_labels = sorted(set(predicted_classes.tolist()))
-        print(f"Unique Predicted Labels: {unique_predicted_labels}")
-
-        return {
-            "predicted_classes": predicted_classes,
-            "accuracy": accuracy,
-            "unique_predicted_labels": unique_predicted_labels,
-        }
