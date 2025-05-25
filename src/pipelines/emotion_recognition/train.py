@@ -97,7 +97,7 @@ def main(
             col_names=col_names, file_path=full_log_path
         )
 
-    write_log_file(full_log_path, eval_result)
+    write_log_file(full_log_path, eval_result, True)
 
 
 if __name__ == "__main__":
