@@ -12,6 +12,7 @@ from torch.optim import AdamW, Adam
 from torch.utils.data import DataLoader, TensorDataset
 from torch.nn.utils import clip_grad_norm_
 from torch.nn.init import xavier_uniform_, zeros_
+from torch.nn.functional import relu
 
 TRAINING_DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -207,6 +208,7 @@ class LSTMModel(Module):
                 )
 
             out, (hn, cn) = self.lstm(x, (h0, c0))
+            out = relu(out)
             out = self.output_layer(out[:, -1, :])
             return out, hn, cn
         else:

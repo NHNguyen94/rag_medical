@@ -3,10 +3,12 @@ import re
 import textwrap
 from typing import Dict, List
 from uuid import UUID, uuid4
-import csv
 
+import nltk
 import pandas as pd
 import yaml
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
 
 
 def load_yml_configs(config_path: str) -> Dict:
@@ -61,3 +63,20 @@ def sample_qa_data() -> List[Dict]:
 def write_log_file(log_file_path: str, data: Dict, with_header: bool) -> None:
     df = pd.DataFrame([data])
     df.to_csv(log_file_path, mode="a", index=False, header=with_header)
+
+
+def download_nlkt() -> None:
+    nltk.download("punkt")
+    nltk.download("punkt_tab")
+    nltk.download("stopwords")
+
+
+def clean_text(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r'\d+', '', text)
+    tokens = word_tokenize(text)
+    tokens = [word for word in tokens if word.isalpha()]
+    stop_words = set(stopwords.words('english'))
+    tokens = [word for word in tokens if word not in stop_words]
+
+    return " ".join(tokens)

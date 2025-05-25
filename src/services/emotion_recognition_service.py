@@ -9,20 +9,21 @@ from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_sc
 from src.core_managers.encoding_manager import EncodingManager
 from src.ml_models.lstm import LSTMModel
 from src.utils.enums import LSTMConfig
+from src.utils.helpers import download_nlkt, clean_text
 
 
 class EmotionRecognitionService:
     def __init__(
-        self,
-        num_classes: int = 6,
-        # input_dim is to input data directly => float32
-        # embedding_dim is to input token indices => long
-        use_embedding: bool = False,
-        embedding_dim: int = 100,
-        hidden_dim: int = 10,
-        layer_dim: int = 2,
-        lr: float = 0.01,
-        dropout: float = 0.2,
+            self,
+            num_classes: int = 6,
+            # input_dim is to input data directly => float32
+            # embedding_dim is to input token indices => long
+            use_embedding: bool = False,
+            embedding_dim: int = 100,
+            hidden_dim: int = 10,
+            layer_dim: int = 2,
+            lr: float = 0.01,
+            dropout: float = 0.2,
     ):
         self.encoder = EncodingManager()
         self.executor = ThreadPoolExecutor(max_workers=1)
@@ -50,6 +51,7 @@ class EmotionRecognitionService:
                 dropout=dropout,
             )
         self.lstm_config = LSTMConfig()
+        download_nlkt()
 
     def _reshape(self, data: torch.Tensor, max_length: int) -> torch.Tensor:
         if self.use_embedding:
@@ -59,6 +61,7 @@ class EmotionRecognitionService:
     def prepare_data(self, data_path: str) -> (torch.Tensor, torch.Tensor):
         df = pd.read_csv(data_path)
         texts = df[self.lstm_config.TEXT_COL].tolist()
+        texts = [clean_text(text) for text in texts]
         labels = df[self.lstm_config.LABEL_COL].tolist()
         (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
         if self.use_embedding:
@@ -81,11 +84,11 @@ class EmotionRecognitionService:
         return X, y
 
     def train_model(
-        self,
-        train_data_path: str,
-        num_epochs: int,
-        model_path: str = None,
-        batch_size: int = 32,
+            self,
+            train_data_path: str,
+            num_epochs: int,
+            model_path: str = None,
+            batch_size: int = 32,
     ) -> None:
         trainX, trainY = self.prepare_data(train_data_path)
         if model_path is None:
@@ -134,6 +137,7 @@ class EmotionRecognitionService:
         return self.model
 
     def predict(self, text: str) -> torch.Tensor:
+        text = clean_text(text)
         tokenized_text = self.encoder.tokenize_text(text)
         if self.use_embedding:
             X = self.encoder.to_tensor(tokenized_text, self.lstm_config.LONG)
@@ -146,6 +150,7 @@ class EmotionRecognitionService:
     def evaluate_model(self, test_data_path: str) -> Dict:
         df = pd.read_csv(test_data_path)
         texts = df[self.lstm_config.TEXT_COL].tolist()
+        texts = [clean_text(text) for text in texts]
         labels = df[self.lstm_config.LABEL_COL].tolist()
         predictions = []
         for text in texts:
