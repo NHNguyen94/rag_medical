@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 from llama_index.core import Document
-from llama_index.readers.file import PandasCSVReader
+from src.utils.helpers import clean_document_text
 
 
 class DocumentManager:
@@ -14,10 +14,17 @@ class DocumentManager:
         print(f"csv_path: {csv_path}")
         df = pd.read_csv(csv_path)
         print(f"Length of csv: {len(df)}")
-        print(f"5 first rows of csv: {df.head()}")
-        print(f"5 last rows of csv: {df.tail()}")
+        print(f"2 first rows of csv: {df.head(2)}")
+        print(f"2 last rows of csv: {df.tail(2)}")
         selected_data = df[column_name]
         # Ensure each row = 1 document
-        documents = [Document(text=content) for content in selected_data]
+        # documents = [Document(text=clean_document_text(content)) for content in selected_data]
+        documents = []
+        for content in selected_data:
+            cleaned_content = clean_document_text(content)
+            if cleaned_content:
+                documents.append(Document(text=cleaned_content))
+        print(f"\n\n\n2 first cleaned documents: {[doc.text for doc in documents[:5]]}\n\n\n")
+        print(f"\n\n\n2 last cleaned documents: {[doc.text for doc in documents[-5:]]}\n\n\n")
 
         return documents

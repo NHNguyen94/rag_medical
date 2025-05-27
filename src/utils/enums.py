@@ -60,4 +60,4 @@ class LSTMConfig:
     FLOAT32 = "float32"
     LONG = "long"
     MODEL_PATH = "src/ml_models/model_files/lstm_model.pth"
-    MAX_SEQ_LENGTH = 128
+    MAX_SEQ_LENGTH = 20
