@@ -63,7 +63,8 @@ class EmotionRecognitionService:
         texts = df[self.lstm_config.TEXT_COL].tolist()
         texts = [clean_text(text) for text in texts]
         labels = df[self.lstm_config.LABEL_COL].tolist()
-        (tokenized_texts, max_length) = self.encoder.tokenize_texts(texts)
+        tokenized_texts = self.encoder.tokenize_texts(texts)
+        # tokenized_texts = [self.encoder.tokenize_text(text) for text in texts]
         if self.use_embedding:
             X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
         else:
@@ -86,14 +87,16 @@ class EmotionRecognitionService:
     def train_model(
         self,
         train_data_path: str,
+        validation_data_path: str,
         num_epochs: int,
         model_path: str = None,
         batch_size: int = 32,
     ) -> None:
-        trainX, trainY = self.prepare_data(train_data_path)
+        train_X, train_y = self.prepare_data(train_data_path)
+        val_X, val_y = self.prepare_data(validation_data_path)
         if model_path is None:
             model_path = self.lstm_config.MODEL_PATH
-        self.model.train_model(trainX, trainY, num_epochs, batch_size)
+        self.model.train_model(train_X, train_y, val_X, val_y, num_epochs, batch_size)
         model_config = {
             "num_classes": self.model.output_dim,
             "input_dim": self.model.input_dim,
@@ -138,7 +141,8 @@ class EmotionRecognitionService:
 
     def predict(self, text: str) -> torch.Tensor:
         text = clean_text(text)
-        tokenized_text = self.encoder.tokenize_text(text)
+        tokenized_text_list = self.encoder.tokenize_texts([text])
+        tokenized_text = tokenized_text_list[0]
         if self.use_embedding:
             X = self.encoder.to_tensor(tokenized_text, self.lstm_config.LONG)
         else:

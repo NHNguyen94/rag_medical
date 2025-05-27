@@ -186,14 +186,15 @@ class LSTMModel(Module):
 
     def get_criterion(self, y_train: torch.Tensor) -> CrossEntropyLoss:
         class_weights = self.compute_class_weights(y_train)
-        return CrossEntropyLoss(weight=class_weights.to(TRAINING_DEVICE))
+        # return CrossEntropyLoss(weight=class_weights.to(TRAINING_DEVICE))
+        return CrossEntropyLoss()
 
     def create_dataloader(
         self, X_train: torch.Tensor, y_train: torch.Tensor, batch_size: int
     ) -> DataLoader:
         dataset = TensorDataset(X_train, y_train)
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-        return dataloader
+        data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        return data_loader
 
     def forward(self, x: torch.Tensor, h0: int = None, c0: int = None):
         if self.input_dim:
@@ -229,22 +230,27 @@ class LSTMModel(Module):
 
     def train_model(
         self,
-        trainX: torch.Tensor,
-        trainY: torch.Tensor,
+        train_X: torch.Tensor,
+        train_y: torch.Tensor,
+        val_X: torch.Tensor,
+        val_y: torch.Tensor,
         num_epochs: int,
         batch_size: int,
     ) -> None:
-        trainX = trainX.to(TRAINING_DEVICE)
-        trainY = trainY.to(TRAINING_DEVICE)
+        train_X = train_X.to(TRAINING_DEVICE)
+        train_y = train_y.to(TRAINING_DEVICE)
+        val_X = val_X.to(TRAINING_DEVICE)
+        val_y = val_y.to(TRAINING_DEVICE)
 
-        dataloader = self.create_dataloader(trainX, trainY, batch_size)
-        criterion = self.get_criterion(trainY)
+        train_data_loader = self.create_dataloader(train_X, train_y, batch_size)
+        val_data_loader = self.create_dataloader(val_X, val_y, batch_size)
+        criterion = self.get_criterion(train_y)
 
         for epoch in range(num_epochs):
             self.train()
             total_loss = 0.0
             num_batches = 0
-            for batch_X, batch_Y in dataloader:
+            for batch_X, batch_Y in train_data_loader:
                 batch_X = batch_X.to(TRAINING_DEVICE)
                 batch_Y = batch_Y.to(TRAINING_DEVICE)
 
@@ -258,7 +264,23 @@ class LSTMModel(Module):
                 num_batches += 1
                 # print("Batch output mean/std:", outputs.mean().item(), outputs.std().item())
             avg_loss = total_loss / num_batches
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Avg Loss: {avg_loss:.4f}")
+            print(f"Epoch [{epoch + 1}/{num_epochs}]")
+            print(f"Training avg Loss: {avg_loss:.4f}")
+
+            self.eval()
+            with torch.no_grad():
+                total_val_loss = 0.0
+                num_val_batches = 0
+                for batch_X, batch_Y in val_data_loader:
+                    batch_X = batch_X.to(TRAINING_DEVICE)
+                    batch_Y = batch_Y.to(TRAINING_DEVICE)
+
+                    outputs, _, _ = self(batch_X)
+                    loss = criterion(outputs, batch_Y)
+                    total_val_loss += loss.item()
+                    num_val_batches += 1
+                avg_val_loss = total_val_loss / num_val_batches
+                print(f"Validation avg Loss: {avg_val_loss:.4f}")
 
     def predict(self, x: torch.Tensor) -> torch.Tensor:
         x = x.to(TRAINING_DEVICE)

@@ -31,7 +31,7 @@ class EncodingManager:
         tokenized_text = encodings["input_ids"]
         return tokenized_text
 
-    def tokenize_texts(self, texts: List[str]) -> (List[List[int]], int):
+    def tokenize_texts(self, texts: List[str]) -> List[List[int]]:
         encodings = self.tokenizer(
             texts,
             padding=True,
@@ -42,8 +42,7 @@ class EncodingManager:
         )
         tokenized_texts = encodings["input_ids"]
         # max_length = max(len(seq) for seq in tokenized_texts)
-        max_length = self.lstm_config.MAX_SEQ_LENGTH
-        return tokenized_texts, max_length
+        return tokenized_texts
 
     def to_tensor(self, tokens: List, data_type: str) -> Tensor:
         if data_type == self.lstm_config.FLOAT32:
