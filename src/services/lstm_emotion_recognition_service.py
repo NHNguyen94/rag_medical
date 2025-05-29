@@ -15,16 +15,16 @@ from src.utils.helpers import download_nlkt, clean_text
 
 class EmotionRecognitionService:
     def __init__(
-            self,
-            # input_dim is to input data directly => float32
-            # embedding_dim is to input token indices => long
-            use_embedding: bool = False,
-            embedding_dim: int = 100,
-            hidden_dim: int = 10,
-            layer_dim: int = 2,
-            lr: float = 0.01,
-            dropout: float = 0.2,
-            num_classes: int = 6,
+        self,
+        # input_dim is to input data directly => float32
+        # embedding_dim is to input token indices => long
+        use_embedding: bool = False,
+        embedding_dim: int = 100,
+        hidden_dim: int = 10,
+        layer_dim: int = 2,
+        lr: float = 0.01,
+        dropout: float = 0.2,
+        num_classes: int = 6,
     ):
         self.encoder = EncodingManager()
         self.executor = ThreadPoolExecutor(max_workers=1)
@@ -94,18 +94,20 @@ class EmotionRecognitionService:
         return X, y
 
     def train_lstm_model(
-            self,
-            train_data_path: str,
-            validation_data_path: str,
-            num_epochs: int,
-            model_path: str = None,
-            batch_size: int = 32,
+        self,
+        train_data_path: str,
+        validation_data_path: str,
+        num_epochs: int,
+        model_path: str = None,
+        batch_size: int = 32,
     ) -> None:
         train_X, train_y = self.prepare_data(train_data_path)
         val_X, val_y = self.prepare_data(validation_data_path)
         if model_path is None:
             model_path = self.config.LSTM_MODEL_PATH
-        self.lstm_model.train_model(train_X, train_y, val_X, val_y, num_epochs, batch_size)
+        self.lstm_model.train_model(
+            train_X, train_y, val_X, val_y, num_epochs, batch_size
+        )
         model_config = {
             "num_classes": self.lstm_model.output_dim,
             "input_dim": self.lstm_model.input_dim,
@@ -125,18 +127,20 @@ class EmotionRecognitionService:
         )
 
     def train_cnn_model(
-            self,
-            train_data_path: str,
-            validation_data_path: str,
-            num_epochs: int,
-            model_path: str = None,
-            batch_size: int = 32,
+        self,
+        train_data_path: str,
+        validation_data_path: str,
+        num_epochs: int,
+        model_path: str = None,
+        batch_size: int = 32,
     ) -> None:
         train_X, train_y = self.prepare_data(train_data_path)
         val_X, val_y = self.prepare_data(validation_data_path)
         if model_path is None:
             model_path = self.config.CNN_MODEL_PATH
-        self.cnn_model.train_model(train_X, train_y, val_X, val_y, num_epochs, batch_size)
+        self.cnn_model.train_model(
+            train_X, train_y, val_X, val_y, num_epochs, batch_size
+        )
         model_config = {
             "num_classes": self.cnn_model.output_dim,
             "lr": self.cnn_model.lr,

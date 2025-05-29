@@ -7,18 +7,18 @@ from src.utils.helpers import write_log_file
 
 
 def run_train(
-        train_data_path: str,
-        test_data_path: str,
-        validation_data_path: str,
-        model_path: str,
-        embedding_dim: int,
-        num_classes: int,
-        kernel_sizes: list,
-        num_filters: int,
-        dropout: float,
-        lr: float,
-        batch_size: int,
-        epochs: int,
+    train_data_path: str,
+    test_data_path: str,
+    validation_data_path: str,
+    model_path: str,
+    embedding_dim: int,
+    num_classes: int,
+    kernel_sizes: list,
+    num_filters: int,
+    dropout: float,
+    lr: float,
+    batch_size: int,
+    epochs: int,
 ) -> None:
     emotion_recognition_service = EmotionRecognitionService(
         train_data_path=train_data_path,
@@ -57,20 +57,20 @@ def run_eval(model_path: str, validation_data_path: str) -> Dict:
 
 
 def main(
-        train_data_path: str,
-        test_data_path: str,
-        validation_data_path: str,
-        model_path: str,
-        log_path: str,
-        log_file_name: str,
-        embedding_dim: int,
-        num_classes: int,
-        kernel_sizes: List,
-        num_filters: int,
-        dropout: float,
-        lr: float,
-        batch_size: int,
-        num_epochs: int,
+    train_data_path: str,
+    test_data_path: str,
+    validation_data_path: str,
+    model_path: str,
+    log_path: str,
+    log_file_name: str,
+    embedding_dim: int,
+    num_classes: int,
+    kernel_sizes: List,
+    num_filters: int,
+    dropout: float,
+    lr: float,
+    batch_size: int,
+    num_epochs: int,
 ) -> None:
     start_time = datetime.now()
     run_train(

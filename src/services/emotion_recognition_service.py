@@ -15,16 +15,16 @@ config = EmotionRecognitionConfig()
 
 class EmotionRecognitionService:
     def __init__(
-            self,
-            train_data_path: str = config.TRAIN_DATA_PATH,
-            test_data_path: str = config.TEST_DATA_PATH,
-            validation_data_path: str = config.VALIDATION_DATA_PATH,
-            embed_dim: int = config.DEFAULT_EMBED_DIM,
-            num_classes: int = config.DEFAULT_NUM_CLASSES,
-            kernel_sizes: List = config.DEFAULT_KERNEL_SIZES,
-            num_filters: int = config.DEFAULT_NUM_FILTERS,
-            dropout: float = config.DEFAULT_DROPOUT,
-            lr: float = config.DEFAULT_LR,
+        self,
+        train_data_path: str = config.TRAIN_DATA_PATH,
+        test_data_path: str = config.TEST_DATA_PATH,
+        validation_data_path: str = config.VALIDATION_DATA_PATH,
+        embed_dim: int = config.DEFAULT_EMBED_DIM,
+        num_classes: int = config.DEFAULT_NUM_CLASSES,
+        kernel_sizes: List = config.DEFAULT_KERNEL_SIZES,
+        num_filters: int = config.DEFAULT_NUM_FILTERS,
+        dropout: float = config.DEFAULT_DROPOUT,
+        lr: float = config.DEFAULT_LR,
     ):
         self.vocab = build_vocab(
             pd.read_csv(train_data_path)[config.TEXT_COL].tolist(),
@@ -50,9 +50,9 @@ class EmotionRecognitionService:
         self.executor = ThreadPoolExecutor(max_workers=1)
 
     def train(
-            self,
-            batch_size: int = 32,
-            epochs: int = 10,
+        self,
+        batch_size: int = 32,
+        epochs: int = 10,
     ) -> None:
         texts_train = pd.read_csv(self.train_data_path)[config.TEXT_COL].tolist()
         labels_train = pd.read_csv(self.train_data_path)[config.LABEL_COL].tolist()
@@ -112,15 +112,17 @@ class EmotionRecognitionService:
 
         return model, vocab
 
-    async def async_load_model(self, model_path: str = None) -> (CNNModel, Dict[str, int]):
+    async def async_load_model(
+        self, model_path: str = None
+    ) -> (CNNModel, Dict[str, int]):
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.executor, self.load_model, model_path)
 
     def predict(
-            self,
-            text: str,
-            model: CNNModel,
-            vocab: Dict[str, int],
+        self,
+        text: str,
+        model: CNNModel,
+        vocab: Dict[str, int],
     ) -> torch.Tensor:
         encoded_text = self.model_manager.encode(text, vocab, config.MAX_SEQ_LENGTH)
         encoded_text = encoded_text.unsqueeze(0).to(config.DEVICE)
@@ -131,9 +133,9 @@ class EmotionRecognitionService:
         return output.argmax(dim=1)
 
     def evaluate(
-            self,
-            model: CNNModel,
-            vocab: Dict[str, int],
+        self,
+        model: CNNModel,
+        vocab: Dict[str, int],
     ) -> Dict:
         df = pd.read_csv(self.validation_data_path)
         texts = df[config.TEXT_COL].tolist()

@@ -6,7 +6,7 @@ from torch.nn import (
     CrossEntropyLoss,
     ModuleList,
     Dropout,
-    Conv2d
+    Conv2d,
 )
 from torch.optim import AdamW, Adam
 from torch.utils.data import DataLoader, TensorDataset
@@ -14,25 +14,24 @@ from torch.nn.functional import relu
 from collections import Counter
 from typing import List, Tuple
 
+
 class CNNModel(Module):
     def __init__(
-            self,
-            output_dim: int,
-            lr: float,
-            kernel_sizes: List = [3, 4, 5],
-            num_filters: int = 100,
-            vocab_size: int = 10000,
-            embedding_dim: int = 100,
-            dropout: float = 0.2,
-            padding_idx: int = 0,
+        self,
+        output_dim: int,
+        lr: float,
+        kernel_sizes: List = [3, 4, 5],
+        num_filters: int = 100,
+        vocab_size: int = 10000,
+        embedding_dim: int = 100,
+        dropout: float = 0.2,
+        padding_idx: int = 0,
     ):
         super().__init__()
-        self.embedding = Embedding(
-            vocab_size, embedding_dim, padding_idx=padding_idx
+        self.embedding = Embedding(vocab_size, embedding_dim, padding_idx=padding_idx)
+        self.convs = ModuleList(
+            [Conv2d(1, num_filters, (k, embedding_dim)) for k in kernel_sizes]
         )
-        self.convs = ModuleList([
-            Conv2d(1, num_filters, (k, embedding_dim)) for k in kernel_sizes
-        ])
         self.dropout = dropout
         self.dropout_layer = Dropout(dropout)
         self.fc = Linear(num_filters * len(kernel_sizes), output_dim)
@@ -42,10 +41,7 @@ class CNNModel(Module):
         self.output_dim = output_dim
         self.lr = lr
 
-    def forward(
-            self,
-            x: torch.Tensor
-    ) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.embedding(x).unsqueeze(1)
         conv_x = [torch.relu(conv(x)).squeeze(3) for conv in self.convs]
         pooled_x = [torch.max(c, dim=2)[0] for c in conv_x]
@@ -54,13 +50,13 @@ class CNNModel(Module):
         return self.fc(out)
 
     def train_model(
-            self,
-            train_X: torch.Tensor,
-            train_y: torch.Tensor,
-            val_X: torch.Tensor,
-            val_y: torch.Tensor,
-            num_epochs: int,
-            batch_size: int,
+        self,
+        train_X: torch.Tensor,
+        train_y: torch.Tensor,
+        val_X: torch.Tensor,
+        val_y: torch.Tensor,
+        num_epochs: int,
+        batch_size: int,
     ) -> None:
         train_dataset = TensorDataset(train_X, train_y)
         val_dataset = TensorDataset(val_X, val_y)

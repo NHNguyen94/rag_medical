@@ -20,9 +20,15 @@ async def chat(
 ):
     try:
         # TODO: Implement the all the features here
-        lstm_model = request.app.state.emotion_recognition_service
+        emotion_recognition_service = request.app.state.emotion_recognition_service
+        emotion_model = request.app.state.emotion_model
+        emotion_vocab = request.app.state.emotion_vocab
+
         index_cancer = request.app.state.index_cancer
         index_diabetes = request.app.state.index_diabetes
+        index_disease_control_and_prevention = (
+            request.app.state.index_disease_control_and_prevention
+        )
         index_genetic = request.app.state.index_genetic
         index_hormone = request.app.state.index_hormone
         index_heart_lung_blood = request.app.state.index_heart_lung_blood
@@ -40,7 +46,7 @@ async def chat(
             case ChatBotConfig.DIABETES:
                 index = index_diabetes
             case ChatBotConfig.DISEASE_CONTROL_AND_PREVENTION:
-                index = index_diabetes
+                index = index_disease_control_and_prevention
             case ChatBotConfig.GENETIC_AND_RARE_DISEASES:
                 index = index_genetic
             case ChatBotConfig.GROWTH_HORMONE_RECEPTOR:
@@ -63,7 +69,11 @@ async def chat(
             use_cot=use_cot,
         )
 
-        predicted_emotion = lstm_model.predict_by_lstm_model(chat_request.message)
+        predicted_emotion = emotion_recognition_service.predict(
+            text=chat_request.message,
+            model=emotion_model,
+            vocab=emotion_vocab,
+        )
         nearest_nodes = await chat_bot_service.retrieve_related_nodes(
             message=chat_request.message
         )

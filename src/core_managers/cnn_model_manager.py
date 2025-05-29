@@ -20,19 +20,19 @@ from src.utils.helpers import build_vocab, clean_and_tokenize
 
 class CNNModel(Module):
     def __init__(
-            self,
-            vocab_size: int,
-            embed_dim: int,
-            num_classes: int,
-            kernel_sizes: List = [3, 4, 5],
-            num_filters: int = 100,
-            dropout: float = 0.2
+        self,
+        vocab_size: int,
+        embed_dim: int,
+        num_classes: int,
+        kernel_sizes: List = [3, 4, 5],
+        num_filters: int = 100,
+        dropout: float = 0.2,
     ):
         super().__init__()
         self.embedding = Embedding(vocab_size, embed_dim, padding_idx=0)
-        self.convs = ModuleList([
-            Conv2d(1, num_filters, (k, embed_dim)) for k in kernel_sizes
-        ])
+        self.convs = ModuleList(
+            [Conv2d(1, num_filters, (k, embed_dim)) for k in kernel_sizes]
+        )
         self.dropout_layer = Dropout(dropout)
         self.fc = Linear(num_filters * len(kernel_sizes), num_classes)
 
@@ -46,16 +46,16 @@ class CNNModel(Module):
         return self.fc(out)
 
 
-class CNNModelManager():
+class CNNModelManager:
     def __init__(
-            self,
-            vocab_size: int,
-            embed_dim: int,
-            num_classes: int,
-            lr: float,
-            kernel_sizes: List,
-            num_filters: int,
-            dropout: float,
+        self,
+        vocab_size: int,
+        embed_dim: int,
+        num_classes: int,
+        lr: float,
+        kernel_sizes: List,
+        num_filters: int,
+        dropout: float,
     ):
         self.min_freq = 1
         self.model = CNNModel(
@@ -64,36 +64,38 @@ class CNNModelManager():
             num_classes=num_classes,
             kernel_sizes=kernel_sizes,
             num_filters=num_filters,
-            dropout=dropout
+            dropout=dropout,
         )
         self.criterion = CrossEntropyLoss()
         self.optimizer = Adam(self.model.parameters(), lr=lr)
 
     def encode(self, text: str, vocab: Dict[str, int], max_len: int) -> Tensor:
         tokens = clean_and_tokenize(text)
-        idxs = [vocab.get(t, vocab['<unk>']) for t in tokens]
+        idxs = [vocab.get(t, vocab["<unk>"]) for t in tokens]
         if len(idxs) < max_len:
-            idxs = idxs + [vocab['<pad>']] * (max_len - len(idxs))
+            idxs = idxs + [vocab["<pad>"]] * (max_len - len(idxs))
         else:
             idxs = idxs[:max_len]
         return torch.tensor(idxs)
 
-    def create_dataset(self, texts: List[str], labels: List[int], vocab: Dict[str, int], max_len: int) -> TensorDataset:
+    def create_dataset(
+        self, texts: List[str], labels: List[int], vocab: Dict[str, int], max_len: int
+    ) -> TensorDataset:
         encoded_texts = [self.encode(text, vocab, max_len) for text in texts]
         label_tensors = [torch.tensor(label) for label in labels]
         return TensorDataset(torch.stack(encoded_texts), torch.stack(label_tensors))
 
     def train(
-            self,
-            texts_train: List[str],
-            labels_train: List[int],
-            texts_val: List[str],
-            labels_val: List[int],
-            vocab: Dict[str, int],
-            max_len: int,
-            batch_size: int,
-            epochs: int,
-            device: torch.device
+        self,
+        texts_train: List[str],
+        labels_train: List[int],
+        texts_val: List[str],
+        labels_val: List[int],
+        vocab: Dict[str, int],
+        max_len: int,
+        batch_size: int,
+        epochs: int,
+        device: torch.device,
     ) -> None:
         dataset = self.create_dataset(texts_train, labels_train, vocab, max_len)
         data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
@@ -121,7 +123,6 @@ class CNNModelManager():
 
             self.model.eval()
             with torch.no_grad():
-
                 val_loss = 0.0
                 correct = 0
                 total = 0
@@ -138,6 +139,8 @@ class CNNModelManager():
                     total += targets.size(0)
                     correct += (predicted == targets).sum().item()
 
-                print(f"Validation Loss: {val_loss / len(val_data_loader)}, Accuracy: {correct / total:.4f}")
+                print(
+                    f"Validation Loss: {val_loss / len(val_data_loader)}, Accuracy: {correct / total:.4f}"
+                )
 
             self.model.train()
