@@ -26,7 +26,7 @@ async def load_model_background(emotion_recognition_service: EmotionRecognitionS
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    emotion_recognition_service = EmotionRecognitionService(use_embedding=True)
+    emotion_recognition_service = EmotionRecognitionService()
     app.state.emotion_recognition_service = emotion_recognition_service
 
     index_path = IngestionConfig.INDEX_PATH

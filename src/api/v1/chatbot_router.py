@@ -63,7 +63,7 @@ async def chat(
             use_cot=use_cot,
         )
 
-        predicted_emotion = lstm_model.predict(chat_request.message)
+        predicted_emotion = lstm_model.predict_by_lstm_model(chat_request.message)
         nearest_nodes = await chat_bot_service.retrieve_related_nodes(
             message=chat_request.message
         )

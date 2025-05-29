@@ -1,164 +1,151 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict
+from typing import Dict, List
 
 import pandas as pd
 import torch
 from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
 
-from src.core_managers.encoding_manager import EncodingManager
-from src.ml_models.lstm import LSTMModel
-from src.utils.enums import LSTMConfig
-from src.utils.helpers import download_nlkt, clean_text
+from src.core_managers.cnn_model_manager import CNNModelManager, CNNModel
+from src.utils.enums import EmotionRecognitionConfig
+from src.utils.helpers import clean_text, build_vocab
+
+config = EmotionRecognitionConfig()
 
 
 class EmotionRecognitionService:
     def __init__(
-        self,
-        num_classes: int = 6,
-        # input_dim is to input data directly => float32
-        # embedding_dim is to input token indices => long
-        use_embedding: bool = False,
-        embedding_dim: int = 100,
-        hidden_dim: int = 10,
-        layer_dim: int = 2,
-        lr: float = 0.01,
-        dropout: float = 0.2,
+            self,
+            train_data_path: str = config.TRAIN_DATA_PATH,
+            test_data_path: str = config.TEST_DATA_PATH,
+            validation_data_path: str = config.VALIDATION_DATA_PATH,
+            embed_dim: int = config.DEFAULT_EMBED_DIM,
+            num_classes: int = config.DEFAULT_NUM_CLASSES,
+            kernel_sizes: List = config.DEFAULT_KERNEL_SIZES,
+            num_filters: int = config.DEFAULT_NUM_FILTERS,
+            dropout: float = config.DEFAULT_DROPOUT,
+            lr: float = config.DEFAULT_LR,
     ):
-        self.encoder = EncodingManager()
+        self.vocab = build_vocab(
+            pd.read_csv(train_data_path)[config.TEXT_COL].tolist(),
+        )
+        self.train_data_path = train_data_path
+        self.test_data_path = test_data_path
+        self.validation_data_path = validation_data_path
+        self.embed_dim = embed_dim
+        self.num_classes = num_classes
+        self.kernel_sizes = kernel_sizes
+        self.num_filters = num_filters
+        self.dropout = dropout
+        self.model_manager = CNNModelManager(
+            vocab_size=len(self.vocab),
+            embed_dim=embed_dim,
+            num_classes=num_classes,
+            kernel_sizes=kernel_sizes,
+            num_filters=num_filters,
+            dropout=dropout,
+            lr=lr,
+        )
+        self.min_freq = 1
         self.executor = ThreadPoolExecutor(max_workers=1)
-        self.use_embedding = use_embedding
-        if self.use_embedding:
-            self.input_dim = None
-            self.model = LSTMModel(
-                hidden_dim=hidden_dim,
-                layer_dim=layer_dim,
-                output_dim=num_classes,
-                lr=lr,
-                vocab_size=len(self.encoder.tokenizer),
-                padding_idx=self.encoder.tokenizer.pad_token_id,
-                embedding_dim=embedding_dim,
-                dropout=dropout,
-            )
-        else:
-            # Always 1 for input_dim
-            self.model = LSTMModel(
-                input_dim=1,
-                hidden_dim=hidden_dim,
-                layer_dim=layer_dim,
-                output_dim=num_classes,
-                lr=lr,
-                dropout=dropout,
-            )
-        self.lstm_config = LSTMConfig()
-        download_nlkt()
 
-    def _reshape(self, data: torch.Tensor, max_length: int) -> torch.Tensor:
-        if self.use_embedding:
-            return data.view(-1, max_length)
-        return data.view(-1, max_length, 1)
-
-    def prepare_data(self, data_path: str) -> (torch.Tensor, torch.Tensor):
-        df = pd.read_csv(data_path)
-        texts = df[self.lstm_config.TEXT_COL].tolist()
-        texts = [clean_text(text) for text in texts]
-        labels = df[self.lstm_config.LABEL_COL].tolist()
-        tokenized_texts = self.encoder.tokenize_texts(texts)
-        # tokenized_texts = [self.encoder.tokenize_text(text) for text in texts]
-        if self.use_embedding:
-            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.LONG)
-        else:
-            X = self.encoder.to_tensor(tokenized_texts, self.lstm_config.FLOAT32)
-        y = self.encoder.to_tensor(labels, self.lstm_config.LONG)
-
-        # print("Shape X:", X.shape)
-        # print("Shape y:", y.shape)
-        assert X.shape[0] == y.shape[0], "Mismatch"
-
-        # Use reshape if don't fix max length
-        # new_X, new_y = self._reshape(X, max_length), y
-        #
-        # print("Shape new_X:", new_X.shape)
-        # print("Shape new_y:", new_y.shape)
-        # assert new_X.shape[0] == new_y.shape[0], "Mismatch after reshape!"
-
-        return X, y
-
-    def train_model(
-        self,
-        train_data_path: str,
-        validation_data_path: str,
-        num_epochs: int,
-        model_path: str = None,
-        batch_size: int = 32,
+    def train(
+            self,
+            batch_size: int = 32,
+            epochs: int = 10,
     ) -> None:
-        train_X, train_y = self.prepare_data(train_data_path)
-        val_X, val_y = self.prepare_data(validation_data_path)
+        texts_train = pd.read_csv(self.train_data_path)[config.TEXT_COL].tolist()
+        labels_train = pd.read_csv(self.train_data_path)[config.LABEL_COL].tolist()
+        texts_train = [clean_text(text) for text in texts_train]
+        val_texts = pd.read_csv(self.test_data_path)[config.TEXT_COL].tolist()
+        val_labels = pd.read_csv(self.test_data_path)[config.LABEL_COL].tolist()
+        val_texts = [clean_text(text) for text in val_texts]
+        self.model_manager.train(
+            texts_train=texts_train,
+            labels_train=labels_train,
+            texts_val=val_texts,
+            labels_val=val_labels,
+            vocab=self.vocab,
+            max_len=config.MAX_SEQ_LENGTH,
+            batch_size=batch_size,
+            epochs=epochs,
+            device=config.DEVICE,
+        )
+
+    def save_model(self, model_path: str = None) -> None:
         if model_path is None:
-            model_path = self.lstm_config.MODEL_PATH
-        self.model.train_model(train_X, train_y, val_X, val_y, num_epochs, batch_size)
-        model_config = {
-            "num_classes": self.model.output_dim,
-            "input_dim": self.model.input_dim,
-            "hidden_dim": self.model.hidden_dim,
-            "layer_dim": self.model.layer_dim,
-            "lr": self.model.lr,
-            "dropout": self.model.dropout,
-            "vocab_size": len(self.encoder.tokenizer),
-            "embedding_dim": self.model.embedding.embedding_dim,
-        }
+            model_path = config.CNN_MODEL_PATH
         torch.save(
             {
-                "model_state_dict": self.model.state_dict(),
-                "model_config": model_config,
+                "model_config": {
+                    "vocab_size": len(self.vocab),
+                    "embed_dim": self.embed_dim,
+                    "num_classes": self.num_classes,
+                    "kernel_sizes": self.kernel_sizes,
+                    "num_filters": self.num_filters,
+                    "dropout": self.dropout,
+                },
+                "model_state_dict": self.model_manager.model.state_dict(),
+                "vocab": self.vocab,
             },
             model_path,
         )
 
-    def load_model(self, model_path: str = None) -> LSTMModel:
+    def load_model(self, model_path: str = None) -> (CNNModel, Dict[str, int]):
         if model_path is None:
-            model_path = self.lstm_config.MODEL_PATH
-        checkpoint = torch.load(model_path, map_location=torch.device("cpu"))
-        config = checkpoint["model_config"]
-        model = LSTMModel(
-            input_dim=config["input_dim"],
-            hidden_dim=config["hidden_dim"],
-            layer_dim=config["layer_dim"],
-            output_dim=config["num_classes"],
-            lr=config["lr"],
-            dropout=config["dropout"],
-            vocab_size=config["vocab_size"],
-            embedding_dim=config["embedding_dim"],
+            model_path = config.CNN_MODEL_PATH
+        checkpoint = torch.load(model_path, map_location=config.DEVICE)
+
+        model_config = checkpoint["model_config"]
+        model = CNNModel(
+            vocab_size=model_config["vocab_size"],
+            embed_dim=model_config["embed_dim"],
+            num_classes=model_config["num_classes"],
+            kernel_sizes=model_config["kernel_sizes"],
+            num_filters=model_config["num_filters"],
+            dropout=model_config["dropout"],
         )
         model.load_state_dict(checkpoint["model_state_dict"])
         model.eval()
-        return model
 
-    async def async_load_model(self, model_path: str = None) -> LSTMModel:
+        vocab = checkpoint["vocab"]
+
+        return model, vocab
+
+    async def async_load_model(self, model_path: str = None) -> (CNNModel, Dict[str, int]):
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(self.executor, self.load_model, model_path)
-        return self.model
+        return await loop.run_in_executor(self.executor, self.load_model, model_path)
 
-    def predict(self, text: str) -> torch.Tensor:
-        text = clean_text(text)
-        tokenized_text_list = self.encoder.tokenize_texts([text])
-        tokenized_text = tokenized_text_list[0]
-        if self.use_embedding:
-            X = self.encoder.to_tensor(tokenized_text, self.lstm_config.LONG)
-        else:
-            X = self.encoder.to_tensor(tokenized_text, self.lstm_config.FLOAT32)
-        X = X.to(next(self.model.parameters()).device)
-        # X = self._reshape(X, max_length)
-        return self.model.predict(X.unsqueeze(0))
+    def predict(
+            self,
+            text: str,
+            model: CNNModel,
+            vocab: Dict[str, int],
+    ) -> torch.Tensor:
+        encoded_text = self.model_manager.encode(text, vocab, config.MAX_SEQ_LENGTH)
+        encoded_text = encoded_text.unsqueeze(0).to(config.DEVICE)
+        model.to(config.DEVICE)
+        model.eval()
+        with torch.no_grad():
+            output = model(encoded_text)
+        return output.argmax(dim=1)
 
-    def evaluate_model(self, test_data_path: str) -> Dict:
-        df = pd.read_csv(test_data_path)
-        texts = df[self.lstm_config.TEXT_COL].tolist()
+    def evaluate(
+            self,
+            model: CNNModel,
+            vocab: Dict[str, int],
+    ) -> Dict:
+        df = pd.read_csv(self.validation_data_path)
+        texts = df[config.TEXT_COL].tolist()
         texts = [clean_text(text) for text in texts]
-        labels = df[self.lstm_config.LABEL_COL].tolist()
+        labels = df[config.LABEL_COL].tolist()
         predictions = []
         for text in texts:
-            prediction = self.predict(text)
+            prediction = self.predict(
+                text=text,
+                model=model,
+                vocab=vocab,
+            )
             predictions.append(prediction.item())
 
         return {

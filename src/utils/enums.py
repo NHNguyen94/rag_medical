@@ -1,3 +1,6 @@
+import torch
+
+
 class ChatBotConfig:
     DEFAULT_CHAT_MODEL = "gpt-4o-mini"
     GPT_4O = "gpt-4o"
@@ -54,10 +57,21 @@ class IngestionConfig:
     CSV_FILE_EXTENSION = ".csv"
 
 
-class LSTMConfig:
+class EmotionRecognitionConfig:
     LABEL_COL = "label"
     TEXT_COL = "text"
     FLOAT32 = "float32"
     LONG = "long"
-    MODEL_PATH = "src/ml_models/model_files/lstm_model.pth"
-    MAX_SEQ_LENGTH = 20
+    LSTM_MODEL_PATH = "src/ml_models/model_files/lstm_model.pth"
+    CNN_MODEL_PATH = "src/ml_models/model_files/cnn_model.pth"
+    TRAIN_DATA_PATH = "src/data/emotion_data/training.csv"
+    TEST_DATA_PATH = "src/data/emotion_data/test.csv"
+    VALIDATION_DATA_PATH = "src/data/emotion_data/validation.csv"
+    MAX_SEQ_LENGTH = 100
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEFAULT_EMBED_DIM = 100
+    DEFAULT_NUM_CLASSES = 6
+    DEFAULT_KERNEL_SIZES = [3, 4, 5]
+    DEFAULT_NUM_FILTERS = 100
+    DEFAULT_DROPOUT = 0.2
+    DEFAULT_LR = 0.001
