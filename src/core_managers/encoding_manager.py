@@ -4,12 +4,12 @@ import torch
 from torch import Tensor
 from transformers import AutoTokenizer
 
-from src.utils.enums import LSTMConfig
+from src.utils.enums import EmotionRecognitionConfig
 
 
 class EncodingManager:
     def __init__(self, model_name="bert-base-uncased"):
-        self.lstm_config = LSTMConfig()
+        self.config = EmotionRecognitionConfig()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     def yield_tokens(self, texts: List[str]):
@@ -24,7 +24,7 @@ class EncodingManager:
             text,
             padding=True,
             truncation=True,
-            max_length=self.lstm_config.MAX_SEQ_LENGTH,
+            max_length=self.config.MAX_SEQ_LENGTH,
             return_attention_mask=False,
             return_token_type_ids=False,
         )
@@ -36,7 +36,7 @@ class EncodingManager:
             texts,
             padding=True,
             truncation=True,
-            max_length=self.lstm_config.MAX_SEQ_LENGTH,
+            max_length=self.config.MAX_SEQ_LENGTH,
             return_attention_mask=False,
             return_token_type_ids=False,
         )
@@ -45,9 +45,9 @@ class EncodingManager:
         return tokenized_texts
 
     def to_tensor(self, tokens: List, data_type: str) -> Tensor:
-        if data_type == self.lstm_config.FLOAT32:
+        if data_type == self.config.FLOAT32:
             return torch.tensor(tokens, dtype=torch.float32)
-        elif data_type == self.lstm_config.LONG:
+        elif data_type == self.config.LONG:
             return torch.tensor(tokens, dtype=torch.long)
         else:
             raise ValueError("Unsupported data type")

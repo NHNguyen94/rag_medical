@@ -9,6 +9,7 @@ import pandas as pd
 import yaml
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
+from collections import Counter
 
 
 def load_yml_configs(config_path: str) -> Dict:
@@ -80,3 +81,22 @@ def clean_text(text: str) -> str:
     tokens = [word for word in tokens if word not in stop_words]
 
     return " ".join(tokens)
+
+
+def clean_and_tokenize(text: str) -> List[str]:
+    cleaned_text = clean_text(text)
+    if not cleaned_text:
+        return []
+    return cleaned_text.lower().split()
+
+
+def build_vocab(texts: List[str], min_freq: int = 1) -> Dict[str, int]:
+    counter = Counter()
+    for text in texts:
+        tokens = clean_and_tokenize(text)
+        counter.update(tokens)
+    vocab = {"<pad>": 0, "<unk>": 1}
+    for word, freq in counter.items():
+        if freq >= min_freq:
+            vocab[word] = len(vocab)
+    return vocab
