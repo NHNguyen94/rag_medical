@@ -3,7 +3,6 @@ from typing import Dict, List
 
 from src.services.emotion_recognition_service import EmotionRecognitionService
 from src.utils.directory_manager import DirectoryManager
-from src.utils.helpers import write_log_file
 
 
 def run_train(
@@ -112,13 +111,13 @@ def main(
     print(f"Evaluation Result: {eval_result}")
 
     full_log_path = f"{log_path}/{log_file_name}"
-    if not DirectoryManager.check_if_file_exists(full_log_path):
-        col_names = [col_name for col_name in eval_result.keys()]
-        DirectoryManager.create_empty_csv_file(
-            col_names=col_names, file_path=full_log_path
-        )
+    # if not DirectoryManager.check_if_file_exists(full_log_path):
+    #     col_names = [col_name for col_name in eval_result.keys()]
+    #     DirectoryManager.create_empty_csv_file(
+    #         col_names=col_names, file_path=full_log_path
+    #     )
 
-    write_log_file(full_log_path, eval_result, False)
+    DirectoryManager.write_log_file(full_log_path, eval_result)
 
 
 if __name__ == "__main__":

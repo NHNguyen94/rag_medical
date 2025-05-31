@@ -21,3 +21,6 @@ clear-db:
 
 ingest-data:
 	PYTHONPATH=. python src/pipelines/ingest_data/ingest_to_vt_store.py
+
+compare-rag:
+	PYTHONPATH=. python src/pipelines/rag/compare_rag.py
