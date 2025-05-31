@@ -1,5 +1,7 @@
 import os
+from typing import Dict
 from typing import List, Union
+
 import pandas as pd
 
 
@@ -74,3 +76,15 @@ class DirectoryManager:
         df = pd.DataFrame(columns=col_names)
         df.to_csv(file_path, index=False)
         print("Empty CSV file created with columns:", col_names)
+
+    @staticmethod
+    def write_log_file(
+        log_file_path: str, data: Dict, with_header: bool = False
+    ) -> None:
+        if not DirectoryManager.check_if_file_exists(log_file_path):
+            col_names = list(data.keys())
+            DirectoryManager.create_empty_csv_file(
+                col_names=col_names, file_path=log_file_path
+            )
+        df = pd.DataFrame([data])
+        df.to_csv(log_file_path, mode="a", index=False, header=with_header)
