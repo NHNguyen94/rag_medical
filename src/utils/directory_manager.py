@@ -27,6 +27,10 @@ class DirectoryManager:
         return os.path.exists(file_path)
 
     @staticmethod
+    def check_if_empty_file(file_path: str) -> bool:
+        return os.path.exists(file_path) and os.path.getsize(file_path) == 0
+
+    @staticmethod
     def move_file(src: str, dest: str) -> None:
         os.rename(src, dest)
         print(f"File {src} moved to {dest}")
@@ -78,13 +82,11 @@ class DirectoryManager:
         print("Empty CSV file created with columns:", col_names)
 
     @staticmethod
-    def write_log_file(
-        log_file_path: str, data: Dict, with_header: bool = False
-    ) -> None:
+    def write_log_file(log_file_path: str, data: Dict) -> None:
         if not DirectoryManager.check_if_file_exists(log_file_path):
             col_names = list(data.keys())
             DirectoryManager.create_empty_csv_file(
                 col_names=col_names, file_path=log_file_path
             )
         df = pd.DataFrame([data])
-        df.to_csv(log_file_path, mode="a", index=False, header=with_header)
+        df.to_csv(log_file_path, mode="a", index=False, header=False)

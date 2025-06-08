@@ -18,7 +18,7 @@ def run_train(
     lr: float,
     batch_size: int,
     epochs: int,
-) -> None:
+) -> (float, float):
     emotion_recognition_service = EmotionRecognitionService(
         train_data_path=train_data_path,
         test_data_path=test_data_path,
@@ -31,7 +31,7 @@ def run_train(
         lr=lr,
     )
 
-    emotion_recognition_service.train(
+    (train_loss, val_loss) = emotion_recognition_service.train(
         batch_size=batch_size,
         epochs=epochs,
     )
@@ -39,6 +39,8 @@ def run_train(
     emotion_recognition_service.save_model(
         model_path=model_path,
     )
+
+    return train_loss, val_loss
 
 
 def run_eval(model_path: str, validation_data_path: str) -> Dict:
@@ -72,7 +74,7 @@ def main(
     num_epochs: int,
 ) -> None:
     start_time = datetime.now()
-    run_train(
+    train_loss, val_loss = run_train(
         train_data_path=train_data_path,
         test_data_path=test_data_path,
         validation_data_path=validation_data_path,
@@ -93,6 +95,8 @@ def main(
         validation_data_path=validation_data_path,
     )
 
+    eval_result["train_loss"] = train_loss
+    eval_result["val_loss"] = val_loss
     eval_result["start_time"] = start_time
     eval_result["end_time"] = end_time
     eval_result["training_time"] = (end_time - start_time).total_seconds()
@@ -111,40 +115,47 @@ def main(
     print(f"Evaluation Result: {eval_result}")
 
     full_log_path = f"{log_path}/{log_file_name}"
-    # if not DirectoryManager.check_if_file_exists(full_log_path):
-    #     col_names = [col_name for col_name in eval_result.keys()]
-    #     DirectoryManager.create_empty_csv_file(
-    #         col_names=col_names, file_path=full_log_path
-    #     )
-
     DirectoryManager.write_log_file(full_log_path, eval_result)
 
 
 if __name__ == "__main__":
-    model = "cnn"
     train_data_path = "src/data/emotion_data/training.csv"
     test_data_path = "src/data/emotion_data/test.csv"
     validation_data_path = "src/data/emotion_data/validation.csv"
     model_path = "src/ml_models/model_files/cnn_model.pth"
     log_path = "src/data/training_logs"
     log_file_name = "emotion_recognition.csv"
+    num_classes = 6
     DirectoryManager.create_dir_if_not_exists(log_path)
     if DirectoryManager.check_if_file_exists(model_path):
         DirectoryManager.delete_file(model_path)
 
-    main(
-        train_data_path=train_data_path,
-        test_data_path=test_data_path,
-        validation_data_path=validation_data_path,
-        model_path=model_path,
-        log_path=log_path,
-        log_file_name=log_file_name,
-        embedding_dim=300,
-        num_classes=6,
-        kernel_sizes=[3, 4, 5],
-        num_filters=100,
-        dropout=0.2,
-        lr=0.001,
-        batch_size=32,
-        num_epochs=1,
-    )
+    hyper_params = [
+        {
+            "embedding_dim": 300,
+            "kernel_sizes": [2, 3, 4, 5],
+            "num_filters": 200,
+            "dropout": 0.5,
+            "lr": 0.001,
+            "batch_size": 32,
+            "num_epochs": 10,
+        },
+    ]
+
+    for params in hyper_params:
+        main(
+            train_data_path=train_data_path,
+            test_data_path=test_data_path,
+            validation_data_path=validation_data_path,
+            model_path=model_path,
+            log_path=log_path,
+            log_file_name=log_file_name,
+            embedding_dim=params["embedding_dim"],
+            num_classes=num_classes,
+            kernel_sizes=params["kernel_sizes"],
+            num_filters=params["num_filters"],
+            dropout=params["dropout"],
+            lr=params["lr"],
+            batch_size=params["batch_size"],
+            num_epochs=params["num_epochs"],
+        )
