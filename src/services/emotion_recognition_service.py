@@ -4,30 +4,37 @@ from typing import Dict, List
 
 import pandas as pd
 import torch
-from sklearn.metrics import precision_score, recall_score, f1_score, accuracy_score
+from sklearn.metrics import (
+    precision_score,
+    recall_score,
+    f1_score,
+    accuracy_score,
+    confusion_matrix,
+)
 
 from src.core_managers.cnn_model_manager import CNNModelManager, CNNModel
-from src.utils.enums import EmotionRecognitionConfig
-from src.utils.helpers import clean_text, build_vocab
+from src.utils.enums import EmotionRecognitionConfig, ChatBotConfig
+from src.utils.helpers import clean_text, build_vocab, calculate_confusion_matrix
 
-config = EmotionRecognitionConfig()
+emotion_config = EmotionRecognitionConfig()
+chatbot_config = ChatBotConfig()
 
 
 class EmotionRecognitionService:
     def __init__(
         self,
-        train_data_path: str = config.TRAIN_DATA_PATH,
-        test_data_path: str = config.TEST_DATA_PATH,
-        validation_data_path: str = config.VALIDATION_DATA_PATH,
-        embed_dim: int = config.DEFAULT_EMBED_DIM,
-        num_classes: int = config.DEFAULT_NUM_CLASSES,
-        kernel_sizes: List = config.DEFAULT_KERNEL_SIZES,
-        num_filters: int = config.DEFAULT_NUM_FILTERS,
-        dropout: float = config.DEFAULT_DROPOUT,
-        lr: float = config.DEFAULT_LR,
+        train_data_path: str = emotion_config.TRAIN_DATA_PATH,
+        test_data_path: str = emotion_config.TEST_DATA_PATH,
+        validation_data_path: str = emotion_config.VALIDATION_DATA_PATH,
+        embed_dim: int = emotion_config.DEFAULT_EMBED_DIM,
+        num_classes: int = emotion_config.DEFAULT_NUM_CLASSES,
+        kernel_sizes: List = emotion_config.DEFAULT_KERNEL_SIZES,
+        num_filters: int = emotion_config.DEFAULT_NUM_FILTERS,
+        dropout: float = emotion_config.DEFAULT_DROPOUT,
+        lr: float = emotion_config.DEFAULT_LR,
     ):
         self.vocab = build_vocab(
-            pd.read_csv(train_data_path)[config.TEXT_COL].tolist(),
+            pd.read_csv(train_data_path)[emotion_config.TEXT_COL].tolist(),
         )
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
@@ -53,28 +60,34 @@ class EmotionRecognitionService:
         self,
         batch_size: int = 32,
         epochs: int = 10,
-    ) -> None:
-        texts_train = pd.read_csv(self.train_data_path)[config.TEXT_COL].tolist()
-        labels_train = pd.read_csv(self.train_data_path)[config.LABEL_COL].tolist()
+    ) -> (float, float):
+        texts_train = pd.read_csv(self.train_data_path)[
+            emotion_config.TEXT_COL
+        ].tolist()
+        labels_train = pd.read_csv(self.train_data_path)[
+            emotion_config.LABEL_COL
+        ].tolist()
         texts_train = [clean_text(text) for text in texts_train]
-        val_texts = pd.read_csv(self.test_data_path)[config.TEXT_COL].tolist()
-        val_labels = pd.read_csv(self.test_data_path)[config.LABEL_COL].tolist()
+        val_texts = pd.read_csv(self.test_data_path)[emotion_config.TEXT_COL].tolist()
+        val_labels = pd.read_csv(self.test_data_path)[emotion_config.LABEL_COL].tolist()
         val_texts = [clean_text(text) for text in val_texts]
-        self.model_manager.train(
+        (train_loss, val_loss) = self.model_manager.train(
             texts_train=texts_train,
             labels_train=labels_train,
             texts_val=val_texts,
             labels_val=val_labels,
             vocab=self.vocab,
-            max_len=config.MAX_SEQ_LENGTH,
+            max_len=emotion_config.MAX_SEQ_LENGTH,
             batch_size=batch_size,
             epochs=epochs,
-            device=config.DEVICE,
+            device=emotion_config.DEVICE,
         )
+
+        return train_loss, val_loss
 
     def save_model(self, model_path: str = None) -> None:
         if model_path is None:
-            model_path = config.CNN_MODEL_PATH
+            model_path = emotion_config.CNN_MODEL_PATH
         torch.save(
             {
                 "model_config": {
@@ -93,8 +106,8 @@ class EmotionRecognitionService:
 
     def load_model(self, model_path: str = None) -> (CNNModel, Dict[str, int]):
         if model_path is None:
-            model_path = config.CNN_MODEL_PATH
-        checkpoint = torch.load(model_path, map_location=config.DEVICE)
+            model_path = emotion_config.CNN_MODEL_PATH
+        checkpoint = torch.load(model_path, map_location=emotion_config.DEVICE)
 
         model_config = checkpoint["model_config"]
         model = CNNModel(
@@ -124,9 +137,11 @@ class EmotionRecognitionService:
         model: CNNModel,
         vocab: Dict[str, int],
     ) -> torch.Tensor:
-        encoded_text = self.model_manager.encode(text, vocab, config.MAX_SEQ_LENGTH)
-        encoded_text = encoded_text.unsqueeze(0).to(config.DEVICE)
-        model.to(config.DEVICE)
+        encoded_text = self.model_manager.encode(
+            text, vocab, emotion_config.MAX_SEQ_LENGTH
+        )
+        encoded_text = encoded_text.unsqueeze(0).to(emotion_config.DEVICE)
+        model.to(emotion_config.DEVICE)
         model.eval()
         with torch.no_grad():
             output = model(encoded_text)
@@ -138,9 +153,9 @@ class EmotionRecognitionService:
         vocab: Dict[str, int],
     ) -> Dict:
         df = pd.read_csv(self.validation_data_path)
-        texts = df[config.TEXT_COL].tolist()
+        texts = df[emotion_config.TEXT_COL].tolist()
         texts = [clean_text(text) for text in texts]
-        labels = df[config.LABEL_COL].tolist()
+        labels = df[emotion_config.LABEL_COL].tolist()
         predictions = []
         for text in texts:
             prediction = self.predict(
@@ -156,4 +171,7 @@ class EmotionRecognitionService:
             "precision": 100 * precision_score(labels, predictions, average="weighted"),
             "recall": 100 * recall_score(labels, predictions, average="weighted"),
             "f1_score": 100 * f1_score(labels, predictions, average="weighted"),
+            "confusion_matrix": calculate_confusion_matrix(
+                labels=labels, predictions=predictions
+            ),
         }
