@@ -2,6 +2,7 @@ import os
 
 import dotenv
 import streamlit as st
+import torch
 
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
@@ -9,6 +10,8 @@ from src.utils.enums import ChatBotConfig
 from src.utils.helpers import clean_document_text, hash_string
 
 dotenv.load_dotenv()
+# https://github.com/datalab-to/marker/issues/442
+torch.classes.__path__ = []
 
 
 def login_or_signup():
