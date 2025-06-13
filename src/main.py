@@ -2,7 +2,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI
 
 from src.api.v1.api import router as v1_router
 from src.core_managers.vector_store_manager import VectorStoreManager
@@ -20,19 +20,26 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 
 # https://fastapi.tiangolo.com/advanced/events/#startup-and-shutdown-together
-async def load_model_background(emotion_recognition_service: EmotionRecognitionService):
-    await emotion_recognition_service.async_load_model()
+async def load_model_background(
+    app: FastAPI, emotion_recognition_service: EmotionRecognitionService
+) -> None:
+    model, vocab = await emotion_recognition_service.async_load_model()
+    app.state.emotion_model = model
+    app.state.emotion_vocab = vocab
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    emotion_recognition_service = EmotionRecognitionService(use_embedding=True)
+    emotion_recognition_service = EmotionRecognitionService()
     app.state.emotion_recognition_service = emotion_recognition_service
 
     index_path = IngestionConfig.INDEX_PATH
     index_cancer = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.CANCER}")
     index_diabetes = vt_store.build_or_load_index(
         f"{index_path}/{ChatBotConfig.DIABETES}"
+    )
+    index_disease_control_and_prevention = vt_store.build_or_load_index(
+        f"{index_path}/{ChatBotConfig.DISEASE_CONTROL_AND_PREVENTION}"
     )
     index_genetic = vt_store.build_or_load_index(
         f"{index_path}/{ChatBotConfig.GENETIC_AND_RARE_DISEASES}"
@@ -52,6 +59,9 @@ async def lifespan(app: FastAPI):
     index_others = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.OTHERS}")
     app.state.index_cancer = index_cancer
     app.state.index_diabetes = index_diabetes
+    app.state.index_disease_control_and_prevention = (
+        index_disease_control_and_prevention
+    )
     app.state.index_genetic = index_genetic
     app.state.index_hormone = index_hormone
     app.state.index_heart_lung_blood = index_heart_lung_blood
@@ -59,12 +69,9 @@ async def lifespan(app: FastAPI):
     app.state.index_senior_health = index_senior_health
     app.state.index_others = index_others
 
-    # Start background task to load the model after the app starts
-    background_tasks = BackgroundTasks()
-    background_tasks.add_task(
-        load_model_background,
-        emotion_recognition_service,
-    )
+    model, vocab = await emotion_recognition_service.async_load_model()
+    app.state.emotion_model = model
+    app.state.emotion_vocab = vocab
 
     await create_tables()
     yield

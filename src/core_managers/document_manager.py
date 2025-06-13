@@ -24,7 +24,11 @@ class DocumentManager:
             cleaned_content = clean_document_text(content)
             if cleaned_content:
                 documents.append(Document(text=cleaned_content))
-        print(f"\n\n\n2 first cleaned documents: {[doc.text for doc in documents[:5]]}\n\n\n")
-        print(f"\n\n\n2 last cleaned documents: {[doc.text for doc in documents[-5:]]}\n\n\n")
+        print(
+            f"\n\n\n2 first cleaned documents: {[doc.text for doc in documents[:5]]}\n\n\n"
+        )
+        print(
+            f"\n\n\n2 last cleaned documents: {[doc.text for doc in documents[-5:]]}\n\n\n"
+        )
 
         return documents

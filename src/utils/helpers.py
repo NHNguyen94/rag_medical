@@ -1,11 +1,11 @@
 import hashlib
 import re
 import textwrap
+from collections import Counter
 from typing import Dict, List
 from uuid import UUID, uuid4
 
 import nltk
-import pandas as pd
 import yaml
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
@@ -60,11 +60,6 @@ def sample_qa_data() -> List[Dict]:
     ]
 
 
-def write_log_file(log_file_path: str, data: Dict, with_header: bool) -> None:
-    df = pd.DataFrame([data])
-    df.to_csv(log_file_path, mode="a", index=False, header=with_header)
-
-
 def download_nlkt() -> None:
     nltk.download("punkt")
     nltk.download("punkt_tab")
@@ -80,3 +75,22 @@ def clean_text(text: str) -> str:
     tokens = [word for word in tokens if word not in stop_words]
 
     return " ".join(tokens)
+
+
+def clean_and_tokenize(text: str) -> List[str]:
+    cleaned_text = clean_text(text)
+    if not cleaned_text:
+        return []
+    return cleaned_text.lower().split()
+
+
+def build_vocab(texts: List[str], min_freq: int = 1) -> Dict[str, int]:
+    counter = Counter()
+    for text in texts:
+        tokens = clean_and_tokenize(text)
+        counter.update(tokens)
+    vocab = {"<pad>": 0, "<unk>": 1}
+    for word, freq in counter.items():
+        if freq >= min_freq:
+            vocab[word] = len(vocab)
+    return vocab
