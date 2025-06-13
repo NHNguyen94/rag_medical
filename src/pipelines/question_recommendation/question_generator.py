@@ -1,5 +1,5 @@
 from typing import List, Dict
-import openai
+import random
 import numpy as np
 from pathlib import Path
 
@@ -31,20 +31,66 @@ class QuestionGenerator:
         # )
 
     def get_similar_questions(self, query_embedding, k: int = 4) -> List[str]:
-        """Retrieve similar questions using FAISS."""
-        """Retrieve similar questions using FAISS."""
-        # Ensure query_embedding is the right shape
+        """Retrieve exactly k similar questions using FAISS with adaptive search."""
         if isinstance(query_embedding, list):
             query_embedding = np.array(query_embedding)
 
         if query_embedding.ndim == 1:
             query_embedding = query_embedding.reshape(1, -1)
 
-        # Search in FAISS index
-        distances, indices = self.faiss_index.search(query_embedding.astype('float32'), k)
+        results = []
+        current_k = k
+        max_attempts = 5  # Limit the number of attempts to avoid infinite loops
+        
+        # Try progressively larger k values until we get enough results
+        for attempt in range(max_attempts):
+            distances, indices = self.faiss_index.search(query_embedding.astype('float32'), current_k)
+            
+            # Filter valid questions
+            valid_questions = [self.questions_mapping[str(idx)] for idx in indices[0] 
+                          if str(idx) in self.questions_mapping]
+            
+            # Remove duplicates while preserving order
+            results = []
+            for q in valid_questions:
+                if q not in results:
+                    results.append(q)
+                
+            # If we have enough, we're done
+            if len(results) >= k:
+                return results[:k]
+            
+            # Otherwise, try with a larger k
+            current_k = current_k * 2
+        
+        # If we still don't have enough, fill with default questions
+        default_questions  = [
+                    "What are the early signs or symptoms of this condition?",
+                    "How is this condition diagnosed?",
+                    "Are there common misdiagnoses?",
+                    "What are the risk factors associated with this condition?",
+                    "Can this condition be prevented?",
+                    "Who is most at risk?",
+                    "What treatment options are available?",
+                    "Are there any lifestyle changes that can help manage this condition?",
+                    "What is the success rate of common treatments?",
+                    "What is the long-term outlook for patients?",
+                    "What are possible complications?",
+                    "Can this condition become chronic?",
+                    "How does this condition affect daily living?",
+                    "Are there support groups or resources for patients?",
+                    "What accommodations might be necessary?"
+                ]
 
-        # Get questions using the mapping
-        return [self.questions_mapping[str(idx)] for idx in indices[0] if str(idx) in self.questions_mapping]
+        default_questions = random.sample(default_questions, k)
+        while len(results) < k:
+            # Add a default question that's not already in results
+            for q in default_questions:
+                if q not in results:
+                    results.append(q)
+                    break
+        
+        return results[:k]
 
     def generate_questions_with_llm(
             self,

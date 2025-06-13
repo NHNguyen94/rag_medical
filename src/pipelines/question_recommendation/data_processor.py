@@ -39,7 +39,6 @@ class QuestionDataProcessor:
         # Load all CSV files in the directory
         for file_path in self.data_dir.glob("*.csv"):
             df = pd.read_csv(file_path)
-            # Add source information
             df['source'] = file_path.stem
             combined_data.append(df)
 
@@ -51,7 +50,8 @@ class QuestionDataProcessor:
 
     def preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
         df.head()
-        df['cleaned_question'] = df['Question'].apply(clean_text)
+        # df['cleaned_question'] = df['Question'].apply(clean_text)
+        df['cleaned_question'] = df['Question']
         df = df.drop_duplicates(subset=['cleaned_question'])
         df = df.dropna(subset=['cleaned_question'])
 

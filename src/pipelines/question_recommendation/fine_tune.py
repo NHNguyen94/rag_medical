@@ -1,5 +1,6 @@
 from typing import List, Dict
 from pathlib import Path
+from tqdm import tqdm
 import json
 from transformers import (
     AutoModelForSeq2SeqLM,
@@ -58,7 +59,9 @@ class FineTuningPipeline:
 
         # Generate training pairs
         training_data = []
-        for idx, question in enumerate(processed_data['questions']):
+        for idx, question in tqdm(enumerate(processed_data['questions']),
+                             total=len(processed_data['questions']),
+                             desc="Generating training data"):
             question_embedding = processed_data['embeddings'][idx]
 
             follow_up_questions = question_generator.generate_follow_up_questions(
@@ -97,8 +100,7 @@ class FineTuningPipeline:
             ),
             'validation': split_dataset['test'].map(
                 tokenize_batch,
-                batched=True,
-                remove_columns=dataset.column_names
+                batched=True,                remove_columns=dataset.column_names
             )
         }
 

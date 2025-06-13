@@ -42,6 +42,10 @@ bcrypt = "<4.0"
 [tool.poetry.group.dev.dependencies]
 pytest-cov = "^6.1.1"
 pytest-mock = "^3.14.0"
+accelerate = "0.26.0"
+evaluate = "^0.4.3"
+rouge-score = "^0.1.2"
+bert-score = "^0.3.13"
 
 [build-system]
 requires = ["poetry-core"]
