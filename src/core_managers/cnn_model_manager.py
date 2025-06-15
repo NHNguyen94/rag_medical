@@ -96,7 +96,7 @@ class CNNModelManager:
         batch_size: int,
         epochs: int,
         device: torch.device,
-    ) -> None:
+    ) -> (float, float):
         dataset = self.create_dataset(texts_train, labels_train, vocab, max_len)
         data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         val_dataset = self.create_dataset(texts_val, labels_val, vocab, max_len)
@@ -121,6 +121,8 @@ class CNNModelManager:
 
             print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / len(data_loader)}")
 
+            final_train_loss = total_loss / len(data_loader)
+
             self.model.eval()
             with torch.no_grad():
                 val_loss = 0.0
@@ -143,4 +145,8 @@ class CNNModelManager:
                     f"Validation Loss: {val_loss / len(val_data_loader)}, Accuracy: {correct / total:.4f}"
                 )
 
+            final_val_loss = val_loss / len(val_data_loader)
+
             self.model.train()
+
+        return final_train_loss, final_val_loss

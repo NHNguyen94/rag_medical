@@ -7,6 +7,9 @@ run-backend:
 train-emotion:
 	PYTHONPATH=. python src/pipelines/emotion_recognition/train.py
 
+run-emotion:
+	PYTHONPATH=. python src/pipelines/emotion_recognition/inference.py
+
 format:
 	PYTHONPATH=. ruff format
 

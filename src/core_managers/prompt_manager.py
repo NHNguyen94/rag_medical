@@ -3,6 +3,7 @@ from typing import Literal, Optional, List
 
 from llama_index.core import PromptTemplate
 from llama_index.core.prompts import PromptType
+from loguru import logger
 
 from src.utils.enums import ChatBotConfig
 from src.utils.helpers import load_yml_configs
@@ -47,6 +48,7 @@ class PromptManager:
         # Put all services that require to update the system prompt here
         if customer_emotion:
             emotion_str = chat_bot_config.EMOTION_MAPPING[customer_emotion]
+            logger.info(f"customer emotion: {emotion_str}")
             emotion_prompt = f"""
             -----------
             This is the emotion of the user,
