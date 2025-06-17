@@ -7,13 +7,13 @@ class TestQuestionRecommender:
     service = QuestionService()
 
     def test_question_recommender(self):
-        question = "What is the outlook for Uterine Sarcoma?"
-        output = self.model.recommend(question)
+        question = "How is cancer diagnosed?"
+        output = self.model.recommend(question, 'Cancer')
         print(f"response1: {output} ")
-        assert isinstance(output, str) and len(output) > 5
+        assert isinstance(output, list)
 
     def test_question_service(self):
-        question = "What is the outlook for Uterine Sarcoma ?"
-        follow_up = self.service.get_follow_up_question(question)
+        question = "How is cancer diagnosed?"
+        follow_up = self.service.get_follow_up_question(question, domain='Cancer')
         print(f"response2: {follow_up} ")
-        assert isinstance(follow_up, str) and len(follow_up) > 5
+        assert isinstance(follow_up, list)
