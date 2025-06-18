@@ -178,3 +178,5 @@ cython_debug/
 /src/indices/
 
 .DS_Store
+
+/src/ml_models/flant5
