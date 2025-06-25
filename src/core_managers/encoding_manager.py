@@ -2,7 +2,7 @@ from typing import List, Dict
 
 import torch
 from torch import Tensor
-from transformers import AutoTokenizer
+from transformers import AutoTokenizer, AutoModel
 
 from src.utils.enums import EmotionRecognitionConfig
 
@@ -11,6 +11,9 @@ class EncodingManager:
     def __init__(self, model_name="bert-base-uncased"):
         self.config = EmotionRecognitionConfig()
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        self.model = AutoModel.from_pretrained(model_name)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
 
     def yield_tokens(self, texts: List[str]):
         for text in texts:

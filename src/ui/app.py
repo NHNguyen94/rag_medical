@@ -13,6 +13,32 @@ dotenv.load_dotenv()
 # https://github.com/datalab-to/marker/issues/442
 torch.classes.__path__ = []
 
+def handle_chat_response(chat_client, user_id, message, selected_domain):
+    try:
+        response_data = chat_client.chat(
+            user_id=user_id, message=message, selected_domain=selected_domain
+        )
+
+        nearest_docs = response_data.get("nearest_documents", [])
+        st.session_state.retrieved_documents = nearest_docs
+
+        followup_questions = response_data.get("recommended_questions", [])
+        st.session_state.followup_questions = followup_questions
+
+        response = response_data.get("response", "No response from the assistant.")
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+        return True
+
+    except Exception as e:
+        with st.chat_message("assistant"):
+            st.error(f"An error occurred: {e}")
+        return False
+
+
+
 
 def login_or_signup():
     st.title("Login / Sign Up")
@@ -81,6 +107,9 @@ def main_app():
         "Hello, I'm your AI medical assistant. How can I help you today?"
     )
 
+    if "followup_questions" not in st.session_state:
+        st.session_state.followup_questions = []
+
     if "retrieved_documents" not in st.session_state:
         st.session_state.retrieved_documents = []
 
@@ -97,22 +126,23 @@ def main_app():
         st.chat_message("user").markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
-        try:
-            response_data = chat_client.chat(
-                user_id=user_id, message=prompt, selected_domain=selected_domain
-            )
+        handle_chat_response(chat_client, user_id, prompt, selected_domain)
 
-            nearest_docs = response_data.get("nearest_documents", [])
-            st.session_state.retrieved_documents = nearest_docs
+    if st.session_state.followup_questions:
+        st.divider()
+        st.markdown('Related')
 
-            response = response_data.get("response", "No response from the assistant.")
-            with st.chat_message("assistant"):
-                st.markdown(response)
-            st.session_state.messages.append({"role": "assistant", "content": response})
+        followup_container = st.container()
+        with followup_container:
+            for idx, followup_question in enumerate(st.session_state.followup_questions):
+                button_key = f'followup_{idx}_{hash(followup_question)}'
 
-        except Exception as e:
-            with st.chat_message("assistant"):
-                st.error(f"An error occurred: {e}")
+                if st.button(f'➕ {followup_question}', key=button_key):
+                    st.session_state.messages.append({"role": "user", "content": followup_question})
+                    success = handle_chat_response(chat_client, user_id, followup_question, selected_domain)
+
+                    if success:
+                        st.rerun()
 
     with st.sidebar:
         st.header("Retrieved Documents")
