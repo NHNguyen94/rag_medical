@@ -1,12 +1,12 @@
 from pathlib import Path
 from src.pipelines.question_recommendation.fine_tune import FineTuningPipeline
-
+from src.utils.enums import QuestionRecommendConfig
 
 def main():
     # Configuration
     model_name = "google/flan-t5-base"
-    data_dir = "../../data/fine_tune_dataset"
-    output_dir = "./../ml_modles/flant5"
+    data_dir = QuestionRecommendConfig.FINE_TUNE_DATA_DIR
+    output_dir = QuestionRecommendConfig.MODEL_DIR
 
     # Initialize pipeline
     pipeline = FineTuningPipeline(

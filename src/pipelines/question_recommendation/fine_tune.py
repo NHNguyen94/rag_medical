@@ -15,19 +15,21 @@ import pandas as pd
 
 from src.pipelines.question_recommendation.data_processor import QuestionDataProcessor
 from src.pipelines.question_recommendation.question_generator import QuestionGenerator
+from src.utils.enums import QuestionRecommendConfig
 
 
 class FineTuningPipeline:
     def __init__(
             self,
             model_name: str = "google/flan-t5-base",
-            data_dir: str = "../../data/fine_tune_dataset",
-            output_dir: str = "../../ml_modles/flant5",
+            data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
+            output_dir: str = QuestionRecommendConfig.MODEL_DIR,
             max_length: int = 256,
             batch_size: int = 2,
             learning_rate: float = 2e-5,
             num_epochs: int = 3
     ):
+
         self.model_name = model_name
         self.data_dir = Path(data_dir)
         self.output_dir = Path(output_dir)
@@ -51,7 +53,7 @@ class FineTuningPipeline:
         # Process datasets
         processed_data = self.data_processor.process_datasets()
 
-        # Pass both faiss_index and questions_mapping to QuestionGenerator
+        # Initialize question generator
         question_generator = QuestionGenerator(
             faiss_index=processed_data['faiss_index'],
             questions_mapping=processed_data['questions_mapping']
@@ -60,8 +62,8 @@ class FineTuningPipeline:
         # Generate training pairs
         training_data = []
         for idx, question in tqdm(enumerate(processed_data['questions']),
-                             total=len(processed_data['questions']),
-                             desc="Generating training data"):
+                                 total=len(processed_data['questions']),
+                                 desc="Generating training data"):
             question_embedding = processed_data['embeddings'][idx]
 
             follow_up_questions = question_generator.generate_follow_up_questions(
@@ -81,32 +83,40 @@ class FineTuningPipeline:
         # Save to CSV for manual inspection
         csv_path = self.output_dir / "training_data.csv"
         df.to_csv(csv_path, index=False)
-        print(f"Training data saved to {csv_path}")
 
         # Convert to dataset
         dataset = Dataset.from_list(training_data)
         split_dataset = dataset.train_test_split(test_size=0.1)
 
-        # Create a tokenization function that can access self
-        def tokenize_batch(examples):
-            return self.tokenize_function(examples)
-
         # Tokenize both splits
         tokenized_dataset = {
             'train': split_dataset['train'].map(
-                tokenize_batch,
+                self.tokenize_function,
                 batched=True,
                 remove_columns=dataset.column_names
             ),
             'validation': split_dataset['test'].map(
-                tokenize_batch,
-                batched=True,                remove_columns=dataset.column_names
+                self.tokenize_function,
+                batched=True,
+                remove_columns=dataset.column_names
             )
         }
+
+        print("Sample tokenized data:")
+        sample = tokenized_dataset['train'][0]
+        print(f"Input IDs shape: {len(sample['input_ids'])}")
+        print(f"Labels shape: {len(sample['labels'])}")
+        print(f"First few input IDs: {sample['input_ids'][:10]}")
+        print(f"First few labels: {sample['labels'][:10]}")
+
+        labels_flat = [label for labels in tokenized_dataset['train']['labels'] for label in labels]
+        num_ignored = sum(1 for label in labels_flat if label == -100)
+        print(f"Number of ignored tokens (-100): {num_ignored}/{len(labels_flat)}")
 
         return tokenized_dataset
 
     def tokenize_function(self, examples):
+        """Tokenize the input and output sequences."""
         model_inputs = self.tokenizer(
             examples["input"],
             max_length=self.max_length,
@@ -117,47 +127,60 @@ class FineTuningPipeline:
         # Join the list of questions with a separator
         formatted_outputs = [" | ".join(questions) for questions in examples["output"]]
 
-        # Tokenize targets
-        with self.tokenizer.as_target_tokenizer():
-            labels = self.tokenizer(
-                formatted_outputs,
-                max_length=self.max_length,
-                padding="max_length",
-                truncation=True
-            )
+        labels = self.tokenizer(
+            text_target=formatted_outputs,
+            max_length=self.max_length,
+            padding="max_length",
+            truncation=True
+        )
 
-        model_inputs["labels"] = labels["input_ids"]
+        labels_input_ids = labels["input_ids"].copy()
+        labels_input_ids = [
+            [(label if label != self.tokenizer.pad_token_id else -100) for label in label_seq]
+            for label_seq in labels_input_ids
+        ]
+
+        model_inputs["labels"] = labels_input_ids
         return model_inputs
 
     def train(self):
         """Train the model."""
-        # Prepare dataset
         datasets = self.prepare_training_data()
-
 
         # Training arguments
         training_args = Seq2SeqTrainingArguments(
             output_dir=str(self.output_dir),
-            eval_strategy="epoch",
-            save_strategy="epoch",
+            eval_steps=100,
+            do_eval=True,
+            do_train=True,
+            save_steps=100,
+            eval_strategy="steps",
+            save_strategy="steps",
+            logging_strategy="steps",
+            logging_steps=10,
             learning_rate=self.learning_rate,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
             num_train_epochs=self.num_epochs,
             weight_decay=0.01,
             save_total_limit=3,
-            predict_with_generate=True,
-            fp16=torch.cuda.is_available(),
+            predict_with_generate=False,
+            fp16=True,
             logging_dir=str(self.output_dir / "logs"),
             load_best_model_at_end=True,
+            log_level='info',
+            report_to="none",
+            gradient_accumulation_steps=1,
+            max_grad_norm=1.0,
+            warmup_steps=100,
+            dataloader_pin_memory=False
         )
 
         # Data collator
         data_collator = DataCollatorForSeq2Seq(
             self.tokenizer,
             model=self.model,
-            padding="max_length",
-            max_length=self.max_length
+            label_pad_token_id=-100
         )
 
         # Initialize trainer
@@ -172,6 +195,9 @@ class FineTuningPipeline:
 
         # Train the model
         trainer.train()
+
+        metrics = trainer.evaluate()
+        print(f"Final validation loss: {metrics['eval_loss']:.4f}")
 
         # Save the model
         trainer.save_model(str(self.output_dir))
