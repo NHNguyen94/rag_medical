@@ -1,3 +1,10 @@
+
+data/
+models/
+results/
+*.pth
+*.csv
+fresh-clone/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -181,3 +188,4 @@ cython_debug/
 
 
 /src/ml_models/flant5/
+
