@@ -1,4 +1,5 @@
 import torch
+from pathlib import Path
 
 
 class ChatBotConfig:
@@ -75,3 +76,10 @@ class EmotionRecognitionConfig:
     DEFAULT_NUM_FILTERS = 100
     DEFAULT_DROPOUT = 0.2
     DEFAULT_LR = 0.001
+
+class QuestionRecommendConfig:
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    print(f"BASE_DIR: {BASE_DIR}")
+    FINE_TUNE_DATA_DIR = BASE_DIR/"data"/"fine_tune_dataset"/"CancerQA.csv"
+    PROCESSED_DATA_DIR = BASE_DIR/"data"/"processed"
+    MODEL_DIR = BASE_DIR/"data"/"processed"

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Request
 from src.api.v1.models.chat_request import ChatRequest
 from src.api.v1.models.chat_response import ChatResponse
 from src.services.chat_bot_service import ChatBotService
+from src.services.question_service import QuestionService
 from src.utils.enums import ChatBotConfig
 
 router = APIRouter(tags=["chatbot"])
@@ -39,7 +40,6 @@ async def chat(
         index_others = request.app.state.index_others
 
         domain = ChatBotConfig.DOMAIN_MAPPING[chat_request.selected_domain]
-        # print(f"Domain: {domain}")
         match domain:
             case ChatBotConfig.CANCER:
                 index = index_cancer
@@ -62,6 +62,7 @@ async def chat(
             case _:
                 raise ValueError(f"Invalid domain: {domain}")
 
+        question_recomend_service = QuestionService()
         chat_bot_service = ChatBotService(
             user_id=chat_request.user_id,
             index=index,
@@ -91,18 +92,20 @@ async def chat(
             synthesized_response=synthesized_response,
         )
 
+        follow_up_questions = question_recomend_service.get_follow_up_question(chat_request.message, domain)
         await chat_bot_service.append_history(
             message=chat_request.message,
             response_str=response,
             nearest_documents=nearest_documents,
             predicted_emotion=str(predicted_emotion.item()),
+            recommended_questions=follow_up_questions
         )
 
         response = ChatResponse(
             response=response,
             nearest_documents=nearest_documents,
+            recommended_questions=follow_up_questions
         )
-        # print(f"Chat response: {response}")
 
         return response
     except Exception as e:
