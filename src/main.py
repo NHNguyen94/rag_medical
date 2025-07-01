@@ -8,6 +8,7 @@ from src.api.v1.api import router as v1_router
 from src.core_managers.vector_store_manager import VectorStoreManager
 from src.database.models import create_tables
 from src.services.emotion_recognition_service import EmotionRecognitionService
+from src.services.topic_clustering_service import TopicClusteringService
 from src.utils.enums import IngestionConfig, ChatBotConfig
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # https://fastapi.tiangolo.com/advanced/events/#startup-and-shutdown-together
 async def load_model_background(
-    app: FastAPI, emotion_recognition_service: EmotionRecognitionService
+        app: FastAPI, emotion_recognition_service: EmotionRecognitionService
 ) -> None:
     model, vocab = await emotion_recognition_service.async_load_model()
     app.state.emotion_model = model
@@ -31,7 +32,9 @@ async def load_model_background(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     emotion_recognition_service = EmotionRecognitionService()
+    topic_clustering_service = TopicClusteringService()
     app.state.emotion_recognition_service = emotion_recognition_service
+    app.state.topic_clustering_service = topic_clustering_service
 
     index_path = IngestionConfig.INDEX_PATH
     index_cancer = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.CANCER}")
@@ -69,9 +72,12 @@ async def lifespan(app: FastAPI):
     app.state.index_senior_health = index_senior_health
     app.state.index_others = index_others
 
-    model, vocab = await emotion_recognition_service.async_load_model()
-    app.state.emotion_model = model
-    app.state.emotion_vocab = vocab
+    emotion_model, emotion_vocab = await emotion_recognition_service.async_load_model()
+    app.state.emotion_model = emotion_model
+    app.state.emotion_vocab = emotion_vocab
+
+    topic_cluster_model = await topic_clustering_service.async_load_model()
+    app.state.topic_cluster_model = topic_cluster_model
 
     await create_tables()
     yield

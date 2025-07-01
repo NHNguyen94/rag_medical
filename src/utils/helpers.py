@@ -71,6 +71,7 @@ def download_nlkt() -> None:
 
 
 def clean_text(text: str) -> str:
+    text = clean_document_text(text)
     text = text.lower().strip()
     text = re.sub(r"\d+", "", text)
     tokens = word_tokenize(text)

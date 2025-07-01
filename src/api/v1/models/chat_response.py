@@ -6,4 +6,4 @@ from pydantic import BaseModel
 class ChatResponse(BaseModel):
     response: str
     nearest_documents: List[str]
-    recommended_questions: List[str]
+    # recommended_questions: List[str]

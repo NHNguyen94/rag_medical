@@ -25,5 +25,11 @@ clear-db:
 ingest-data:
 	PYTHONPATH=. python src/pipelines/ingest_data/ingest_to_vt_store.py
 
+ingest-medical-data:
+	PYTHONPATH=. python src/pipelines/ingest_data/ingest_medical_data.py
+
 compare-rag:
 	PYTHONPATH=. python src/pipelines/rag/compare_rag.py
+
+test-topic-service:
+	PYTHONPATH=. python src/services/topic_clustering_service.py
