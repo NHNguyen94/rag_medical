@@ -14,9 +14,11 @@ def sample_data():
     questions = [
         "What are the symptoms of diabetes?",
         "How is blood pressure measured?",
-        "What causes heart disease?"
+        "What causes heart disease?",
     ]
-    embeddings = np.random.rand(3, 768).astype('float32')  # 3 questions, 768-dim embeddings
+    embeddings = np.random.rand(3, 768).astype(
+        "float32"
+    )  # 3 questions, 768-dim embeddings
     return questions, embeddings
 
 
@@ -35,7 +37,7 @@ def setup_files(tmp_path, sample_data):
 
     # Create questions mapping
     questions_mapping = {i: q for i, q in enumerate(questions)}
-    with open(output_dir / "questions_mapping.json", 'w') as f:
+    with open(output_dir / "questions_mapping.json", "w") as f:
         json.dump(questions_mapping, f)
 
     return output_dir, index, questions_mapping
@@ -44,10 +46,7 @@ def setup_files(tmp_path, sample_data):
 @pytest.fixture
 def question_generator(setup_files):
     output_dir, index, _ = setup_files
-    return QuestionGenerator(
-        faiss_index=index,
-        output_dir=str(output_dir)
-    )
+    return QuestionGenerator(faiss_index=index, output_dir=str(output_dir))
 
 
 class TestQuestionGenerator:
@@ -55,7 +54,10 @@ class TestQuestionGenerator:
         output_dir, _, _ = setup_files
         assert question_generator.faiss_index is not None
         assert question_generator.output_dir == Path(output_dir)
-        assert question_generator.questions_mapping_path == Path(output_dir) / "questions_mapping.json"
+        assert (
+            question_generator.questions_mapping_path
+            == Path(output_dir) / "questions_mapping.json"
+        )
 
     def test_get_similar_questions(self, question_generator, sample_data):
         _, embeddings = sample_data
@@ -67,8 +69,10 @@ class TestQuestionGenerator:
         assert len(similar_questions) <= 4  # Default k=4
         assert all(isinstance(q, str) for q in similar_questions)
 
-    @patch('src.core_managers.agent_manager.AgentManager.aget_stream_response')
-    def test_generate_questions_with_llm(self, mock_aget_stream_response, question_generator):
+    @patch("src.core_managers.agent_manager.AgentManager.aget_stream_response")
+    def test_generate_questions_with_llm(
+        self, mock_aget_stream_response, question_generator
+    ):
         mock_aget_stream_response.return_value = "Question 1\nQuestion 2\nQuestion 3"
 
         context = "Diabetes is a metabolic disease that causes high blood sugar"
@@ -78,7 +82,7 @@ class TestQuestionGenerator:
         questions = question_generator.generate_questions_with_llm(
             context=context,
             num_questions=num_questions,
-            existing_questions=existing_questions
+            existing_questions=existing_questions,
         )
 
         assert isinstance(questions, list)
@@ -86,16 +90,22 @@ class TestQuestionGenerator:
         assert all(isinstance(q, str) for q in questions)
         mock_aget_stream_response.assert_called_once()
 
-    @patch('src.question_generator.QuestionGenerator.get_similar_questions')
-    @patch('src.question_generator.QuestionGenerator.generate_questions_with_llm')
+    @patch("src.question_generator.QuestionGenerator.get_similar_questions")
+    @patch("src.question_generator.QuestionGenerator.generate_questions_with_llm")
     def test_generate_follow_up_questions(
-            self,
-            mock_generate_questions_with_llm,
-            mock_get_similar_questions,
-            question_generator
+        self,
+        mock_generate_questions_with_llm,
+        mock_get_similar_questions,
+        question_generator,
     ):
-        mock_get_similar_questions.return_value = ["Similar Question 1", "Similar Question 2"]
-        mock_generate_questions_with_llm.return_value = ["New Question 1", "New Question 2"]
+        mock_get_similar_questions.return_value = [
+            "Similar Question 1",
+            "Similar Question 2",
+        ]
+        mock_generate_questions_with_llm.return_value = [
+            "New Question 1",
+            "New Question 2",
+        ]
 
         context = "Diabetes symptoms include frequent urination and increased thirst"
         questions = question_generator.generate_follow_up_questions(context)
