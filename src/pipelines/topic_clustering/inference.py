@@ -18,7 +18,7 @@ if __name__ == "__main__":
         "How can I manage my hypertension?",
         "What is the best treatment for anxiety disorders?",
         "What are the side effects of chemotherapy?",
-        "How can I improve my mental health?"
+        "How can I improve my mental health?",
     ]
 
     for text in texts:

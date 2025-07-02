@@ -2,6 +2,7 @@ from pathlib import Path
 from src.pipelines.question_recommendation.fine_tune import FineTuningPipeline
 from src.utils.enums import QuestionRecommendConfig
 
+
 def main():
     # Configuration
     model_name = "google/flan-t5-base"
@@ -10,9 +11,7 @@ def main():
 
     # Initialize pipeline
     pipeline = FineTuningPipeline(
-        model_name=model_name,
-        data_dir=data_dir,
-        output_dir=output_dir
+        model_name=model_name, data_dir=data_dir, output_dir=output_dir
     )
 
     # Train model

@@ -9,14 +9,14 @@ topic_config = TopicClusteringConfig()
 
 
 def run_train(
-        model_name: str,
-        batch_size: int,
-        epochs: int,
-        train_data_path: str,
-        test_data_path: str,
-        validation_data_path: str,
-        model_path: str,
-        lr: float,
+    model_name: str,
+    batch_size: int,
+    epochs: int,
+    train_data_path: str,
+    test_data_path: str,
+    validation_data_path: str,
+    model_path: str,
+    lr: float,
 ) -> (float, float):
     topic_clustering_service = TopicClusteringService(
         model_name=model_name,
@@ -26,8 +26,7 @@ def run_train(
         lr=lr,
     )
     train_loss, val_loss = topic_clustering_service.train(
-        batch_size=batch_size,
-        epochs=epochs
+        batch_size=batch_size, epochs=epochs
     )
     topic_clustering_service.save_model(model_path)
 
@@ -44,16 +43,16 @@ def run_eval(validation_data_path: str, model_path: str) -> Dict:
 
 
 def main(
-        model_name: str,
-        batch_size: int,
-        epochs: int,
-        train_data_path: str,
-        test_data_path: str,
-        validation_data_path: str,
-        model_path: str,
-        lr: float,
-        log_path: str,
-        log_file_name: str,
+    model_name: str,
+    batch_size: int,
+    epochs: int,
+    train_data_path: str,
+    test_data_path: str,
+    validation_data_path: str,
+    model_path: str,
+    lr: float,
+    log_path: str,
+    log_file_name: str,
 ) -> None:
     start_time = datetime.now()
     train_loss, val_loss = run_train(
@@ -68,8 +67,7 @@ def main(
     )
     end_time = datetime.now()
     eval_result = run_eval(
-        validation_data_path=validation_data_path,
-        model_path=model_path
+        validation_data_path=validation_data_path, model_path=model_path
     )
 
     eval_result["train_loss"] = train_loss
@@ -104,8 +102,8 @@ if __name__ == "__main__":
         {
             "model_name": "google-bert/bert-base-uncased",
             "batch_size": 32,
-            "epochs": 10,
-            "lr": 0.0001,
+            "epochs": 5,
+            "lr": 0.001,
         },
     ]
 
@@ -120,5 +118,5 @@ if __name__ == "__main__":
             model_path=model_path,
             lr=params["lr"],
             log_path=log_path,
-            log_file_name=log_file_name
+            log_file_name=log_file_name,
         )

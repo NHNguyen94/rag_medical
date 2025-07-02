@@ -14,7 +14,11 @@ from sklearn.metrics import (
 
 from src.core_managers.cnn_model_manager import CNNModelManager, CNNModel
 from src.utils.enums import EmotionRecognitionConfig, ChatBotConfig
-from src.utils.helpers import clean_text, build_vocab, calculate_confusion_matrix_for_emotion
+from src.utils.helpers import (
+    clean_text,
+    build_vocab,
+    calculate_confusion_matrix_for_emotion,
+)
 
 emotion_config = EmotionRecognitionConfig()
 chatbot_config = ChatBotConfig()

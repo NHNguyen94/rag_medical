@@ -12,7 +12,10 @@ from sklearn.metrics import (
 )
 
 from src.core_managers.encoding_manager import EncodingManager
-from src.core_managers.transformer_model_manager import TransformerModelManager, TransformerModel
+from src.core_managers.transformer_model_manager import (
+    TransformerModelManager,
+    TransformerModel,
+)
 from src.utils.enums import TopicClusteringConfig
 from src.utils.helpers import clean_text, calculate_confusion_matrix_for_topic
 
@@ -21,14 +24,14 @@ topic_config = TopicClusteringConfig()
 
 class TopicClusteringService:
     def __init__(
-            self,
-            model_name: str = topic_config.DEFAULT_MODEL,
-            train_data_path: str = topic_config.TRAIN_DATA_PATH,
-            test_data_path: str = topic_config.TEST_DATA_PATH,
-            validation_data_path: str = topic_config.TEST_DATA_PATH,
-            dropout: float = topic_config.DEFAULT_DROPOUT,
-            lr: float = topic_config.DEFAULT_LR,
-            num_classes: int = topic_config.DEFAULT_NUM_CLASSES,
+        self,
+        model_name: str = topic_config.DEFAULT_MODEL,
+        train_data_path: str = topic_config.TRAIN_DATA_PATH,
+        test_data_path: str = topic_config.TEST_DATA_PATH,
+        validation_data_path: str = topic_config.TEST_DATA_PATH,
+        dropout: float = topic_config.DEFAULT_DROPOUT,
+        lr: float = topic_config.DEFAULT_LR,
+        num_classes: int = topic_config.DEFAULT_NUM_CLASSES,
     ):
         self.model_name = model_name
         self.num_classes = num_classes
@@ -46,9 +49,7 @@ class TopicClusteringService:
         )
 
     def train(self, batch_size: int, epochs: int) -> (float, float):
-        texts_train = pd.read_csv(self.train_data_path)[
-            topic_config.TEXT_COL
-        ].tolist()
+        texts_train = pd.read_csv(self.train_data_path)[topic_config.TEXT_COL].tolist()
         labels_train = pd.read_csv(self.train_data_path)[
             topic_config.LABEL_COL
         ].tolist()
@@ -63,14 +64,14 @@ class TopicClusteringService:
             labels_val=labels_val,
             batch_size=batch_size,
             max_len=topic_config.MAX_SEQ_LENGTH,
-            device=topic_config.DEVICE
+            device=topic_config.DEVICE,
         )
 
         return train_loss, val_loss
 
     def evaluate(
-            self,
-            model: TransformerModel,
+        self,
+        model: TransformerModel,
     ) -> Dict:
         df = pd.read_csv(self.validation_data_path)
         texts = df[topic_config.TEXT_COL].tolist()
@@ -108,7 +109,7 @@ class TopicClusteringService:
                 },
                 "model_state_dict": self.model_manager.model.state_dict(),
             },
-            model_path
+            model_path,
         )
 
     def load_model(self, model_path: str = None) -> TransformerModel:
@@ -127,9 +128,7 @@ class TopicClusteringService:
 
         return model
 
-    async def async_load_model(
-            self, model_path: str = None
-    ) -> TransformerModel:
+    async def async_load_model(self, model_path: str = None) -> TransformerModel:
         if model_path is None:
             model_path = topic_config.MODEL_PATH
         loop = asyncio.get_event_loop()
@@ -142,7 +141,7 @@ class TopicClusteringService:
             truncation=True,
             padding="max_length",
             max_length=topic_config.MAX_SEQ_LENGTH,
-            return_tensors="pt"
+            return_tensors="pt",
         )
         input_ids = encoded_text["input_ids"].to(topic_config.DEVICE)
         attention_mask = encoded_text["attention_mask"].to(topic_config.DEVICE)
@@ -151,26 +150,3 @@ class TopicClusteringService:
             predicted = torch.argmax(outputs, dim=1)
 
         return predicted.cpu().numpy().tolist()[0]
-
-
-if __name__ == "__main__":
-    topic_clustering_service = TopicClusteringService()
-    train_loss, val_loss = topic_clustering_service.train(
-        batch_size=32,
-        epochs=10
-    )
-    topic_clustering_service.save_model()
-
-    model = topic_clustering_service.load_model()
-
-    texts = [
-        "What are the symptoms of diabetes?",
-        "How can I manage my hypertension?",
-        "What is the best treatment for anxiety disorders?",
-        "What are the side effects of chemotherapy?",
-        "How can I improve my mental health?"
-    ]
-
-    for text in texts:
-        predicted_topic = topic_clustering_service.predict(text, model)
-        print(f"Text: {text}, Predicted Topic: {predicted_topic}")

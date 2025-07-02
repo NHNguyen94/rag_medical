@@ -12,18 +12,18 @@ from transformers import AutoTokenizer
 
 class TransformerTextDataset(Dataset):
     def __init__(
-            self,
-            texts: List[str],
-            labels: List[int],
-            tokenizer: AutoTokenizer,
-            max_len: int
+        self,
+        texts: List[str],
+        labels: List[int],
+        tokenizer: AutoTokenizer,
+        max_len: int,
     ):
         self.encodings = tokenizer(
             texts,
             truncation=True,
             padding="max_length",
             max_length=max_len,
-            return_tensors="pt"
+            return_tensors="pt",
         )
         self.labels = torch.tensor(labels, dtype=torch.long)
 
@@ -34,7 +34,7 @@ class TransformerTextDataset(Dataset):
         return {
             "input_ids": self.encodings["input_ids"][idx],
             "attention_mask": self.encodings["attention_mask"][idx],
-            "label": self.labels[idx]
+            "label": self.labels[idx],
         }
 
 
@@ -55,10 +55,10 @@ class TransformerModel(Module):
 
 class TransformerModelManager:
     def __init__(
-            self,
-            model_name: str,
-            num_classes: int,
-            lr: float,
+        self,
+        model_name: str,
+        num_classes: int,
+        lr: float,
     ):
         self.model = TransformerModel(model_name, num_classes)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -69,18 +69,22 @@ class TransformerModelManager:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def get_data_loaders(
-            self,
-            texts_train: List[str],
-            labels_train: List[int],
-            texts_val: List[str],
-            labels_val: List[int],
-            max_len: int,
-            batch_size: int
+        self,
+        texts_train: List[str],
+        labels_train: List[int],
+        texts_val: List[str],
+        labels_val: List[int],
+        max_len: int,
+        batch_size: int,
     ) -> (DataLoader, DataLoader):
         texts_train = [str(text) for text in texts_train]
         texts_val = [str(text) for text in texts_val]
-        train_dataset = TransformerTextDataset(texts_train, labels_train, self.tokenizer, max_len=max_len)
-        test_dataset = TransformerTextDataset(texts_val, labels_val, self.tokenizer, max_len=max_len)
+        train_dataset = TransformerTextDataset(
+            texts_train, labels_train, self.tokenizer, max_len=max_len
+        )
+        test_dataset = TransformerTextDataset(
+            texts_val, labels_val, self.tokenizer, max_len=max_len
+        )
 
         train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
         test_loader = DataLoader(test_dataset, batch_size=batch_size)
@@ -88,14 +92,15 @@ class TransformerModelManager:
         return train_loader, test_loader
 
     def train(
-            self, epochs: int,
-            texts_train: List[str],
-            labels_train: List[int],
-            texts_val: List[str],
-            labels_val: List[int],
-            batch_size: int,
-            max_len: int,
-            device: torch.device
+        self,
+        epochs: int,
+        texts_train: List[str],
+        labels_train: List[int],
+        texts_val: List[str],
+        labels_val: List[int],
+        batch_size: int,
+        max_len: int,
+        device: torch.device,
     ) -> (float, float):
         train_loader, val_loader = self.get_data_loaders(
             texts_train,
@@ -103,7 +108,7 @@ class TransformerModelManager:
             texts_val,
             labels_val,
             max_len=max_len,
-            batch_size=batch_size
+            batch_size=batch_size,
         )
         self.model.to(device)
         self.model.train()
@@ -130,7 +135,9 @@ class TransformerModelManager:
                 correct += predicted.eq(labels).sum().item()
                 total += labels.size(0)
 
-            print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / total:.4f}, Accuracy: {correct / total:.4f}")
+            print(
+                f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / total:.4f}, Accuracy: {correct / total:.4f}"
+            )
             final_train_loss = total_loss / total
 
             self.model.eval()
@@ -152,10 +159,11 @@ class TransformerModelManager:
                     val_correct += predicted.eq(labels).sum().item()
                     val_total += labels.size(0)
 
-            print(f"Validation Loss: {val_loss / val_total:.4f}, Accuracy: {val_correct / val_total:.4f}")
+            print(
+                f"Validation Loss: {val_loss / val_total:.4f}, Accuracy: {val_correct / val_total:.4f}"
+            )
             final_val_loss = val_loss / val_total
 
             self.model.train()
 
         return final_train_loss, final_val_loss
-

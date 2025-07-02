@@ -22,7 +22,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # https://fastapi.tiangolo.com/advanced/events/#startup-and-shutdown-together
 async def load_model_background(
-        app: FastAPI, emotion_recognition_service: EmotionRecognitionService
+    app: FastAPI, emotion_recognition_service: EmotionRecognitionService
 ) -> None:
     model, vocab = await emotion_recognition_service.async_load_model()
     app.state.emotion_model = model

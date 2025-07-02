@@ -17,17 +17,17 @@ from src.utils.enums import QuestionRecommendConfig
 
 class QuestionDataProcessor:
     def __init__(
-            self,
-            data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
-            output_dir: str = QuestionRecommendConfig.PROCESSED_DATA_DIR,
-            embedding_dim: int = 768
+        self,
+        data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
+        output_dir: str = QuestionRecommendConfig.PROCESSED_DATA_DIR,
+        embedding_dim: int = 768,
     ):
         self.data_dir = Path(data_dir)
         self.output_dir = Path(output_dir)
         self.embedding_dim = embedding_dim
 
-        self.tokenizer = AutoTokenizer.from_pretrained('bert-base-uncased')
-        self.model = AutoModel.from_pretrained('bert-base-uncased')
+        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+        self.model = AutoModel.from_pretrained("bert-base-uncased")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
@@ -45,14 +45,13 @@ class QuestionDataProcessor:
     def load_datasets(self) -> pd.DataFrame:
         file_path = self.data_dir
         df = pd.read_csv(Path(file_path))
-        df['source'] = Path(file_path).stem
+        df["source"] = Path(file_path).stem
         return df
 
-
     def preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
-        df['cleaned_question'] = df['Question']
-        df = df.drop_duplicates(subset=['cleaned_question'])
-        df = df.dropna(subset=['cleaned_question'])
+        df["cleaned_question"] = df["Question"]
+        df = df.drop_duplicates(subset=["cleaned_question"])
+        df = df.dropna(subset=["cleaned_question"])
 
         self.output_dir.mkdir(parents=True, exist_ok=True)
         df.to_csv(self.output_dir / "cleaned_dataset.csv", index=False)
@@ -64,12 +63,19 @@ class QuestionDataProcessor:
         embeddings = []
         for question in tqdm(questions, desc="Creating embeddings"):
             # Tokenize and create embedding
-            inputs = self.tokenizer(question, return_tensors="pt", padding=True, truncation=True)
+            inputs = self.tokenizer(
+                question, return_tensors="pt", padding=True, truncation=True
+            )
             inputs = {k: v.to(self.device) for k, v in inputs.items()}
 
             with torch.no_grad():
                 outputs = self.model(**inputs)
-                embedding = outputs.last_hidden_state[:, 0, :].cpu().numpy()[0].astype('float32')
+                embedding = (
+                    outputs.last_hidden_state[:, 0, :]
+                    .cpu()
+                    .numpy()[0]
+                    .astype("float32")
+                )
 
                 if embedding.size != self.embedding_dim:
                     raise ValueError(f"Expected {self.embedding_dim}, got {emb.size}")
@@ -80,7 +86,7 @@ class QuestionDataProcessor:
 
     def build_faiss_index(self, questions: List[str], embeddings: List[List[float]]):
         """Build FAISS index for question retrieval."""
-        embeddings_array = np.array(embeddings).astype('float32')
+        embeddings_array = np.array(embeddings).astype("float32")
 
         faiss_index = faiss.IndexFlatL2(self.embedding_dim)
         faiss_index.add(embeddings_array)
@@ -96,7 +102,7 @@ class QuestionDataProcessor:
         processed_df = self.preprocess_data(combined_df)
 
         print("Creating embeddings...")
-        questions = processed_df['cleaned_question'].tolist()
+        questions = processed_df["cleaned_question"].tolist()
         embeddings = self.create_embeddings(questions)
 
         print("Building FAISS index...")
@@ -105,19 +111,18 @@ class QuestionDataProcessor:
         # Save processed data
         questions_mapping = {i: q for i, q in enumerate(questions)}
         # Write out to disk
-        with open(f'{self.output_dir}/questions_mapping.json', "w", encoding="utf-8") as f:
+        with open(
+            f"{self.output_dir}/questions_mapping.json", "w", encoding="utf-8"
+        ) as f:
             json.dump(questions_mapping, f, ensure_ascii=False, indent=2)
 
-
         return {
-            'questions': questions,
-            'embeddings': embeddings,
-            'faiss_index': faiss_index,
-            'questions_mapping': questions_mapping,
-            'metadata': {
-                'num_questions': len(questions),
-                'embedding_dim': self.embedding_dim
-            }
+            "questions": questions,
+            "embeddings": embeddings,
+            "faiss_index": faiss_index,
+            "questions_mapping": questions_mapping,
+            "metadata": {
+                "num_questions": len(questions),
+                "embedding_dim": self.embedding_dim,
+            },
         }
-
-

@@ -27,8 +27,8 @@ def encode_labels(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def ingest(
-        document_paths: Dict[str, str],
-        final_csv_dir: str,
+    document_paths: Dict[str, str],
+    final_csv_dir: str,
 ) -> None:
     df = concat_documents(document_paths)
     df = df.dropna()
@@ -46,8 +46,8 @@ def ingest(
     train_df = df[df["split"] == "train"]
     test_df = df[df["split"] == "test"]
 
-    validation_df = test_df.iloc[:int(len(test_df) * 0.5)]
-    new_test_df = test_df.iloc[int(len(test_df) * 0.5):]
+    validation_df = test_df.iloc[: int(len(test_df) * 0.5)]
+    new_test_df = test_df.iloc[int(len(test_df) * 0.5) :]
 
     train_df.to_csv(f"{final_csv_dir}/training.csv", index=False)
     new_test_df.to_csv(f"{final_csv_dir}/test.csv", index=False)

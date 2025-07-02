@@ -99,12 +99,14 @@ class EmotionRecognitionConfig:
     DEFAULT_DROPOUT = 0.2
     DEFAULT_LR = 0.001
 
+
 class QuestionRecommendConfig:
     BASE_DIR = Path(__file__).resolve().parent.parent
     print(f"BASE_DIR: {BASE_DIR}")
-    FINE_TUNE_DATA_DIR = BASE_DIR/"data"/"fine_tune_dataset"/"CancerQA.csv"
-    PROCESSED_DATA_DIR = BASE_DIR/"data"/"processed"
-    MODEL_DIR = BASE_DIR/"data"/"processed"
+    FINE_TUNE_DATA_DIR = BASE_DIR / "data" / "fine_tune_dataset" / "CancerQA.csv"
+    PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
+    MODEL_DIR = BASE_DIR / "data" / "processed"
+
 
 class TopicClusteringConfig:
     DEFAULT_MODEL = "google/bert_uncased_L-2_H-128_A-2"
