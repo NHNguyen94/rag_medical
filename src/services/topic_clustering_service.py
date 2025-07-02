@@ -157,9 +157,8 @@ if __name__ == "__main__":
     topic_clustering_service = TopicClusteringService()
     train_loss, val_loss = topic_clustering_service.train(
         batch_size=32,
-        epochs=1
+        epochs=10
     )
-    print(f"Training Loss: {train_loss}, Validation Loss: {val_loss}")
     topic_clustering_service.save_model()
 
     model = topic_clustering_service.load_model()

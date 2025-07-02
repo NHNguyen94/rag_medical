@@ -88,7 +88,6 @@ def main(
 
 
 if __name__ == "__main__":
-    model_name = "google/bert_uncased_L-2_H-128_A-2"
     num_classes = 9
     train_data_path = "src/data/medical_data/all/training.csv"
     test_data_path = "src/data/medical_data/all/test.csv"
@@ -103,15 +102,16 @@ if __name__ == "__main__":
 
     hyper_params = [
         {
-            "batch_size": 16,
-            "epochs": 1,
-            "lr": 0.001,
+            "model_name": "google-bert/bert-base-uncased",
+            "batch_size": 32,
+            "epochs": 10,
+            "lr": 0.0001,
         },
     ]
 
     for params in hyper_params:
         main(
-            model_name=model_name,
+            model_name=params["model_name"],
             batch_size=params["batch_size"],
             epochs=params["epochs"],
             train_data_path=train_data_path,
