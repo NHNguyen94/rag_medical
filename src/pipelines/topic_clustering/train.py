@@ -102,8 +102,8 @@ if __name__ == "__main__":
         {
             "model_name": "google/bert_uncased_L-2_H-128_A-2",
             "batch_size": 32,
-            "epochs": 20,
-            "lr": 0.00001,
+            "epochs": 150,
+            "lr": 0.000005,
         },
         # {
         #     "model_name": "google/bert_uncased_L-4_H-256_A-4",
