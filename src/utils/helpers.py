@@ -101,7 +101,7 @@ def build_vocab(texts: List[str], min_freq: int = 1) -> Dict[str, int]:
     return vocab
 
 
-def calculate_confusion_matrix(
+def calculate_confusion_matrix_for_emotion(
     labels: List[int], predictions: List[int], normalize: str = "true"
 ) -> pd.DataFrame:
     con_matrix = confusion_matrix(labels, predictions, normalize=normalize).tolist()
@@ -117,6 +117,30 @@ def calculate_confusion_matrix(
     current_matrix_header = con_matrix_df.columns
     new_matrix_header = [
         ChatBotConfig.EMOTION_MAPPING[int(i)] for i in current_matrix_header
+    ]
+
+    con_matrix_df.index = new_matrix_index
+    con_matrix_df.columns = new_matrix_header
+
+    return con_matrix_df
+
+
+def calculate_confusion_matrix_for_topic(
+    labels: List[int], predictions: List[int], normalize: str = "true"
+) -> pd.DataFrame:
+    con_matrix = confusion_matrix(labels, predictions, normalize=normalize).tolist()
+    con_matrix_df = pd.DataFrame(
+        con_matrix,
+        index=[str(i) for i in range(len(con_matrix))],  # True labels
+        columns=[str(i) for i in range(len(con_matrix[0]))],  # Predicted labels
+    )
+    current_matrix_index = con_matrix_df.index
+    new_matrix_index = [
+        ChatBotConfig.DOMAIN_NUMBER_MAPPING[int(i)] for i in current_matrix_index
+    ]
+    current_matrix_header = con_matrix_df.columns
+    new_matrix_header = [
+        ChatBotConfig.DOMAIN_NUMBER_MAPPING[int(i)] for i in current_matrix_header
     ]
 
     con_matrix_df.index = new_matrix_index

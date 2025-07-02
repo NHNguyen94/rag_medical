@@ -37,8 +37,6 @@ def ingest(
     df[topic_config.TEXT_COL] = df[topic_config.TEXT_COL].str.lower()
     df = encode_labels(df)
 
-    print(df.head())
-
     total_classes = df[topic_config.LABEL_COL].nunique()
     print(f"Total classes: {total_classes}")
 
@@ -48,8 +46,12 @@ def ingest(
     train_df = df[df["split"] == "train"]
     test_df = df[df["split"] == "test"]
 
+    validation_df = test_df.iloc[:int(len(test_df) * 0.5)]
+    new_test_df = test_df.iloc[int(len(test_df) * 0.5):]
+
     train_df.to_csv(f"{final_csv_dir}/training.csv", index=False)
-    test_df.to_csv(f"{final_csv_dir}/test.csv", index=False)
+    new_test_df.to_csv(f"{final_csv_dir}/test.csv", index=False)
+    validation_df.to_csv(f"{final_csv_dir}/validation.csv", index=False)
 
 
 if __name__ == "__main__":

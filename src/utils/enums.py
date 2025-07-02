@@ -52,6 +52,17 @@ class ChatBotConfig:
         SENIOR_HEALTH: 7,
         OTHERS: 8,
     }
+    DOMAIN_NUMBER_MAPPING = {
+        0: CANCER,
+        1: DIABETES,
+        2: DISEASE_CONTROL_AND_PREVENTION,
+        3: GENETIC_AND_RARE_DISEASES,
+        4: GROWTH_HORMONE_RECEPTOR,
+        5: HEART_LUNG_AND_BLOOD,
+        6: NEUROLOGICAL_DISORDERS_AND_STROKE,
+        7: SENIOR_HEALTH,
+        8: OTHERS,
+    }
     EMOTION_MAPPING = {
         0: "sadness",
         1: "joy",

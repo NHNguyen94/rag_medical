@@ -1,13 +1,20 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-from typing import List
+from typing import Dict
 
 import pandas as pd
 import torch
+from sklearn.metrics import (
+    precision_score,
+    recall_score,
+    f1_score,
+    accuracy_score,
+)
 
 from src.core_managers.encoding_manager import EncodingManager
 from src.core_managers.transformer_model_manager import TransformerModelManager, TransformerModel
 from src.utils.enums import TopicClusteringConfig
+from src.utils.helpers import clean_text, calculate_confusion_matrix_for_topic
 
 topic_config = TopicClusteringConfig()
 
@@ -31,17 +38,14 @@ class TopicClusteringService:
         self.executor = ThreadPoolExecutor(max_workers=1)
         self.train_data_path = train_data_path
         self.test_data_path = test_data_path
+        self.validation_data_path = validation_data_path
         self.model_manager = TransformerModelManager(
             model_name=model_name,
             num_classes=num_classes,
             lr=lr,
         )
 
-    def train(
-            self,
-            batch_size: int = 32,
-            epochs: int = 10,
-    ) -> (float, float):
+    def train(self, batch_size: int, epochs: int) -> (float, float):
         texts_train = pd.read_csv(self.train_data_path)[
             topic_config.TEXT_COL
         ].tolist()
@@ -64,25 +68,32 @@ class TopicClusteringService:
 
         return train_loss, val_loss
 
-    def evaluate(self, texts: List[str], labels: List[int]) -> float:
-        encoded_texts = self.model_manager.tokenizer(
-            texts,
-            truncation=True,
-            padding="max_length",
-            max_length=topic_config.MAX_SEQ_LENGTH,
-            return_tensors="pt"
-        )
-        input_ids = encoded_texts["input_ids"].to(topic_config.DEVICE)
-        attention_mask = encoded_texts["attention_mask"].to(topic_config.DEVICE)
+    def evaluate(
+            self,
+            model: TransformerModel,
+    ) -> Dict:
+        df = pd.read_csv(self.validation_data_path)
+        texts = df[topic_config.TEXT_COL].tolist()
+        texts = [str(text) for text in texts]
+        labels = df[topic_config.LABEL_COL].tolist()
+        predictions = []
+        for text in texts:
+            prediction = self.predict(
+                text=text,
+                model=model,
+            )
+            predictions.append(prediction)
 
-        with torch.no_grad():
-            outputs = self.model_manager.model(input_ids, attention_mask)
-            predictions = torch.argmax(outputs, dim=1)
-
-        correct_predictions = (predictions.cpu().numpy() == labels).sum()
-        accuracy = correct_predictions / len(labels)
-
-        return accuracy
+        return {
+            "unique_predicted_labels": sorted(set(predictions)),
+            "accuracy": 100 * accuracy_score(labels, predictions),
+            "precision": 100 * precision_score(labels, predictions, average="weighted"),
+            "recall": 100 * recall_score(labels, predictions, average="weighted"),
+            "f1_score": 100 * f1_score(labels, predictions, average="weighted"),
+            "confusion_matrix": calculate_confusion_matrix_for_topic(
+                labels=labels, predictions=predictions
+            ),
+        }
 
     def save_model(self, model_path: str = None) -> None:
         if model_path is None:
@@ -125,6 +136,7 @@ class TopicClusteringService:
         return await loop.run_in_executor(self.executor, self.load_model, model_path)
 
     def predict(self, text: str, model: TransformerModel) -> int:
+        text = clean_text(text)
         encoded_text = self.model_manager.tokenizer(
             [text],
             truncation=True,
