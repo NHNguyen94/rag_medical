@@ -181,3 +181,5 @@ cython_debug/
 
 
 /src/ml_models/flant5/
+
+src/.DS_Store

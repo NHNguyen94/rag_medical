@@ -25,6 +25,9 @@ async def chat(
         emotion_model = request.app.state.emotion_model
         emotion_vocab = request.app.state.emotion_vocab
 
+        topic_clustering_service = request.app.state.topic_clustering_service
+        topic_cluster_model = request.app.state.topic_cluster_model
+
         index_cancer = request.app.state.index_cancer
         index_diabetes = request.app.state.index_diabetes
         index_disease_control_and_prevention = (
@@ -62,13 +65,26 @@ async def chat(
             case _:
                 raise ValueError(f"Invalid domain: {domain}")
 
-        question_recomend_service = QuestionService()
+        # question_recomend_service = QuestionService()
         chat_bot_service = ChatBotService(
             user_id=chat_request.user_id,
             index=index,
             force_use_tools=force_use_tools,
             use_cot=use_cot,
         )
+
+        # Use later for question recommendation
+        topic_domain = ChatBotConfig.DOMAIN_ENCODE_MAPPING
+        predicted_topic_no = topic_clustering_service.predict(
+            chat_request.message,
+            topic_cluster_model,
+        )
+        print(f"Predicted topic no: {predicted_topic_no}")
+        for k, v in topic_domain.items():
+            if v == predicted_topic_no:
+                predicted_topic = k
+                print(f"Predicted topic: {predicted_topic}")
+                break
 
         predicted_emotion = emotion_recognition_service.predict(
             text=chat_request.message,
@@ -92,19 +108,19 @@ async def chat(
             synthesized_response=synthesized_response,
         )
 
-        follow_up_questions = question_recomend_service.get_follow_up_question(chat_request.message, domain)
+        # follow_up_questions = question_recomend_service.get_follow_up_question(chat_request.message, domain)
         await chat_bot_service.append_history(
             message=chat_request.message,
             response_str=response,
             nearest_documents=nearest_documents,
             predicted_emotion=str(predicted_emotion.item()),
-            recommended_questions=follow_up_questions
+            # recommended_questions=follow_up_questions
         )
 
         response = ChatResponse(
             response=response,
             nearest_documents=nearest_documents,
-            recommended_questions=follow_up_questions
+            # recommended_questions=follow_up_questions
         )
 
         return response

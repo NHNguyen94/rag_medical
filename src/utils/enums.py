@@ -41,6 +41,28 @@ class ChatBotConfig:
         "Senior Health": SENIOR_HEALTH,
         "Others": OTHERS,
     }
+    DOMAIN_ENCODE_MAPPING = {
+        CANCER: 0,
+        DIABETES: 1,
+        DISEASE_CONTROL_AND_PREVENTION: 2,
+        GENETIC_AND_RARE_DISEASES: 3,
+        GROWTH_HORMONE_RECEPTOR: 4,
+        HEART_LUNG_AND_BLOOD: 5,
+        NEUROLOGICAL_DISORDERS_AND_STROKE: 6,
+        SENIOR_HEALTH: 7,
+        OTHERS: 8,
+    }
+    DOMAIN_NUMBER_MAPPING = {
+        0: CANCER,
+        1: DIABETES,
+        2: DISEASE_CONTROL_AND_PREVENTION,
+        3: GENETIC_AND_RARE_DISEASES,
+        4: GROWTH_HORMONE_RECEPTOR,
+        5: HEART_LUNG_AND_BLOOD,
+        6: NEUROLOGICAL_DISORDERS_AND_STROKE,
+        7: SENIOR_HEALTH,
+        8: OTHERS,
+    }
     EMOTION_MAPPING = {
         0: "sadness",
         1: "joy",
@@ -69,7 +91,7 @@ class EmotionRecognitionConfig:
     TEST_DATA_PATH = "src/data/emotion_data/test.csv"
     VALIDATION_DATA_PATH = "src/data/emotion_data/validation.csv"
     MAX_SEQ_LENGTH = 100
-    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
     DEFAULT_EMBED_DIM = 100
     DEFAULT_NUM_CLASSES = 6
     DEFAULT_KERNEL_SIZES = [3, 4, 5]
@@ -77,9 +99,24 @@ class EmotionRecognitionConfig:
     DEFAULT_DROPOUT = 0.2
     DEFAULT_LR = 0.001
 
+
 class QuestionRecommendConfig:
     BASE_DIR = Path(__file__).resolve().parent.parent
     print(f"BASE_DIR: {BASE_DIR}")
-    FINE_TUNE_DATA_DIR = BASE_DIR/"data"/"fine_tune_dataset"/"CancerQA.csv"
-    PROCESSED_DATA_DIR = BASE_DIR/"data"/"processed"
-    MODEL_DIR = BASE_DIR/"data"/"processed"
+    FINE_TUNE_DATA_DIR = BASE_DIR / "data" / "fine_tune_dataset" / "CancerQA.csv"
+    PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
+    MODEL_DIR = BASE_DIR / "data" / "processed"
+
+
+class TopicClusteringConfig:
+    DEFAULT_MODEL = "google/bert_uncased_L-2_H-128_A-2"
+    DEFAULT_DROPOUT = 0.2
+    DEFAULT_LR = 0.001
+    DEFAULT_NUM_CLASSES = 9
+    MAX_SEQ_LENGTH = 148
+    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    LABEL_COL = "topic"
+    TEXT_COL = "Question"
+    TRAIN_DATA_PATH = "src/data/medical_data/all/training.csv"
+    TEST_DATA_PATH = "src/data/medical_data/all/test.csv"
+    MODEL_PATH = "src/ml_models/model_files/topic_clustering_model.pth"

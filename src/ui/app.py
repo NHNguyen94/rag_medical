@@ -13,6 +13,7 @@ dotenv.load_dotenv()
 # https://github.com/datalab-to/marker/issues/442
 torch.classes.__path__ = []
 
+
 def handle_chat_response(chat_client, user_id, message, selected_domain):
     try:
         response_data = chat_client.chat(
@@ -36,8 +37,6 @@ def handle_chat_response(chat_client, user_id, message, selected_domain):
         with st.chat_message("assistant"):
             st.error(f"An error occurred: {e}")
         return False
-
-
 
 
 def login_or_signup():
@@ -130,16 +129,22 @@ def main_app():
 
     if st.session_state.followup_questions:
         st.divider()
-        st.markdown('Related')
+        st.markdown("Related")
 
         followup_container = st.container()
         with followup_container:
-            for idx, followup_question in enumerate(st.session_state.followup_questions):
-                button_key = f'followup_{idx}_{hash(followup_question)}'
+            for idx, followup_question in enumerate(
+                st.session_state.followup_questions
+            ):
+                button_key = f"followup_{idx}_{hash(followup_question)}"
 
-                if st.button(f'➕ {followup_question}', key=button_key):
-                    st.session_state.messages.append({"role": "user", "content": followup_question})
-                    success = handle_chat_response(chat_client, user_id, followup_question, selected_domain)
+                if st.button(f"➕ {followup_question}", key=button_key):
+                    st.session_state.messages.append(
+                        {"role": "user", "content": followup_question}
+                    )
+                    success = handle_chat_response(
+                        chat_client, user_id, followup_question, selected_domain
+                    )
 
                     if success:
                         st.rerun()

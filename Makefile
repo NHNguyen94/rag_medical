@@ -10,6 +10,12 @@ train-emotion:
 run-emotion:
 	PYTHONPATH=. python src/pipelines/emotion_recognition/inference.py
 
+train-topic:
+	PYTHONPATH=. python src/pipelines/topic_clustering/train.py
+
+run-topic:
+	PYTHONPATH=. python src/pipelines/topic_clustering/inference.py
+
 format:
 	PYTHONPATH=. ruff format
 
@@ -24,6 +30,9 @@ clear-db:
 
 ingest-data:
 	PYTHONPATH=. python src/pipelines/ingest_data/ingest_to_vt_store.py
+
+ingest-medical-data:
+	PYTHONPATH=. python src/pipelines/ingest_data/ingest_medical_data.py
 
 compare-rag:
 	PYTHONPATH=. python src/pipelines/rag/compare_rag.py

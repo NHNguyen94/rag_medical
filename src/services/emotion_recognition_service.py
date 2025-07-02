@@ -14,7 +14,11 @@ from sklearn.metrics import (
 
 from src.core_managers.cnn_model_manager import CNNModelManager, CNNModel
 from src.utils.enums import EmotionRecognitionConfig, ChatBotConfig
-from src.utils.helpers import clean_text, build_vocab, calculate_confusion_matrix
+from src.utils.helpers import (
+    clean_text,
+    build_vocab,
+    calculate_confusion_matrix_for_emotion,
+)
 
 emotion_config = EmotionRecognitionConfig()
 chatbot_config = ChatBotConfig()
@@ -171,7 +175,7 @@ class EmotionRecognitionService:
             "precision": 100 * precision_score(labels, predictions, average="weighted"),
             "recall": 100 * recall_score(labels, predictions, average="weighted"),
             "f1_score": 100 * f1_score(labels, predictions, average="weighted"),
-            "confusion_matrix": calculate_confusion_matrix(
+            "confusion_matrix": calculate_confusion_matrix_for_emotion(
                 labels=labels, predictions=predictions
             ),
         }

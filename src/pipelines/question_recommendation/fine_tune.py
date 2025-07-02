@@ -7,7 +7,7 @@ from transformers import (
     AutoTokenizer,
     Seq2SeqTrainingArguments,
     Seq2SeqTrainer,
-    DataCollatorForSeq2Seq
+    DataCollatorForSeq2Seq,
 )
 from datasets import Dataset
 import torch
@@ -20,16 +20,15 @@ from src.utils.enums import QuestionRecommendConfig
 
 class FineTuningPipeline:
     def __init__(
-            self,
-            model_name: str = "google/flan-t5-base",
-            data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
-            output_dir: str = QuestionRecommendConfig.MODEL_DIR,
-            max_length: int = 256,
-            batch_size: int = 2,
-            learning_rate: float = 2e-5,
-            num_epochs: int = 3
+        self,
+        model_name: str = "google/flan-t5-base",
+        data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
+        output_dir: str = QuestionRecommendConfig.MODEL_DIR,
+        max_length: int = 256,
+        batch_size: int = 2,
+        learning_rate: float = 2e-5,
+        num_epochs: int = 3,
     ):
-
         self.model_name = model_name
         self.data_dir = Path(data_dir)
         self.output_dir = Path(output_dir)
@@ -55,27 +54,30 @@ class FineTuningPipeline:
 
         # Initialize question generator
         question_generator = QuestionGenerator(
-            faiss_index=processed_data['faiss_index'],
-            questions_mapping=processed_data['questions_mapping']
+            faiss_index=processed_data["faiss_index"],
+            questions_mapping=processed_data["questions_mapping"],
         )
 
         # Generate training pairs
         training_data = []
-        for idx, question in tqdm(enumerate(processed_data['questions']),
-                                 total=len(processed_data['questions']),
-                                 desc="Generating training data"):
-            question_embedding = processed_data['embeddings'][idx]
+        for idx, question in tqdm(
+            enumerate(processed_data["questions"]),
+            total=len(processed_data["questions"]),
+            desc="Generating training data",
+        ):
+            question_embedding = processed_data["embeddings"][idx]
 
             follow_up_questions = question_generator.generate_follow_up_questions(
-                question_embedding,
-                num_questions=4
+                question_embedding, num_questions=4
             )
 
-            training_data.append({
-                'input': question,
-                'output': follow_up_questions,
-                'follow_up_combined': ' | '.join(follow_up_questions)
-            })
+            training_data.append(
+                {
+                    "input": question,
+                    "output": follow_up_questions,
+                    "follow_up_combined": " | ".join(follow_up_questions),
+                }
+            )
 
         # Convert to DataFrame for inspection
         df = pd.DataFrame(training_data)
@@ -90,26 +92,28 @@ class FineTuningPipeline:
 
         # Tokenize both splits
         tokenized_dataset = {
-            'train': split_dataset['train'].map(
+            "train": split_dataset["train"].map(
                 self.tokenize_function,
                 batched=True,
-                remove_columns=dataset.column_names
+                remove_columns=dataset.column_names,
             ),
-            'validation': split_dataset['test'].map(
+            "validation": split_dataset["test"].map(
                 self.tokenize_function,
                 batched=True,
-                remove_columns=dataset.column_names
-            )
+                remove_columns=dataset.column_names,
+            ),
         }
 
         print("Sample tokenized data:")
-        sample = tokenized_dataset['train'][0]
+        sample = tokenized_dataset["train"][0]
         print(f"Input IDs shape: {len(sample['input_ids'])}")
         print(f"Labels shape: {len(sample['labels'])}")
         print(f"First few input IDs: {sample['input_ids'][:10]}")
         print(f"First few labels: {sample['labels'][:10]}")
 
-        labels_flat = [label for labels in tokenized_dataset['train']['labels'] for label in labels]
+        labels_flat = [
+            label for labels in tokenized_dataset["train"]["labels"] for label in labels
+        ]
         num_ignored = sum(1 for label in labels_flat if label == -100)
         print(f"Number of ignored tokens (-100): {num_ignored}/{len(labels_flat)}")
 
@@ -121,7 +125,7 @@ class FineTuningPipeline:
             examples["input"],
             max_length=self.max_length,
             padding="max_length",
-            truncation=True
+            truncation=True,
         )
 
         # Join the list of questions with a separator
@@ -131,12 +135,15 @@ class FineTuningPipeline:
             text_target=formatted_outputs,
             max_length=self.max_length,
             padding="max_length",
-            truncation=True
+            truncation=True,
         )
 
         labels_input_ids = labels["input_ids"].copy()
         labels_input_ids = [
-            [(label if label != self.tokenizer.pad_token_id else -100) for label in label_seq]
+            [
+                (label if label != self.tokenizer.pad_token_id else -100)
+                for label in label_seq
+            ]
             for label_seq in labels_input_ids
         ]
 
@@ -168,29 +175,27 @@ class FineTuningPipeline:
             fp16=True,
             logging_dir=str(self.output_dir / "logs"),
             load_best_model_at_end=True,
-            log_level='info',
+            log_level="info",
             report_to="none",
             gradient_accumulation_steps=1,
             max_grad_norm=1.0,
             warmup_steps=100,
-            dataloader_pin_memory=False
+            dataloader_pin_memory=False,
         )
 
         # Data collator
         data_collator = DataCollatorForSeq2Seq(
-            self.tokenizer,
-            model=self.model,
-            label_pad_token_id=-100
+            self.tokenizer, model=self.model, label_pad_token_id=-100
         )
 
         # Initialize trainer
         trainer = Seq2SeqTrainer(
             model=self.model,
             args=training_args,
-            train_dataset=datasets['train'],
-            eval_dataset=datasets['validation'],
+            train_dataset=datasets["train"],
+            eval_dataset=datasets["validation"],
             tokenizer=self.tokenizer,
-            data_collator=data_collator
+            data_collator=data_collator,
         )
 
         # Train the model
