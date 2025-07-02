@@ -100,11 +100,29 @@ if __name__ == "__main__":
 
     hyper_params = [
         {
-            "model_name": "google-bert/bert-base-uncased",
+            "model_name": "google/bert_uncased_L-2_H-128_A-2",
             "batch_size": 32,
-            "epochs": 5,
-            "lr": 0.001,
+            "epochs": 20,
+            "lr": 0.00001,
         },
+        # {
+        #     "model_name": "google/bert_uncased_L-4_H-256_A-4",
+        #     "batch_size": 32,
+        #     "epochs": 10,
+        #     "lr": 0.00001,
+        # },
+        # {
+        #     "model_name": "google/bert_uncased_L-6_H-512_A-8",
+        #     "batch_size": 32,
+        #     "epochs": 5,
+        #     "lr": 0.001,
+        # },
+        # {
+        #     "model_name": "google/bert_uncased_L-8_H-512_A-8",
+        #     "batch_size": 32,
+        #     "epochs": 5,
+        #     "lr": 0.001,
+        # },
     ]
 
     for params in hyper_params:
