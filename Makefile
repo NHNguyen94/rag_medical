@@ -7,11 +7,17 @@ run-backend:
 train-emotion:
 	PYTHONPATH=. python src/pipelines/emotion_recognition/train.py
 
+eval-emotion:
+	PYTHONPATH=. python src/pipelines/emotion_recognition/evaluate.py
+
 run-emotion:
 	PYTHONPATH=. python src/pipelines/emotion_recognition/inference.py
 
 train-topic:
 	PYTHONPATH=. python src/pipelines/topic_clustering/train.py
+
+eval-topic:
+	PYTHONPATH=. python src/pipelines/topic_clustering/evaluate.py
 
 run-topic:
 	PYTHONPATH=. python src/pipelines/topic_clustering/inference.py
