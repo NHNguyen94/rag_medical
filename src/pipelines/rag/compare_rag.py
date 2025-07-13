@@ -13,6 +13,9 @@ vt_store = VectorStoreManager()
 
 index_path = IngestionConfig.INDEX_PATH
 index_cancer = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.CANCER}")
+index_disease_control = vt_store.build_or_load_index(
+    f"{index_path}/{ChatBotConfig.DISEASE_CONTROL_AND_PREVENTION}"
+)
 index_diabetes = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.DIABETES}")
 index_genetic = vt_store.build_or_load_index(
     f"{index_path}/{ChatBotConfig.GENETIC_AND_RARE_DISEASES}"
@@ -34,6 +37,7 @@ index_others = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.OTHERS
 all_indices = {
     ChatBotConfig.CANCER: index_cancer,
     ChatBotConfig.DIABETES: index_diabetes,
+    ChatBotConfig.DISEASE_CONTROL_AND_PREVENTION: index_disease_control,
     ChatBotConfig.GENETIC_AND_RARE_DISEASES: index_genetic,
     ChatBotConfig.GROWTH_HORMONE_RECEPTOR: index_hormone,
     ChatBotConfig.HEART_LUNG_AND_BLOOD: index_heart_lung_blood,
@@ -51,8 +55,12 @@ async def run_rag(user_id: str, query: str, index: BaseIndex, use_cot: bool) -> 
         use_cot=use_cot,
     )
     nearest_nodes = await chat_bot_service.retrieve_related_nodes(message=query)
-    return await chat_bot_service.asynthesize_response(
-        message=query, nearest_nodes=nearest_nodes
+    nearest_documents = await chat_bot_service.aget_nearest_documents(
+        nearest_nodes=nearest_nodes
+    )
+    return await chat_bot_service.achat(
+        message=query,
+        nearest_documents=nearest_documents
     )
 
 
