@@ -1,6 +1,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Request
+from loguru import logger
 
 from src.api.v1.models.chat_request import ChatRequest
 from src.api.v1.models.chat_response import ChatResponse
@@ -79,11 +80,11 @@ async def chat(
             chat_request.message,
             topic_cluster_model,
         )
-        print(f"Predicted topic no: {predicted_topic_no}")
+        logger.info(f"Predicted topic no: {predicted_topic_no}")
         for k, v in topic_domain.items():
             if v == predicted_topic_no:
                 predicted_topic = k
-                print(f"Predicted topic: {predicted_topic}")
+                logger.info(f"Predicted topic: {predicted_topic}")
                 break
 
         predicted_emotion = emotion_recognition_service.predict(
