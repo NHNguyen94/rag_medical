@@ -161,4 +161,4 @@ async def get_response(
 
         return response
     except Exception as e:
-        print(f"Error in chat endpoint: {e}")
+        print(f"Error when getting the response: {e}")
