@@ -51,19 +51,21 @@ def main_app():
     prompt = None
 
     if audio_bytes:
+        print(type(audio_bytes))
+        print(len(audio_bytes))
+        print(audio_bytes[:20])
         audio_dir = AudioConfig.AUDIO_DIR
         directory_manager.create_dir_if_not_exists(audio_dir)
         timestamp = datetime_manager.get_current_local_time_str()
         wav_filename = f"{user_id}_recording_{timestamp}.wav"
         wav_path = os.path.join(audio_dir, wav_filename)
 
-        with wave.open(wav_path, "wb") as wf:
-            wf.setnchannels(AudioConfig.CHANNELS)
-            wf.setsampwidth(AudioConfig.WIDTH)
-            wf.setframerate(AudioConfig.FRAME_RATE)
-            wf.writeframes(audio_bytes)
+        # save the audio bytes directly to a file
+        with open(wav_path, "wb") as f:
+            f.write(audio_bytes)
 
         # st.success(f"Audio saved: {wav_path}")
+        # put this here to not block the session state
         st.audio(wav_path, format=AudioConfig.AUDIO_FORMAT)
 
         prompt = chat_client.transcribe(wav_path).get("transcription")
