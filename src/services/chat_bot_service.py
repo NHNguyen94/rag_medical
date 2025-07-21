@@ -8,11 +8,13 @@ from src.core_managers import (
     VectorStoreManager,
     ResponseManager,
     PromptManager,
+    AudioManager,
 )
 from src.core_managers.chat_history_manager import ChatHistoryManager
-from src.utils.enums import ChatBotConfig
+from src.utils.enums import ChatBotConfig, GeneralConfig
 
 chat_bot_config = ChatBotConfig()
+general_config = GeneralConfig()
 
 
 class ChatBotService:
@@ -22,6 +24,7 @@ class ChatBotService:
         index: BaseIndex,
         force_use_tools: bool,
         use_cot: bool,
+        language: str = general_config.DEFAULT_LANGUAGE,
     ):
         self.user_id = user_id
         self.chat_history_manager = ChatHistoryManager()
@@ -42,6 +45,9 @@ class ChatBotService:
             temperature=self.prompt_manager.get_temperature(),
             similarity_top_k=self.prompt_manager.get_similarity_top_k(),
             force_use_tools=force_use_tools,
+        )
+        self.audio_manager = AudioManager(
+            language=language,
         )
         self.response_manager = ResponseManager()
         self.use_cot = use_cot
@@ -112,3 +118,6 @@ class ChatBotService:
             recommended_questions=recommended_questions,
             predicted_emotion=predicted_emotion,
         )
+
+    async def atranscribe(self, audio_path: str) -> str:
+        return await self.audio_manager.atranscribe(audio_path)

@@ -59,8 +59,7 @@ async def run_rag(user_id: str, query: str, index: BaseIndex, use_cot: bool) -> 
         nearest_nodes=nearest_nodes
     )
     return await chat_bot_service.achat(
-        message=query,
-        nearest_documents=nearest_documents
+        message=query, nearest_documents=nearest_documents
     )
 
 

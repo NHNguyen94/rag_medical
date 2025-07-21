@@ -18,8 +18,8 @@ def run_eval(model_path: str, test_data_path: str) -> Dict:
 
 
 def main(
-        model_path: str,
-        test_data_path: str,
+    model_path: str,
+    test_data_path: str,
 ) -> None:
     eval_result = run_eval(model_path, test_data_path)
     print(f"Evaluation Result: {eval_result}")

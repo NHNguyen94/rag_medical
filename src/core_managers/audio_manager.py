@@ -7,7 +7,7 @@ import whisperx
 
 
 class AudioManager:
-    def __init__(self, language: str = "en"):
+    def __init__(self, language: str):
         self.device = "cpu"  # No support for mps yet
         self.compute_type = "float32"  # no support for float16 yet
         self.whisper_model = "base"
@@ -27,8 +27,7 @@ class AudioManager:
             compute_type=self.compute_type,
         )
         self.whisper_align_model, self.whisper_metadata = whisperx.load_align_model(
-            language_code=self.language,
-            device=self.device
+            language_code=self.language, device=self.device
         )
 
     def transcribe(self, audio_path: str) -> str:
@@ -44,6 +43,7 @@ class AudioManager:
 
     async def atranscribe(self, audio_path: str) -> str:
         return await asyncio.to_thread(self.transcribe, audio_path)
+
     #
     # def synthesize(self, text: str, output_path: str) -> None:
     #     audio = self.silero_model.apply_tts(text=text, speaker='en_0')

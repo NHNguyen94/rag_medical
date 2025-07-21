@@ -5,6 +5,8 @@ import torch
 
 class GeneralConfig:
     DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEFAULT_LANGUAGE = "en"
+    FR_LANGUAGE = "fr"
 
 
 class ChatBotConfig:
