@@ -19,9 +19,7 @@ class TestChatClient:
 
     def test_transcribe(self):
         audio_file = "tests/resources/test_audio.wav"
-        response = self.client.transcribe(
-            audio_file=audio_file
-        )
+        response = self.client.transcribe(audio_file=audio_file)
         print(f"Transcription response: {response}")
         assert isinstance(response, Dict)
         assert "transcription" in response

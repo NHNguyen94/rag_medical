@@ -30,7 +30,11 @@ def main_app():
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
-            {"role": "assistant", "content": "Hello, I'm your AI medical assistant. How can I help you today?"}]
+            {
+                "role": "assistant",
+                "content": "Hello, I'm your AI medical assistant. How can I help you today?",
+            }
+        ]
     if "followup_questions" not in st.session_state:
         st.session_state.followup_questions = []
     if "retrieved_documents" not in st.session_state:
@@ -91,7 +95,10 @@ def main_app():
         st.header("Retrieved Documents")
         if st.session_state.retrieved_documents:
             for i, doc in enumerate(st.session_state.retrieved_documents):
-                st.markdown(f"**Doc {i + 1}:** {clean_document_text(doc)}", unsafe_allow_html=True)
+                st.markdown(
+                    f"**Doc {i + 1}:** {clean_document_text(doc)}",
+                    unsafe_allow_html=True,
+                )
         else:
             st.markdown("_No documents retrieved yet._")
 

@@ -40,9 +40,7 @@ class ChatClient:
 
     def transcribe(self, audio_file: str) -> Dict:
         endpoint = f"{self.api_url}/transcribe"
-        payload = {
-            "audio_file": audio_file
-        }
+        payload = {"audio_file": audio_file}
 
         response = requests.post(endpoint, json=payload)
 

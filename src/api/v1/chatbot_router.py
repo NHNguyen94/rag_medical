@@ -14,7 +14,7 @@ router = APIRouter(tags=["chatbot"])
 
 @router.post("/transcribe", response_model=TranscribeResponse)
 async def transcribe(
-        transcribe_request: TranscribeRequest,
+    transcribe_request: TranscribeRequest,
 ):
     audio_service = AudioService()
     transcribed_msg = await audio_service.atranscribe(transcribe_request.audio_file)
@@ -26,11 +26,11 @@ async def transcribe(
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-        chat_request: ChatRequest,
-        request: Request,
-        # Disable tool to manually retrieve documents
-        force_use_tools: bool = False,
-        use_cot: bool = True,
+    chat_request: ChatRequest,
+    request: Request,
+    # Disable tool to manually retrieve documents
+    force_use_tools: bool = False,
+    use_cot: bool = True,
 ):
     return await get_response(
         chat_request=chat_request,
@@ -41,10 +41,10 @@ async def chat(
 
 
 async def get_response(
-        chat_request: BaseChatRequest,
-        request: Request,
-        force_use_tools: bool,
-        use_cot: bool,
+    chat_request: BaseChatRequest,
+    request: Request,
+    force_use_tools: bool,
+    use_cot: bool,
 ):
     try:
         # TODO: Implement the all the features here
@@ -120,9 +120,7 @@ async def get_response(
             model=emotion_model,
             vocab=emotion_vocab,
         )
-        nearest_nodes = await chat_bot_service.retrieve_related_nodes(
-            message=chat_msg
-        )
+        nearest_nodes = await chat_bot_service.retrieve_related_nodes(message=chat_msg)
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             nearest_nodes=nearest_nodes
         )
