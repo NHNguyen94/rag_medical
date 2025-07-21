@@ -14,13 +14,12 @@ class QuestionGenerator:
         faiss_index,
         questions_mapping: Dict[str, str],
         output_dir: str = QuestionRecommendConfig.PROCESSED_DATA_DIR,
-        model_name: str = "gpt-3.5-turbo",
         temperature: float = 0.7,
     ):
         self.output_dir = Path(output_dir)
         self.faiss_index = faiss_index
         self.questions_mapping = questions_mapping
-        self.model_name = model_name
+        self.model_name = "google/flan-t5-base"
         self.temperature = temperature
 
     def get_similar_questions(self, query_embedding, k: int = 5) -> List[str]:

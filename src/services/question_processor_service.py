@@ -18,29 +18,20 @@ from src.utils.enums import QuestionRecommendConfig
 class QuestionDataProcessor:
     def __init__(
         self,
-        data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
-        output_dir: str = QuestionRecommendConfig.PROCESSED_DATA_DIR,
+        data_dir: str = None,
+        output_dir: str = None,
         embedding_dim: int = 768,
     ):
         self.data_dir = Path(data_dir)
         self.output_dir = Path(output_dir)
         self.embedding_dim = embedding_dim
 
+        # Initialize BERT model for embeddings
         self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
         self.model = AutoModel.from_pretrained("bert-base-uncased")
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
-        # Create output directory
-        # self.output_dir.mkdir(parents=True, exist_ok=True)
-
-        # Initialize components
-        # self.encoding_manager = EncodingManager()
-        # self.vector_store = VectorStoreManager()
-        # self.dir_manager = DirectoryManager()
-
-        # Create output directory
-        self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def load_datasets(self) -> pd.DataFrame:
         file_path = self.data_dir
@@ -49,11 +40,10 @@ class QuestionDataProcessor:
         return df
 
     def preprocess_data(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Clean and preprocess the data."""
         df["cleaned_question"] = df["Question"]
         df = df.drop_duplicates(subset=["cleaned_question"])
         df = df.dropna(subset=["cleaned_question"])
-
-        self.output_dir.mkdir(parents=True, exist_ok=True)
         df.to_csv(self.output_dir / "cleaned_dataset.csv", index=False)
 
         return df
@@ -70,6 +60,7 @@ class QuestionDataProcessor:
 
             with torch.no_grad():
                 outputs = self.model(**inputs)
+                # Use [CLS] token embedding
                 embedding = (
                     outputs.last_hidden_state[:, 0, :]
                     .cpu()

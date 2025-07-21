@@ -36,3 +36,10 @@ ingest-medical-data:
 
 compare-rag:
 	PYTHONPATH=. python src/pipelines/rag/compare_rag.py
+
+train-question:
+	@if [ -z "$(DATASET)" ]; then \
+		echo "Please specify DATASET number(Valid numbers from 0-8): make train-emotion DATASET=0"; \
+		exit 1; \
+	fi
+	PYTHONPATH=. python src/pipelines/question_recommendation/train.py --dataset $(DATASET)
