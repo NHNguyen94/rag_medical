@@ -1,5 +1,10 @@
-import torch
 from pathlib import Path
+
+import torch
+
+
+class GeneralConfig:
+    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
 
 
 class ChatBotConfig:
@@ -91,7 +96,7 @@ class EmotionRecognitionConfig:
     TEST_DATA_PATH = "src/data/emotion_data/test.csv"
     VALIDATION_DATA_PATH = "src/data/emotion_data/validation.csv"
     MAX_SEQ_LENGTH = 100
-    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEVICE = GeneralConfig.DEVICE
     DEFAULT_EMBED_DIM = 100
     DEFAULT_NUM_CLASSES = 6
     DEFAULT_KERNEL_SIZES = [3, 4, 5]
@@ -114,7 +119,7 @@ class TopicClusteringConfig:
     DEFAULT_LR = 0.001
     DEFAULT_NUM_CLASSES = 9
     MAX_SEQ_LENGTH = 148
-    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEVICE = GeneralConfig.DEVICE
     LABEL_COL = "topic"
     TEXT_COL = "Question"
     TRAIN_DATA_PATH = "src/data/medical_data/all/training.csv"
