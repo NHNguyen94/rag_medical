@@ -33,7 +33,18 @@ class ChatClient:
 
         response = requests.post(endpoint, json=payload)
 
-        print(f"\n\n\Response: {response}\n\n")
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Error {response.status_code}: {response.text}")
+
+    def transcribe(self, audio_file: str) -> Dict:
+        endpoint = f"{self.api_url}/transcribe"
+        payload = {
+            "audio_file": audio_file
+        }
+
+        response = requests.post(endpoint, json=payload)
 
         if response.status_code == 200:
             return response.json()

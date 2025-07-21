@@ -1,24 +1,36 @@
-from typing import Any
-
 from fastapi import APIRouter, Request
 from loguru import logger
 
-from src.api.v1.models.chat_request import ChatRequest, VoiceChatRequest, BaseChatRequest
+from src.services.audio_service import AudioService
+from src.api.v1.models.chat_request import ChatRequest, BaseChatRequest
 from src.api.v1.models.chat_response import ChatResponse
+from src.api.v1.models.transcribe_request import TranscribeRequest
+from src.api.v1.models.transcribe_response import TranscribeResponse
 from src.services.chat_bot_service import ChatBotService
-from src.services.question_service import QuestionService
 from src.utils.enums import ChatBotConfig
 
 router = APIRouter(tags=["chatbot"])
 
 
+@router.post("/transcribe", response_model=TranscribeResponse)
+async def transcribe(
+        transcribe_request: TranscribeRequest,
+):
+    audio_service = AudioService()
+    transcribed_msg = await audio_service.atranscribe(transcribe_request.audio_file)
+    logger.info(f"Transcribed message: {transcribed_msg}")
+    return TranscribeResponse(
+        transcription=transcribed_msg,
+    )
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-    chat_request: ChatRequest,
-    request: Request,
-    # Disable tool to manually retrieve documents
-    force_use_tools: bool = False,
-    use_cot: bool = True,
+        chat_request: ChatRequest,
+        request: Request,
+        # Disable tool to manually retrieve documents
+        force_use_tools: bool = False,
+        use_cot: bool = True,
 ):
     return await get_response(
         chat_request=chat_request,
@@ -27,26 +39,12 @@ async def chat(
         use_cot=use_cot,
     )
 
-@router.post("/voice_chat", response_model=ChatResponse)
-async def voice_chat(
-    voice_chat_request: VoiceChatRequest,
-    request: Request,
-    # Disable tool to manually retrieve documents
-    force_use_tools: bool = False,
-    use_cot: bool = True,
-):
-    return await get_response(
-        chat_request=voice_chat_request,
-        request=request,
-        force_use_tools=force_use_tools,
-        use_cot=use_cot,
-    )
 
 async def get_response(
-    chat_request: BaseChatRequest,
-    request: Request,
-    force_use_tools: bool,
-    use_cot: bool,
+        chat_request: BaseChatRequest,
+        request: Request,
+        force_use_tools: bool,
+        use_cot: bool,
 ):
     try:
         # TODO: Implement the all the features here
@@ -102,14 +100,7 @@ async def get_response(
             use_cot=use_cot,
         )
 
-        if isinstance(chat_request, VoiceChatRequest):
-            chat_msg = await chat_bot_service.atranscribe(chat_request.audio_file)
-        elif isinstance(chat_request, ChatRequest):
-            chat_msg = chat_request.message
-        else:
-            raise ValueError("Invalid chat request type")
-
-        print(f"\n\n\nChat message: {chat_msg}\n\n\n")
+        chat_msg = chat_request.message
 
         # Use later for question recommendation
         topic_domain = ChatBotConfig.DOMAIN_ENCODE_MAPPING

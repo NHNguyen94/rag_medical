@@ -17,15 +17,14 @@ class TestChatClient:
         assert isinstance(response, Dict)
         assert len(response) > 0
 
-    def test_voice_chat(self):
-        user_id = "test_user"
+    def test_transcribe(self):
         audio_file = "tests/resources/test_audio.wav"
-        selected_domain = "Others"
-        response = self.client.voice_chat(
-            user_id=user_id, audio_file=audio_file, selected_domain=selected_domain
+        response = self.client.transcribe(
+            audio_file=audio_file
         )
+        print(f"Transcription response: {response}")
         assert isinstance(response, Dict)
-        assert len(response) > 0
+        assert "transcription" in response
 
     # @pytest.mark.asyncio
     # async def test_achat(self):
