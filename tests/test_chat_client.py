@@ -14,9 +14,17 @@ class TestChatClient:
         response = self.client.chat(
             user_id=user_id, message=message, selected_domain=selected_domain
         )
-        print(f"Response: {response}")
         assert isinstance(response, Dict)
         assert len(response) > 0
+
+    def test_transcribe(self):
+        audio_file = "tests/resources/test_audio.wav"
+        response = self.client.transcribe(
+            audio_file=audio_file
+        )
+        print(f"Transcription response: {response}")
+        assert isinstance(response, Dict)
+        assert "transcription" in response
 
     # @pytest.mark.asyncio
     # async def test_achat(self):

@@ -5,6 +5,8 @@ import torch
 
 class GeneralConfig:
     DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEFAULT_LANGUAGE = "en"
+    FR_LANGUAGE = "fr"
 
 
 class ChatBotConfig:
@@ -125,3 +127,16 @@ class TopicClusteringConfig:
     TRAIN_DATA_PATH = "src/data/medical_data/all/training.csv"
     TEST_DATA_PATH = "src/data/medical_data/all/test.csv"
     MODEL_PATH = "src/ml_models/model_files/topic_clustering_model.pth"
+
+class AudioConfig:
+    DEVICE = "cpu" # no support for mps yet
+    COMPUTE_TYPE = "float32"  # no support for float16 yet
+    AUDIO_DIR = "src/data/recordings_from_speaker"
+    AUDIO_FILE_EXTENSION = ".wav"
+    FRAME_RATE = 44100
+    CHANNELS = 1
+    WIDTH = 2
+    AUDIO_FORMAT = "audio/wav"
+    # DEFAULT_WHISPER_MODEL = "large-v2"
+    DEFAULT_WHISPER_MODEL = "base"
+    DEFAULT_LANGUAGE = "en"
