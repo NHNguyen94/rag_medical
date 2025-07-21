@@ -149,15 +149,6 @@ class FineTuningPipeline:
         formatted_outputs = [" | ".join(questions) for questions in examples["output"]]
         print(f"Formatted target sample: {formatted_outputs[:2]}")
 
-        # Tokenize targets
-        # with self.tokenizer.as_target_tokenizer():
-        #     labels = self.tokenizer(
-        #         formatted_outputs,
-        #         max_length=self.max_length,
-        #         padding="max_length",
-        #         truncation=True
-        #     )
-
         labels = self.tokenizer(
             text_target=formatted_outputs,
             max_length=self.max_length,
@@ -189,20 +180,6 @@ class FineTuningPipeline:
         train_loader = DataLoader(
             datasets["train"], batch_size=2, collate_fn=lambda x: x
         )
-
-        # Get one batch
-        raw_batch = next(iter(train_loader))
-        # print("Raw batch structure:")
-        # for i, item in enumerate(raw_batch[:2]):  # First 2 items
-        #     print(f"Item {i}:")
-        #     print(f"  Input IDs length: {len(item['input_ids'])}")
-        #     print(f"  Labels length: {len(item['labels'])}")
-        #     print(f"  Input IDs sample: {item['input_ids'][:10]}")
-        #     print(f"  Labels sample: {item['labels'][:10]}")
-        #     print(f"  Labels has -100: {-100 in item['labels']}")
-        #     print(f"Label unique values: {set(item['labels'])}")
-        #     print()
-
 
         # Test forward pass with this batch
         self.model.eval()
@@ -276,7 +253,4 @@ class FineTuningPipeline:
         print(f"Final validation loss: {metrics['eval_loss']:.4f}")
 
         # Save the model
-        # trainer.save_model(str(self.output_dir))
-        # self.tokenizer.save_pretrained(str(self.output_dir))
-
         torch.save(self.model.state_dict(), self.model_save_path / self.model_save_name)
