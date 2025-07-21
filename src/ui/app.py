@@ -20,8 +20,12 @@ dotenv.load_dotenv()
 # https://github.com/datalab-to/marker/issues/442
 torch.classes.__path__ = []
 
-
-def handle_chat_response(chat_client, user_id, message, selected_domain):
+def handle_chat_response(
+        chat_client: ChatClient,
+        user_id: str,
+        message: str,
+        selected_domain: str
+) -> bool:
     try:
         response_data = chat_client.chat(
             user_id=user_id, message=message, selected_domain=selected_domain
@@ -130,6 +134,8 @@ def main_app():
 
     use_voice_input = st.toggle("🎙️ Enable voice input")
 
+    prompt = None
+
     if use_voice_input:
         st.markdown("Click below to record your message:")
         audio_bytes = st_audiorec()
@@ -150,15 +156,13 @@ def main_app():
             st.success(f"Audio saved: {wav_path}")
             st.audio(wav_path, format="audio/wav")
 
-        # from src.audio.audio_manager import AudioManager
-        # audio_manager = AudioManager()
-        # prompt = audio_manager.transcribe(wav_path)
-        # st.chat_message("user").markdown(prompt)
-        # st.session_state.messages.append({"role": "user", "content": prompt})
-        # handle_chat_response(chat_client, user_id, prompt, selected_domain)
-        prompt = (
-            "Hello, I have a question about my health."  # fake transcription for now
-        )
+            response_from_transcribe = chat_client.voice_chat(
+                user_id=user_id,
+                audio_file=wav_path,
+                selected_domain=selected_domain,
+            )
+
+            prompt = response_from_transcribe.get("response", "No response from the assistant.")
 
     else:
         prompt = st.chat_input("Type your message here...")

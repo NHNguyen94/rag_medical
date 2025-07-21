@@ -27,7 +27,7 @@ async def chat(
         use_cot=use_cot,
     )
 
-@router.post("voice_chat", response_model=ChatResponse)
+@router.post("/voice_chat", response_model=ChatResponse)
 async def voice_chat(
     voice_chat_request: VoiceChatRequest,
     request: Request,
@@ -108,6 +108,8 @@ async def get_response(
             chat_msg = chat_request.message
         else:
             raise ValueError("Invalid chat request type")
+
+        print(f"\n\n\nChat message: {chat_msg}\n\n\n")
 
         # Use later for question recommendation
         topic_domain = ChatBotConfig.DOMAIN_ENCODE_MAPPING

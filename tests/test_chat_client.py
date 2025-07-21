@@ -14,7 +14,16 @@ class TestChatClient:
         response = self.client.chat(
             user_id=user_id, message=message, selected_domain=selected_domain
         )
-        print(f"Response: {response}")
+        assert isinstance(response, Dict)
+        assert len(response) > 0
+
+    def test_voice_chat(self):
+        user_id = "test_user"
+        audio_file = "tests/resources/test_audio.wav"
+        selected_domain = "Others"
+        response = self.client.voice_chat(
+            user_id=user_id, audio_file=audio_file, selected_domain=selected_domain
+        )
         assert isinstance(response, Dict)
         assert len(response) > 0
 
