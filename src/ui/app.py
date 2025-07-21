@@ -1,13 +1,20 @@
 import os
+import wave
 
 import dotenv
 import streamlit as st
 import torch
+from st_audiorec import st_audiorec
 
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
+from src.utils.date_time_manager import DateTimeManager
+from src.utils.directory_manager import DirectoryManager
 from src.utils.enums import ChatBotConfig
 from src.utils.helpers import clean_document_text, hash_string
+
+datetime_manager = DateTimeManager()
+directory_manager = DirectoryManager()
 
 dotenv.load_dotenv()
 # https://github.com/datalab-to/marker/issues/442
@@ -121,7 +128,42 @@ def main_app():
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    if prompt := st.chat_input("Type your message here..."):
+    use_voice_input = st.toggle("🎙️ Enable voice input")
+
+    if use_voice_input:
+        st.markdown("Click below to record your message:")
+        audio_bytes = st_audiorec()
+
+        if audio_bytes:
+            audio_dir = "src/data/recordings_from_speaker"
+            directory_manager.create_dir_if_not_exists(audio_dir)
+            timestamp = datetime_manager.get_current_local_time_str()
+            wav_filename = f"{user_id}_recording_{timestamp}.wav"
+            wav_path = os.path.join(
+                audio_dir, wav_filename
+            )
+
+            with wave.open(wav_path, 'wb') as wf:
+                wf.setnchannels(1)
+                wf.setsampwidth(2)
+                wf.setframerate(44100)
+                wf.writeframes(audio_bytes)
+
+            st.success(f"Audio saved: {wav_path}")
+            st.audio(wav_path, format="audio/wav")
+
+        # from src.audio.audio_manager import AudioManager
+        # audio_manager = AudioManager()
+        # prompt = audio_manager.transcribe(wav_path)
+        # st.chat_message("user").markdown(prompt)
+        # st.session_state.messages.append({"role": "user", "content": prompt})
+        # handle_chat_response(chat_client, user_id, prompt, selected_domain)
+        prompt = "Hello, I have a question about my health."  # fake transcription for now
+
+    else:
+        prompt = st.chat_input("Type your message here...")
+
+    if prompt:
         st.chat_message("user").markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
 
@@ -134,7 +176,7 @@ def main_app():
         followup_container = st.container()
         with followup_container:
             for idx, followup_question in enumerate(
-                st.session_state.followup_questions
+                    st.session_state.followup_questions
             ):
                 button_key = f"followup_{idx}_{hash(followup_question)}"
 
