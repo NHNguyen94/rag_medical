@@ -44,9 +44,6 @@ def main_app():
 
     audio_bytes = st_audiorec()
 
-    # if audio_bytes and "audio_ready" not in st.session_state:
-    #     st.session_state.audio_bytes = audio_bytes
-    #     st.session_state.audio_ready = True
     if audio_bytes:
         st.session_state.audio_bytes = audio_bytes
         st.session_state.audio_ready = True

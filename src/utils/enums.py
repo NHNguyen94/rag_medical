@@ -137,6 +137,6 @@ class AudioConfig:
     CHANNELS = 1
     WIDTH = 2
     AUDIO_FORMAT = "audio/wav"
-    DEFAULT_WHISPER_MODEL = "large-v2"
-    # DEFAULT_WHISPER_MODEL = "base"
+    # DEFAULT_WHISPER_MODEL = "large-v2"
+    DEFAULT_WHISPER_MODEL = "base"
     DEFAULT_LANGUAGE = "en"
