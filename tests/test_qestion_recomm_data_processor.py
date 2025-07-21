@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import shutil
 
-from src.pipelines.question_recommendation.data_processor import QuestionDataProcessor
+from src.services.question_processor_service import QuestionDataProcessor
 
 
 class TestQuestionDataProcessor:

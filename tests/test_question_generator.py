@@ -5,8 +5,7 @@ from pathlib import Path
 import faiss
 from unittest.mock import Mock, patch
 
-from src.pipelines.question_recommendation.question_generator import QuestionGenerator
-
+from src.services.question_generator_service import QuestionGenerator
 
 @pytest.fixture
 def sample_data():
