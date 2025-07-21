@@ -46,6 +46,8 @@ def ingest(
     train_df = df[df["split"] == "train"]
     test_df = df[df["split"] == "test"]
 
+    test_df = test_df.sample(frac=1, random_state=42).reset_index(drop=True)
+
     validation_df = test_df.iloc[: int(len(test_df) * 0.5)]
     new_test_df = test_df.iloc[int(len(test_df) * 0.5) :]
 

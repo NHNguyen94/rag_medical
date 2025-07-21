@@ -1,23 +1,50 @@
-from typing import Any
-
 from fastapi import APIRouter, Request
+from loguru import logger
 
-from src.api.v1.models.chat_request import ChatRequest
+from src.services.audio_service import AudioService
+from src.api.v1.models.chat_request import ChatRequest, BaseChatRequest
 from src.api.v1.models.chat_response import ChatResponse
+from src.api.v1.models.transcribe_request import TranscribeRequest
+from src.api.v1.models.transcribe_response import TranscribeResponse
 from src.services.chat_bot_service import ChatBotService
-from src.services.question_service import QuestionService
 from src.utils.enums import ChatBotConfig
 
 router = APIRouter(tags=["chatbot"])
 
 
+@router.post("/transcribe", response_model=TranscribeResponse)
+async def transcribe(
+        transcribe_request: TranscribeRequest,
+):
+    audio_service = AudioService()
+    transcribed_msg = await audio_service.atranscribe(transcribe_request.audio_file)
+    logger.info(f"Transcribed message: {transcribed_msg}")
+    return TranscribeResponse(
+        transcription=transcribed_msg,
+    )
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-    chat_request: ChatRequest,
-    request: Request,
-    # Disable tool to manually retrieve documents
-    force_use_tools: bool = False,
-    use_cot: bool = True,
+        chat_request: ChatRequest,
+        request: Request,
+        # Disable tool to manually retrieve documents
+        force_use_tools: bool = False,
+        use_cot: bool = True,
+):
+    return await get_response(
+        chat_request=chat_request,
+        request=request,
+        force_use_tools=force_use_tools,
+        use_cot=use_cot,
+    )
+
+
+async def get_response(
+        chat_request: BaseChatRequest,
+        request: Request,
+        force_use_tools: bool,
+        use_cot: bool,
 ):
     try:
         # TODO: Implement the all the features here
@@ -73,36 +100,38 @@ async def chat(
             use_cot=use_cot,
         )
 
+        chat_msg = chat_request.message
+
         # Use later for question recommendation
         topic_domain = ChatBotConfig.DOMAIN_ENCODE_MAPPING
         predicted_topic_no = topic_clustering_service.predict(
-            chat_request.message,
+            chat_msg,
             topic_cluster_model,
         )
-        print(f"Predicted topic no: {predicted_topic_no}")
+        logger.info(f"Predicted topic no: {predicted_topic_no}")
         for k, v in topic_domain.items():
             if v == predicted_topic_no:
                 predicted_topic = k
-                print(f"Predicted topic: {predicted_topic}")
+                logger.info(f"Predicted topic: {predicted_topic}")
                 break
 
         predicted_emotion = emotion_recognition_service.predict(
-            text=chat_request.message,
+            text=chat_msg,
             model=emotion_model,
             vocab=emotion_vocab,
         )
         nearest_nodes = await chat_bot_service.retrieve_related_nodes(
-            message=chat_request.message
+            message=chat_msg
         )
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             nearest_nodes=nearest_nodes
         )
         synthesized_response = await chat_bot_service.asynthesize_response(
-            message=chat_request.message,
+            message=chat_msg,
             nearest_nodes=nearest_nodes,
         )
         response = await chat_bot_service.achat(
-            message=chat_request.message,
+            message=chat_msg,
             customer_emotion=int(predicted_emotion),
             nearest_documents=nearest_documents,
             synthesized_response=synthesized_response,
@@ -110,7 +139,7 @@ async def chat(
 
         # follow_up_questions = question_recomend_service.get_follow_up_question(chat_request.message, domain)
         await chat_bot_service.append_history(
-            message=chat_request.message,
+            message=chat_msg,
             response_str=response,
             nearest_documents=nearest_documents,
             predicted_emotion=str(predicted_emotion.item()),
@@ -125,9 +154,4 @@ async def chat(
 
         return response
     except Exception as e:
-        print(f"Error in chat endpoint: {e}")
-
-
-@router.post("/summarize")
-def summarize():
-    pass
+        print(f"Error when getting the response: {e}")

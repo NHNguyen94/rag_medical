@@ -1,5 +1,12 @@
-import torch
 from pathlib import Path
+
+import torch
+
+
+class GeneralConfig:
+    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEFAULT_LANGUAGE = "en"
+    FR_LANGUAGE = "fr"
 
 
 class ChatBotConfig:
@@ -91,7 +98,7 @@ class EmotionRecognitionConfig:
     TEST_DATA_PATH = "src/data/emotion_data/test.csv"
     VALIDATION_DATA_PATH = "src/data/emotion_data/validation.csv"
     MAX_SEQ_LENGTH = 100
-    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEVICE = GeneralConfig.DEVICE
     DEFAULT_EMBED_DIM = 100
     DEFAULT_NUM_CLASSES = 6
     DEFAULT_KERNEL_SIZES = [3, 4, 5]
@@ -136,9 +143,22 @@ class TopicClusteringConfig:
     DEFAULT_LR = 0.001
     DEFAULT_NUM_CLASSES = 9
     MAX_SEQ_LENGTH = 148
-    DEVICE = torch.device("mps" if torch.cuda.is_available() else "cpu")
+    DEVICE = GeneralConfig.DEVICE
     LABEL_COL = "topic"
     TEXT_COL = "Question"
     TRAIN_DATA_PATH = "src/data/medical_data/all/training.csv"
     TEST_DATA_PATH = "src/data/medical_data/all/test.csv"
     MODEL_PATH = "src/ml_models/model_files/topic_clustering_model.pth"
+
+class AudioConfig:
+    DEVICE = "cpu" # no support for mps yet
+    COMPUTE_TYPE = "float32"  # no support for float16 yet
+    AUDIO_DIR = "src/data/recordings_from_speaker"
+    AUDIO_FILE_EXTENSION = ".wav"
+    FRAME_RATE = 44100
+    CHANNELS = 1
+    WIDTH = 2
+    AUDIO_FORMAT = "audio/wav"
+    # DEFAULT_WHISPER_MODEL = "large-v2"
+    DEFAULT_WHISPER_MODEL = "base"
+    DEFAULT_LANGUAGE = "en"
