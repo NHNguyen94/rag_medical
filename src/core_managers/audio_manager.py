@@ -2,17 +2,27 @@ import asyncio
 
 import whisperx
 
+from src.utils.enums import AudioConfig
+
+audio_config = AudioConfig()
+
 
 # from silero import silero_stt, silero_tts, silero_te
 
 
 class AudioManager:
-    def __init__(self, language: str):
-        self.device = "cpu"  # No support for mps yet
-        self.compute_type = "float32"  # no support for float16 yet
-        self.whisper_model = "base"
+    def __init__(self, language: str = None, whisper_model_name: str = None):
+        self.device = audio_config.DEVICE
+        self.compute_type = audio_config.COMPUTE_TYPE
+        if whisper_model_name is None:
+            self.whisper_model_name = audio_config.DEFAULT_WHISPER_MODEL
+        else:
+            self.whisper_model_name = whisper_model_name
         self.sample_rate = 48000
-        self.language = language
+        if language is None:
+            self.language = audio_config.DEFAULT_LANGUAGE
+        else:
+            self.language = language
 
         # self.silero_model = silero_tts(
         #     language='en',
@@ -22,7 +32,7 @@ class AudioManager:
         # )
 
         self.whisper_model = whisperx.load_model(
-            self.whisper_model,
+            self.whisper_model_name,
             device=self.device,
             compute_type=self.compute_type,
         )

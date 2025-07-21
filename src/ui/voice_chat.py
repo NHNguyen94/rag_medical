@@ -6,7 +6,7 @@ from st_audiorec import st_audiorec
 
 from src.clients.chat_client import ChatClient
 from src.ui.utils import login_or_signup, handle_chat_response
-from src.utils.enums import ChatBotConfig
+from src.utils.enums import ChatBotConfig, AudioConfig
 from src.utils.directory_manager import DirectoryManager
 from src.utils.date_time_manager import DateTimeManager
 from src.utils.helpers import clean_document_text
@@ -41,28 +41,38 @@ def main_app():
             st.markdown(message["content"])
 
     st.markdown("Click below to record your message:")
+
     audio_bytes = st_audiorec()
+
+    # if audio_bytes and "audio_ready" not in st.session_state:
+    #     st.session_state.audio_bytes = audio_bytes
+    #     st.session_state.audio_ready = True
+    if audio_bytes:
+        st.session_state.audio_bytes = audio_bytes
+        st.session_state.audio_ready = True
+
     prompt = None
 
     if audio_bytes:
-        audio_dir = "src/data/recordings_from_speaker"
+        audio_dir = AudioConfig.AUDIO_DIR
         directory_manager.create_dir_if_not_exists(audio_dir)
         timestamp = datetime_manager.get_current_local_time_str()
         wav_filename = f"{user_id}_recording_{timestamp}.wav"
         wav_path = os.path.join(audio_dir, wav_filename)
 
         with wave.open(wav_path, "wb") as wf:
-            wf.setnchannels(1)
-            wf.setsampwidth(2)
-            wf.setframerate(44100)
+            wf.setnchannels(AudioConfig.CHANNELS)
+            wf.setsampwidth(AudioConfig.WIDTH)
+            wf.setframerate(AudioConfig.FRAME_RATE)
             wf.writeframes(audio_bytes)
 
-        st.success(f"Audio saved: {wav_path}")
-        st.audio(wav_path, format="audio/wav")
+        # st.success(f"Audio saved: {wav_path}")
+        st.audio(wav_path, format=AudioConfig.AUDIO_FORMAT)
 
         prompt = chat_client.transcribe(wav_path).get("transcription")
-
         print(f"Transcribed prompt: {prompt}")
+
+        st.session_state.audio_ready = False
 
     if prompt:
         st.chat_message("user").markdown(prompt)
