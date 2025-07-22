@@ -128,8 +128,9 @@ class TopicClusteringConfig:
     TEST_DATA_PATH = "src/data/medical_data/all/test.csv"
     MODEL_PATH = "src/ml_models/model_files/topic_clustering_model.pth"
 
+
 class AudioConfig:
-    DEVICE = "cpu" # no support for mps yet
+    DEVICE = "cpu"  # no support for mps yet
     COMPUTE_TYPE = "float32"  # no support for float16 yet
     AUDIO_DIR = "src/data/recordings_from_speaker"
     AUDIO_FILE_EXTENSION = ".wav"

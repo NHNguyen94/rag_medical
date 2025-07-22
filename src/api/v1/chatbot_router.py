@@ -1,20 +1,39 @@
 from fastapi import APIRouter, Request
 from loguru import logger
 
+from src.api.v1.models import (
+    ChatRequest,
+    BaseChatRequest,
+    ChatResponse,
+    TextToSpeechRequest,
+    TextToSpeechResponse,
+    TranscribeRequest,
+    TranscribeResponse,
+)
 from src.services.audio_service import AudioService
-from src.api.v1.models.chat_request import ChatRequest, BaseChatRequest
-from src.api.v1.models.chat_response import ChatResponse
-from src.api.v1.models.transcribe_request import TranscribeRequest
-from src.api.v1.models.transcribe_response import TranscribeResponse
 from src.services.chat_bot_service import ChatBotService
 from src.utils.enums import ChatBotConfig
 
 router = APIRouter(tags=["chatbot"])
 
 
+@router.post("/text_to_speech", response_model=TextToSpeechResponse)
+async def text_to_speech(
+    text_to_speech_request: TextToSpeechRequest,
+):
+    audio_service = AudioService()
+    audio_file = await audio_service.atext_to_speech(
+        text=text_to_speech_request.text, output_path=text_to_speech_request.audio_path
+    )
+    logger.info(f"Generated audio file: {audio_file}")
+    return TextToSpeechResponse(
+        audio_path=text_to_speech_request.audio_path,
+    )
+
+
 @router.post("/transcribe", response_model=TranscribeResponse)
 async def transcribe(
-        transcribe_request: TranscribeRequest,
+    transcribe_request: TranscribeRequest,
 ):
     audio_service = AudioService()
     transcribed_msg = await audio_service.atranscribe(transcribe_request.audio_file)
@@ -26,11 +45,11 @@ async def transcribe(
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-        chat_request: ChatRequest,
-        request: Request,
-        # Disable tool to manually retrieve documents
-        force_use_tools: bool = False,
-        use_cot: bool = True,
+    chat_request: ChatRequest,
+    request: Request,
+    # Disable tool to manually retrieve documents
+    force_use_tools: bool = False,
+    use_cot: bool = True,
 ):
     return await get_response(
         chat_request=chat_request,
@@ -41,10 +60,10 @@ async def chat(
 
 
 async def get_response(
-        chat_request: BaseChatRequest,
-        request: Request,
-        force_use_tools: bool,
-        use_cot: bool,
+    chat_request: BaseChatRequest,
+    request: Request,
+    force_use_tools: bool,
+    use_cot: bool,
 ):
     try:
         # TODO: Implement the all the features here
@@ -120,9 +139,7 @@ async def get_response(
             model=emotion_model,
             vocab=emotion_vocab,
         )
-        nearest_nodes = await chat_bot_service.retrieve_related_nodes(
-            message=chat_msg
-        )
+        nearest_nodes = await chat_bot_service.retrieve_related_nodes(message=chat_msg)
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             nearest_nodes=nearest_nodes
         )

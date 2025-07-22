@@ -58,15 +58,18 @@ def login_or_signup():
 
 
 def handle_chat_response(
-        chat_client: ChatClient,
-        user_id: str,
-        message: str,
-        selected_domain: str
+    chat_client: ChatClient, user_id: str, message: str, selected_domain: str
 ):
     try:
-        response_data = chat_client.chat(user_id=user_id, message=message, selected_domain=selected_domain)
-        st.session_state.retrieved_documents = response_data.get("nearest_documents", [])
-        st.session_state.followup_questions = response_data.get("recommended_questions", [])
+        response_data = chat_client.chat(
+            user_id=user_id, message=message, selected_domain=selected_domain
+        )
+        st.session_state.retrieved_documents = response_data.get(
+            "nearest_documents", []
+        )
+        st.session_state.followup_questions = response_data.get(
+            "recommended_questions", []
+        )
         response = response_data.get("response", "No response from the assistant.")
         with st.chat_message("assistant"):
             st.markdown(response)

@@ -17,11 +17,11 @@ chat_bot_config = ChatBotConfig()
 
 class ChatBotService:
     def __init__(
-            self,
-            user_id: str,
-            index: BaseIndex,
-            force_use_tools: bool,
-            use_cot: bool,
+        self,
+        user_id: str,
+        index: BaseIndex,
+        force_use_tools: bool,
+        use_cot: bool,
     ):
         self.user_id = user_id
         self.chat_history_manager = ChatHistoryManager()
@@ -47,10 +47,10 @@ class ChatBotService:
         self.use_cot = use_cot
 
     def update_system_prompt(
-            self,
-            customer_emotion: Optional[int] = None,
-            synthesized_response: Optional[str] = None,
-            nearest_documents: Optional[List[str]] = None,
+        self,
+        customer_emotion: Optional[int] = None,
+        synthesized_response: Optional[str] = None,
+        nearest_documents: Optional[List[str]] = None,
     ) -> None:
         current_prompt = self.prompt_manager.get_system_prompt()
         new_prompt = self.prompt_manager.add_prompts_for_additional_services(
@@ -62,11 +62,11 @@ class ChatBotService:
         self.system_prompt_template = self.prompt_manager.make_system_prompt(new_prompt)
 
     async def achat(
-            self,
-            message: str,
-            customer_emotion: Optional[int] = None,
-            synthesized_response: Optional[str] = None,
-            nearest_documents: Optional[List[str]] = None,
+        self,
+        message: str,
+        customer_emotion: Optional[int] = None,
+        synthesized_response: Optional[str] = None,
+        nearest_documents: Optional[List[str]] = None,
     ) -> str:
         self.update_system_prompt(
             customer_emotion=customer_emotion,
@@ -87,21 +87,21 @@ class ChatBotService:
         return await self.agent.aget_nearest_documents(nearest_nodes)
 
     async def asynthesize_response(
-            self,
-            message: str,
-            nearest_nodes: RESPONSE_TYPE,
+        self,
+        message: str,
+        nearest_nodes: RESPONSE_TYPE,
     ) -> str:
         response = await self.agent.asynthesize_response(message, nearest_nodes)
         return str(response)
 
     async def append_history(
-            self,
-            message: str,
-            response_str: str,
-            nearest_documents: Optional[List] = [],
-            predicted_topic: Optional[str] = "",
-            recommended_questions: Optional[List] = [],
-            predicted_emotion: Optional[str] = "",
+        self,
+        message: str,
+        response_str: str,
+        nearest_documents: Optional[List] = [],
+        predicted_topic: Optional[str] = "",
+        recommended_questions: Optional[List] = [],
+        predicted_emotion: Optional[str] = "",
     ) -> None:
         await self.chat_history_manager.append_chat_history_to_db(
             user_id=self.user_id,

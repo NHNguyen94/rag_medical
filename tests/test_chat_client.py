@@ -19,21 +19,16 @@ class TestChatClient:
 
     def test_transcribe(self):
         audio_file = "tests/resources/test_audio.wav"
-        response = self.client.transcribe(
-            audio_file=audio_file
-        )
+        response = self.client.transcribe(audio_file=audio_file)
         print(f"Transcription response: {response}")
         assert isinstance(response, Dict)
         assert "transcription" in response
 
-    # @pytest.mark.asyncio
-    # async def test_achat(self):
-    #     user_id = "test_user"
-    #     message = "Hello, how are you?"
-    #     selected_domain = "All"
-    #     response = await self.client.achat(
-    #         user_id=user_id, message=message, selected_domain=selected_domain
-    #     )
-    #     print(f"Response async: {response}")
-    #     assert isinstance(response, str)
-    #     assert len(response) > 0
+    def test_text_to_speech(self):
+        text = "This is a test for text to speech."
+        audio_path = "tests/output/test_audio_output_chat_client.wav"
+        response = self.client.text_to_speech(text=text, audio_path=audio_path)
+        print(f"Text to speech response: {response}")
+        # assert isinstance(response, Dict)
+        # assert "audio_path" in response
+        # assert response["audio_path"] == audio_path
