@@ -3,7 +3,7 @@ import os
 import streamlit as st
 
 from src.clients.admin_client import AdminClient
-from src.ui.utils import login_or_signup
+from src.ui.utils import login_or_signup, define_customized_sys_prompt_path
 from src.utils.enums import AdminConfig
 
 
@@ -22,8 +22,10 @@ def main_app():
         system_prompt = st.text_area("System Prompt", height=150)
         reasoning_effort = st.selectbox("Reasoning Effort", ["low", "medium", "high"])
         temperature = st.slider("Temperature", 0.0, 1.0, 0.7)
-        similarity_top_k = st.number_input("Similarity Top K", min_value=1, max_value=100, value=5)
-        yml_file = f"{user_id}_system_prompt.yml"
+        similarity_top_k = st.number_input(
+            "Similarity Top K", min_value=1, max_value=100, value=5
+        )
+        yml_file = define_customized_sys_prompt_path(user_id)
         yml_path = os.path.join(sys_prompt_dir, yml_file)
 
         submitted = st.form_submit_button("Update Prompt")

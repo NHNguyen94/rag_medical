@@ -1,3 +1,5 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request
 from loguru import logger
 
@@ -51,6 +53,7 @@ async def chat(
     # Disable tool to manually retrieve documents
     force_use_tools: bool = False,
     use_cot: bool = True,
+    customized_sys_prompt_path: Optional[str] = None,
 ):
     cache_service = CacheService()
 
@@ -70,6 +73,7 @@ async def chat(
         request=request,
         force_use_tools=force_use_tools,
         use_cot=use_cot,
+        customized_sys_prompt_path=customized_sys_prompt_path,
     )
 
     cache_service.cache_request_and_response(
@@ -85,6 +89,7 @@ async def get_response(
     request: Request,
     force_use_tools: bool,
     use_cot: bool,
+    customized_sys_prompt_path: Optional[str] = None,
 ):
     try:
         # TODO: Implement the all the features here
@@ -138,6 +143,7 @@ async def get_response(
             index=index,
             force_use_tools=force_use_tools,
             use_cot=use_cot,
+            customized_sys_prompt_path=customized_sys_prompt_path,
         )
 
         chat_msg = chat_request.message
