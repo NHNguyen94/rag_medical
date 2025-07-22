@@ -129,3 +129,9 @@ def handle_chat_response_with_voice(
 
 def define_customized_sys_prompt_path(user_id: str) -> str:
     return f"{user_id}_system_prompt.yml"
+
+def generate_customized_csv_file_path(user_id: str) -> str:
+    return f"{user_id}_customized_file_{str(get_unique_id())}.csv"
+
+def generate_customized_index_file_path(user_id: str) -> str:
+    return f"{user_id}_customized_index_{str(get_unique_id())}.json"

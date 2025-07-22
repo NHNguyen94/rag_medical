@@ -30,3 +30,19 @@ class AdminClient:
             return response.json()
         else:
             raise Exception(f"Error {response.status_code}: {response.text}")
+
+    def ingest_custom_file(self, file_path: str, index_path: str) -> Dict:
+        endpoint = f"{self.api_url}/ingest_custom_file"
+        payload = {
+            "file_dir_path": file_path,
+            "index_dir_path": index_path
+        }
+
+        # print(f"\n\n\n Payload for ingest_custom_file: {payload}")
+
+        response = requests.post(endpoint, json=payload)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Error {response.status_code}: {response.text}")

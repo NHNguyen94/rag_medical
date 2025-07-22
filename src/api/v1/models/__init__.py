@@ -6,3 +6,5 @@ from src.api.v1.models.text_to_speech_request import TextToSpeechRequest
 from src.api.v1.models.text_to_speech_response import TextToSpeechResponse
 from src.api.v1.models.transcribe_request import TranscribeRequest
 from src.api.v1.models.transcribe_response import TranscribeResponse
+from src.api.v1.models.ingest_custom_file_request import IngestCustomFileRequest
+from src.api.v1.models.ingest_custom_file_response import IngestCustomFileResponse

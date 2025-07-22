@@ -12,6 +12,8 @@ def main():
     directory_manager.create_dir_if_not_exists(AudioConfig.RECORDINGS_AUDIO_DIR)
     directory_manager.create_dir_if_not_exists(AudioConfig.OUTPUT_TTS_AUDIO_DIR)
     directory_manager.create_dir_if_not_exists(AdminConfig.CUSTOMIZED_SYSTEM_PROMPT_DIR)
+    directory_manager.create_dir_if_not_exists(AdminConfig.CUSTOMIZED_CSV_DIR)
+    directory_manager.create_dir_if_not_exists(AdminConfig.CUSTOMIZED_INDEX_DIR)
 
     st.set_page_config(page_title="AI Medical Assistant", page_icon="🧠")
 
