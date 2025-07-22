@@ -16,3 +16,6 @@ class AudioService:
 
     async def atranscribe(self, audio_path: str) -> str:
         return await self.audio_manager.atranscribe(audio_path)
+
+    async def atext_to_speech(self, text: str, output_path: str) -> None:
+        return await self.audio_manager.atext_to_speech(text, output_path)
