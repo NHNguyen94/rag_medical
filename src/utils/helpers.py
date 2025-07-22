@@ -14,6 +14,8 @@ from sklearn.metrics import confusion_matrix
 
 from src.utils.enums import ChatBotConfig
 
+TRAIN_LOG_PATH = "src/data/training_logs"
+
 
 def load_yml_configs(config_path: str) -> Dict:
     with open(config_path, "r") as file:
@@ -122,6 +124,12 @@ def calculate_confusion_matrix_for_emotion(
     con_matrix_df.index = new_matrix_index
     con_matrix_df.columns = new_matrix_header
 
+    con_matrix_df = round_all_values_in_df(con_matrix_df, decimals=4)
+
+    con_matrix_df.to_csv(
+        f"{TRAIN_LOG_PATH}/confusion_matrix_emotion.csv", index=False, header=True
+    )
+
     return con_matrix_df
 
 
@@ -146,4 +154,17 @@ def calculate_confusion_matrix_for_topic(
     con_matrix_df.index = new_matrix_index
     con_matrix_df.columns = new_matrix_header
 
+    con_matrix_df = round_all_values_in_df(con_matrix_df, decimals=4)
+
+    con_matrix_df.to_csv(
+        f"{TRAIN_LOG_PATH}/confusion_matrix_topic.csv", index=False, header=True
+    )
+
     return con_matrix_df
+
+
+def round_all_values_in_df(df: pd.DataFrame, decimals: int = 2) -> pd.DataFrame:
+    cols = df.columns
+    for col in cols:
+        df[col] = df[col].apply(lambda x: round(x, decimals))
+    return df
