@@ -14,6 +14,7 @@ class ChatClient:
         message: str,
         selected_domain: str,
         customized_sys_prompt_path: Optional[str] = None,
+        customize_index_path: Optional[str] = None,
     ) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
@@ -21,6 +22,7 @@ class ChatClient:
             "message": message,
             "selected_domain": selected_domain,
             "customized_sys_prompt_path": customized_sys_prompt_path,
+            "customize_index_path": customize_index_path,
         }
 
         response = requests.post(endpoint, json=payload)

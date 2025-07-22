@@ -150,3 +150,5 @@ class RedisConfig:
 
 class AdminConfig:
     CUSTOMIZED_SYSTEM_PROMPT_DIR = "src/data/customized_system_prompt"
+    CUSTOMIZED_CSV_DIR = "src/data/customized_csv"
+    CUSTOMIZED_INDEX_DIR = "src/indices/customized"

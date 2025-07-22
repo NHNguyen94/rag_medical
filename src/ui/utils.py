@@ -6,7 +6,7 @@ import streamlit as st
 
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
-from src.utils.enums import AudioConfig
+from src.utils.enums import AudioConfig, AdminConfig
 from src.utils.helpers import hash_string, get_unique_id
 
 dotenv.load_dotenv()
@@ -89,6 +89,7 @@ def handle_chat_response_with_voice(
     message: str,
     selected_domain: str,
     customized_sys_prompt_path: Optional[str] = None,
+    customize_index_path: Optional[str] = None,
 ):
     try:
         response_data = chat_client.chat(
@@ -96,6 +97,7 @@ def handle_chat_response_with_voice(
             message=message,
             selected_domain=selected_domain,
             customized_sys_prompt_path=customized_sys_prompt_path,
+            customize_index_path=customize_index_path,
         )
         st.session_state.retrieved_documents = response_data.get(
             "nearest_documents", []
@@ -129,3 +131,11 @@ def handle_chat_response_with_voice(
 
 def define_customized_sys_prompt_path(user_id: str) -> str:
     return f"{user_id}_system_prompt.yml"
+
+
+def generate_customized_csv_file_path(user_id: str) -> str:
+    return f"{user_id}_customized_file_{str(get_unique_id())}.csv"
+
+
+def define_customized_index_file_path(user_id: str) -> str:
+    return f"{AdminConfig.CUSTOMIZED_INDEX_DIR}/{user_id}"

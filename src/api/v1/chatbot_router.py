@@ -54,6 +54,7 @@ async def chat(
     force_use_tools: bool = False,
     use_cot: bool = True,
     customized_sys_prompt_path: Optional[str] = None,
+    customize_index_path: Optional[str] = None,
 ):
     cache_service = CacheService()
 
@@ -74,6 +75,7 @@ async def chat(
         force_use_tools=force_use_tools,
         use_cot=use_cot,
         customized_sys_prompt_path=customized_sys_prompt_path,
+        customize_index_path=customize_index_path,
     )
 
     cache_service.cache_request_and_response(
@@ -90,6 +92,7 @@ async def get_response(
     force_use_tools: bool,
     use_cot: bool,
     customized_sys_prompt_path: Optional[str] = None,
+    customize_index_path: Optional[str] = None,
 ):
     try:
         # TODO: Implement the all the features here
@@ -144,6 +147,7 @@ async def get_response(
             force_use_tools=force_use_tools,
             use_cot=use_cot,
             customized_sys_prompt_path=customized_sys_prompt_path,
+            customize_index_path=customize_index_path,
         )
 
         chat_msg = chat_request.message
