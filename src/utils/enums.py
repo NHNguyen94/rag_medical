@@ -146,3 +146,7 @@ class AudioConfig:
 
 class RedisConfig:
     DEFAULT_EXPIRATION = 600
+
+
+class AdminConfig:
+    CUSTOMIZED_SYSTEM_PROMPT_DIR = "src/data/customized_system_prompt"

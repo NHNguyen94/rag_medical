@@ -1,12 +1,13 @@
 import os
+from typing import Optional
 
 import dotenv
 import streamlit as st
 
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
-from src.utils.helpers import hash_string, get_unique_id
 from src.utils.enums import AudioConfig
+from src.utils.helpers import hash_string, get_unique_id
 
 dotenv.load_dotenv()
 
@@ -83,11 +84,18 @@ def handle_chat_response(
 
 
 def handle_chat_response_with_voice(
-    chat_client: ChatClient, user_id: str, message: str, selected_domain: str
+    chat_client: ChatClient,
+    user_id: str,
+    message: str,
+    selected_domain: str,
+    customized_sys_prompt_path: Optional[str] = None,
 ):
     try:
         response_data = chat_client.chat(
-            user_id=user_id, message=message, selected_domain=selected_domain
+            user_id=user_id,
+            message=message,
+            selected_domain=selected_domain,
+            customized_sys_prompt_path=customized_sys_prompt_path,
         )
         st.session_state.retrieved_documents = response_data.get(
             "nearest_documents", []
@@ -117,3 +125,7 @@ def handle_chat_response_with_voice(
         with st.chat_message("assistant"):
             st.error(f"An error occurred: {e}")
         return False
+
+
+def define_customized_sys_prompt_path(user_id: str) -> str:
+    return f"{user_id}_system_prompt.yml"

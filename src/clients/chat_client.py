@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import requests
 
@@ -8,12 +8,19 @@ class ChatClient:
         self.api_url = f"{base_url.rstrip('/')}/{api_version}/chatbot"
         # self.client = httpx.AsyncClient()
 
-    def chat(self, user_id: str, message: str, selected_domain: str) -> Dict:
+    def chat(
+        self,
+        user_id: str,
+        message: str,
+        selected_domain: str,
+        customized_sys_prompt_path: Optional[str] = None,
+    ) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
             "user_id": user_id,
             "message": message,
             "selected_domain": selected_domain,
+            "customized_sys_prompt_path": customized_sys_prompt_path,
         }
 
         response = requests.post(endpoint, json=payload)

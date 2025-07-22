@@ -22,14 +22,18 @@ class ChatBotService:
         index: BaseIndex,
         force_use_tools: bool,
         use_cot: bool,
+        customized_sys_prompt_path: Optional[str] = None,
     ):
         self.user_id = user_id
         self.chat_history_manager = ChatHistoryManager()
         self.vector_store_manager = VectorStoreManager()
-        if use_cot:
-            self.prompt_manager = PromptManager(chat_bot_config.COT_PROMPT_PATH)
+        if customized_sys_prompt_path:
+            self.prompt_manager = PromptManager(customized_sys_prompt_path)
         else:
-            self.prompt_manager = PromptManager(chat_bot_config.DEFAULT_PROMPT_PATH)
+            if use_cot:
+                self.prompt_manager = PromptManager(chat_bot_config.COT_PROMPT_PATH)
+            else:
+                self.prompt_manager = PromptManager(chat_bot_config.DEFAULT_PROMPT_PATH)
         self.system_prompt_template = self.prompt_manager.make_system_prompt(
             self.prompt_manager.get_system_prompt()
         )

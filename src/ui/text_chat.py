@@ -4,7 +4,11 @@ import streamlit as st
 import torch
 
 from src.clients.chat_client import ChatClient
-from src.ui.utils import login_or_signup, handle_chat_response_with_voice
+from src.ui.utils import (
+    login_or_signup,
+    handle_chat_response_with_voice,
+    define_customized_sys_prompt_path,
+)
 from src.utils.enums import ChatBotConfig
 from src.utils.helpers import clean_document_text
 
@@ -22,6 +26,13 @@ def main_app():
     selected_domain = st.selectbox("Select a medical domain", ChatBotConfig.DOMAINS)
     chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
     user_id = st.session_state.get("hashed_username", "default_user_id")
+
+    use_custom_prompt = st.toggle("Use customized system prompt", value=False)
+    if use_custom_prompt:
+        customized_sys_prompt_path = define_customized_sys_prompt_path(user_id)
+        st.info(f"Using custom system prompt from:\n`{customized_sys_prompt_path}`")
+    else:
+        customized_sys_prompt_path = None
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
@@ -44,7 +55,9 @@ def main_app():
     if prompt:
         st.chat_message("user").markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
-        handle_chat_response_with_voice(chat_client, user_id, prompt, selected_domain)
+        handle_chat_response_with_voice(
+            chat_client, user_id, prompt, selected_domain, customized_sys_prompt_path
+        )
 
     if st.session_state.followup_questions:
         st.divider()
@@ -53,7 +66,7 @@ def main_app():
             if st.button(f"➕ {q}", key=f"followup_{idx}"):
                 st.session_state.messages.append({"role": "user", "content": q})
                 if handle_chat_response_with_voice(
-                    chat_client, user_id, q, selected_domain
+                    chat_client, user_id, q, selected_domain, customized_sys_prompt_path
                 ):
                     st.rerun()
 
