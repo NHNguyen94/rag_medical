@@ -132,7 +132,8 @@ class TopicClusteringConfig:
 class AudioConfig:
     DEVICE = "cpu"  # no support for mps yet
     COMPUTE_TYPE = "float32"  # no support for float16 yet
-    AUDIO_DIR = "src/data/recordings_from_speaker"
+    RECORDINGS_AUDIO_DIR = "src/data/recordings_from_speaker"
+    OUTPUT_TTS_AUDIO_DIR = "src/data/output_tts_audio"
     AUDIO_FILE_EXTENSION = ".wav"
     FRAME_RATE = 44100
     CHANNELS = 1

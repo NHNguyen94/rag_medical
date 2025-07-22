@@ -5,14 +5,12 @@ import torch
 from st_audiorec import st_audiorec
 
 from src.clients.chat_client import ChatClient
-from src.ui.utils import login_or_signup, handle_chat_response
+from src.ui.utils import login_or_signup, handle_chat_response_with_voice
 from src.utils.enums import ChatBotConfig, AudioConfig
-from src.utils.directory_manager import DirectoryManager
 from src.utils.date_time_manager import DateTimeManager
 from src.utils.helpers import clean_document_text
 
 datetime_manager = DateTimeManager()
-directory_manager = DirectoryManager()
 torch.classes.__path__ = []
 
 
@@ -55,14 +53,10 @@ def main_app():
     prompt = None
 
     if audio_bytes:
-        print(type(audio_bytes))
-        print(len(audio_bytes))
-        print(audio_bytes[:20])
-        audio_dir = AudioConfig.AUDIO_DIR
-        directory_manager.create_dir_if_not_exists(audio_dir)
+        recordings_audio_dir = AudioConfig.RECORDINGS_AUDIO_DIR
         timestamp = datetime_manager.get_current_local_time_str()
         wav_filename = f"{user_id}_recording_{timestamp}.wav"
-        wav_path = os.path.join(audio_dir, wav_filename)
+        wav_path = os.path.join(recordings_audio_dir, wav_filename)
 
         # save the audio bytes directly to a file
         with open(wav_path, "wb") as f:
@@ -80,7 +74,7 @@ def main_app():
     if prompt:
         st.chat_message("user").markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
-        handle_chat_response(chat_client, user_id, prompt, selected_domain)
+        handle_chat_response_with_voice(chat_client, user_id, prompt, selected_domain)
 
     if st.session_state.followup_questions:
         st.divider()
@@ -88,7 +82,9 @@ def main_app():
         for idx, q in enumerate(st.session_state.followup_questions):
             if st.button(f"➕ {q}", key=f"followup_{idx}"):
                 st.session_state.messages.append({"role": "user", "content": q})
-                if handle_chat_response(chat_client, user_id, q, selected_domain):
+                if handle_chat_response_with_voice(
+                    chat_client, user_id, q, selected_domain
+                ):
                     st.rerun()
 
     with st.sidebar:
