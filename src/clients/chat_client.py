@@ -49,14 +49,13 @@ class ChatClient:
         else:
             raise Exception(f"Error {response.status_code}: {response.text}")
 
-    #
-    # async def achat(self, user_id: str, message: str, selected_domain: str) -> str:
-    #     endpoint = f"{self.api_url}/chat"
-    #     payload = {"user_id": user_id, "message": message, "domain": selected_domain}
-    #
-    #     response = await self.client.post(endpoint, json=payload)
-    #
-    #     if response.status_code == 200:
-    #         return response.json()["response"]
-    #     else:
-    #         raise Exception(f"Error {response.status_code}: {response.text}")
+    def text_to_speech(self, text: str, audio_path: str) -> Dict:
+        endpoint = f"{self.api_url}/text_to_speech"
+        payload = {"text": text, "audio_path": audio_path}
+
+        response = requests.post(endpoint, json=payload)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Error {response.status_code}: {response.text}")
