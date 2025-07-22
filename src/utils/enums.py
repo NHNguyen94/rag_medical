@@ -142,3 +142,7 @@ class AudioConfig:
     # DEFAULT_WHISPER_MODEL = "large-v2"
     DEFAULT_WHISPER_MODEL = "base"
     DEFAULT_LANGUAGE = "en"
+
+
+class RedisConfig:
+    DEFAULT_EXPIRATION = 600
