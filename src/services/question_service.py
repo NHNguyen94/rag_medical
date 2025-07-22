@@ -9,7 +9,6 @@ from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
 
 class QuestionService:
     def __init__(self):
-        self.model = flan_t5.FlanT5()
         self.device = QuestionRecommendConfig.DEVICE
         self.model_name = QuestionRecommendConfig.MODEL_NAME
         self.model_path = QuestionRecommendConfig.MODEL_PATH
@@ -17,10 +16,6 @@ class QuestionService:
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.executor = ThreadPoolExecutor(max_workers=1)
         self.max_length = 128
-
-
-    def get_follow_up_question(self, input_question: str, domain: str) -> list[str]:
-        return self.model.recommend(input_question, domain)
 
     def load_model(self, topic: int=0):
         model_weigths = QuestionRecommendConfig.MODEL_SAVE_NAME[topic]
@@ -33,11 +28,9 @@ class QuestionService:
         model.eval()
         return model
 
-    async def async_load_model(self, model_path: str = None):
-        if model_path is None:
-            model_path = topic_config.MODEL_PATH
+    async def async_load_model(self, topic: int = 0):
         loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(self.executor, self.load_model, model_path)
+        return await loop.run_in_executor(self.executor, self.load_model, topic)
 
     def predict(self, input_question: str, model) -> list[str]:
         inputs = self.tokenizer(

@@ -1,4 +1,6 @@
-from src.ml_models.flan_t5 import FlanT5
+import pytest
+import asyncio
+
 from src.services.question_service import QuestionService
 
 
@@ -17,4 +19,20 @@ class TestQuestionRecommender:
         question = "What are the causes diabetes?"
         output = qr_service.predict(question, model)
         print(f"response1: {output} ")
+        assert isinstance(output, list)
+
+    @pytest.mark.asyncio
+    async def test_async_cancer_question_recommender(self):
+        model = await qr_service.async_load_model(0)  # or pass mapped path
+        question = "What are the causes cancer?"
+        output = qr_service.predict(question, model)
+        print(f"response1: {output}")
+        assert isinstance(output, list)
+
+    @pytest.mark.asyncio
+    async def test_async_diabetes_question_recommender(self):
+        model = await qr_service.async_load_model(1)  # or mapped path
+        question = "What are the causes diabetes?"
+        output = qr_service.predict(question, model)
+        print(f"response2: {output}")
         assert isinstance(output, list)
