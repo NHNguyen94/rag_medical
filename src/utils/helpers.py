@@ -22,6 +22,11 @@ def load_yml_configs(config_path: str) -> Dict:
         return yaml.safe_load(file)
 
 
+def write_dict_to_yaml(data: Dict, file_path: str) -> None:
+    with open(file_path, "w") as file:
+        yaml.dump(data, file, default_flow_style=False, sort_keys=False)
+
+
 def get_unique_id() -> UUID:
     return uuid4()
 

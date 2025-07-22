@@ -152,10 +152,12 @@ class TopicClusteringConfig:
     TEST_DATA_PATH = "src/data/medical_data/all/test.csv"
     MODEL_PATH = "src/ml_models/model_files/topic_clustering_model.pth"
 
+
 class AudioConfig:
-    DEVICE = "cpu" # no support for mps yet
+    DEVICE = "cpu"  # no support for mps yet
     COMPUTE_TYPE = "float32"  # no support for float16 yet
-    AUDIO_DIR = "src/data/recordings_from_speaker"
+    RECORDINGS_AUDIO_DIR = "src/data/recordings_from_speaker"
+    OUTPUT_TTS_AUDIO_DIR = "src/data/output_tts_audio"
     AUDIO_FILE_EXTENSION = ".wav"
     FRAME_RATE = 44100
     CHANNELS = 1
@@ -164,3 +166,13 @@ class AudioConfig:
     # DEFAULT_WHISPER_MODEL = "large-v2"
     DEFAULT_WHISPER_MODEL = "base"
     DEFAULT_LANGUAGE = "en"
+
+
+class RedisConfig:
+    DEFAULT_EXPIRATION = 600
+
+
+class AdminConfig:
+    CUSTOMIZED_SYSTEM_PROMPT_DIR = "src/data/customized_system_prompt"
+    CUSTOMIZED_CSV_DIR = "src/data/customized_csv"
+    CUSTOMIZED_INDEX_DIR = "src/indices/customized"

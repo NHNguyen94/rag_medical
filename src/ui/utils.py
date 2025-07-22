@@ -1,11 +1,13 @@
 import os
+from typing import Optional
 
 import dotenv
 import streamlit as st
 
 from src.clients.auth_client import AuthClient
 from src.clients.chat_client import ChatClient
-from src.utils.helpers import hash_string
+from src.utils.enums import AudioConfig, AdminConfig
+from src.utils.helpers import hash_string, get_unique_id
 
 dotenv.load_dotenv()
 
@@ -58,15 +60,18 @@ def login_or_signup():
 
 
 def handle_chat_response(
-        chat_client: ChatClient,
-        user_id: str,
-        message: str,
-        selected_domain: str
+    chat_client: ChatClient, user_id: str, message: str, selected_domain: str
 ):
     try:
-        response_data = chat_client.chat(user_id=user_id, message=message, selected_domain=selected_domain, use_qr=st.session_state.enable_recommendation)
-        st.session_state.retrieved_documents = response_data.get("nearest_documents", [])
-        st.session_state.followup_questions = response_data.get("recommended_questions", [])
+        response_data = chat_client.chat(
+            user_id=user_id, message=message, selected_domain=selected_domain, use_qr=st.session_state.enable_recommendation
+        )
+        st.session_state.retrieved_documents = response_data.get(
+            "nearest_documents", []
+        )
+        st.session_state.followup_questions = response_data.get(
+            "recommended_questions", []
+        )
         response = response_data.get("response", "No response from the assistant.")
         with st.chat_message("assistant"):
             st.markdown(response)
@@ -76,3 +81,61 @@ def handle_chat_response(
         with st.chat_message("assistant"):
             st.error(f"An error occurred: {e}")
         return False
+
+
+def handle_chat_response_with_voice(
+    chat_client: ChatClient,
+    user_id: str,
+    message: str,
+    selected_domain: str,
+    customized_sys_prompt_path: Optional[str] = None,
+    customize_index_path: Optional[str] = None,
+):
+    try:
+        response_data = chat_client.chat(
+            user_id=user_id,
+            message=message,
+            selected_domain=selected_domain,
+            customized_sys_prompt_path=customized_sys_prompt_path,
+            customize_index_path=customize_index_path,
+        )
+        st.session_state.retrieved_documents = response_data.get(
+            "nearest_documents", []
+        )
+        st.session_state.followup_questions = response_data.get(
+            "recommended_questions", []
+        )
+        response = response_data.get("response", "No response from the assistant.")
+
+        output_tts_dir = AudioConfig.OUTPUT_TTS_AUDIO_DIR
+        output_tts_file_name = f"{user_id}_tts_{get_unique_id()}.wav"
+        output_tts_path = os.path.join(output_tts_dir, output_tts_file_name)
+        chat_client.text_to_speech(
+            text=response,
+            audio_path=output_tts_path,
+        )
+
+        with st.chat_message("assistant"):
+            st.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+
+        st.audio(output_tts_path, format=AudioConfig.AUDIO_FORMAT)
+        # st.session_state.audio_ready = False
+
+        return True
+    except Exception as e:
+        with st.chat_message("assistant"):
+            st.error(f"An error occurred: {e}")
+        return False
+
+
+def define_customized_sys_prompt_path(user_id: str) -> str:
+    return f"{user_id}_system_prompt.yml"
+
+
+def generate_customized_csv_file_path(user_id: str) -> str:
+    return f"{user_id}_customized_file_{str(get_unique_id())}.csv"
+
+
+def define_customized_index_file_path(user_id: str) -> str:
+    return f"{AdminConfig.CUSTOMIZED_INDEX_DIR}/{user_id}"

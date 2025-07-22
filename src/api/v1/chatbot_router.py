@@ -1,22 +1,44 @@
+from typing import Optional
+
 from fastapi import APIRouter, Request
 from loguru import logger
 
+from src.api.v1.models import (
+    ChatRequest,
+    BaseChatRequest,
+    ChatResponse,
+    TextToSpeechRequest,
+    TextToSpeechResponse,
+    TranscribeRequest,
+    TranscribeResponse,
+    AiquestionRequest,
+    AiquestionResponse
+)
 from src.services.audio_service import AudioService
-from src.api.v1.models.chat_request import ChatRequest, BaseChatRequest
-from src.api.v1.models.chat_response import ChatResponse
-from src.api.v1.models.transcribe_request import TranscribeRequest
-from src.api.v1.models.transcribe_response import TranscribeResponse
-from src.api.v1.models.ai_question_request import AiquestionRequest
-from src.api.v1.models.ai_question_response import AiquestionResponse
+from src.services.cache_service import CacheService
 from src.services.chat_bot_service import ChatBotService
 from src.utils.enums import ChatBotConfig
 
 router = APIRouter(tags=["chatbot"])
 
 
+@router.post("/text_to_speech", response_model=TextToSpeechResponse)
+async def text_to_speech(
+    text_to_speech_request: TextToSpeechRequest,
+):
+    audio_service = AudioService()
+    audio_file = await audio_service.atext_to_speech(
+        text=text_to_speech_request.text, output_path=text_to_speech_request.audio_path
+    )
+    logger.info(f"Generated audio file: {audio_file}")
+    return TextToSpeechResponse(
+        audio_path=text_to_speech_request.audio_path,
+    )
+
+
 @router.post("/transcribe", response_model=TranscribeResponse)
 async def transcribe(
-        transcribe_request: TranscribeRequest,
+    transcribe_request: TranscribeRequest,
 ):
     audio_service = AudioService()
     transcribed_msg = await audio_service.atranscribe(transcribe_request.audio_file)
@@ -28,17 +50,34 @@ async def transcribe(
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
-        chat_request: ChatRequest,
-        request: Request,
-        # Disable tool to manually retrieve documents
-        force_use_tools: bool = False,
-        use_cot: bool = True,
+    chat_request: ChatRequest,
+    request: Request,
+    # Disable tool to manually retrieve documents
+    force_use_tools: bool = False,
+    use_cot: bool = True,
+    customized_sys_prompt_path: Optional[str] = None,
+    customize_index_path: Optional[str] = None,
 ):
-    return await get_response(
+    cache_service = CacheService()
+
+    cache_request = {
+        "chat_request": chat_request.model_dump(),
+        "force_use_tools": force_use_tools,
+        "use_cot": use_cot,
+    }
+
+    cached_response = cache_service.get_cached_response(cache_request)
+    if cached_response:
+        logger.info("Returning cached response")
+        return ChatResponse(**cached_response)
+
+    response = await get_response(
         chat_request=chat_request,
         request=request,
         force_use_tools=force_use_tools,
         use_cot=use_cot,
+        customized_sys_prompt_path=customized_sys_prompt_path,
+        customize_index_path=customize_index_path,
     )
 
 @router.post("/ai-question", response_model=AiquestionResponse)
@@ -49,15 +88,16 @@ async def get_ai_question(
     question_recommendation_service = request.app.state.question_recomm_service
     question = question_recommendation_service.ai_predict(question_request.topic)
 
-    print("From backend", question)
     return AiquestionResponse(recommended_question=question)
 
 
 async def get_response(
-        chat_request: BaseChatRequest,
-        request: Request,
-        force_use_tools: bool,
-        use_cot: bool
+    chat_request: BaseChatRequest,
+    request: Request,
+    force_use_tools: bool,
+    use_cot: bool,
+    customized_sys_prompt_path: Optional[str] = None,
+    customize_index_path: Optional[str] = None,
 ):
     try:
         # TODO: Implement the all the features here
@@ -114,6 +154,8 @@ async def get_response(
             index=index,
             force_use_tools=force_use_tools,
             use_cot=use_cot,
+            customized_sys_prompt_path=customized_sys_prompt_path,
+            customize_index_path=customize_index_path,
         )
 
         chat_msg = chat_request.message
@@ -136,9 +178,7 @@ async def get_response(
             model=emotion_model,
             vocab=emotion_vocab,
         )
-        nearest_nodes = await chat_bot_service.retrieve_related_nodes(
-            message=chat_msg
-        )
+        nearest_nodes = await chat_bot_service.retrieve_related_nodes(message=chat_msg)
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             nearest_nodes=nearest_nodes
         )
