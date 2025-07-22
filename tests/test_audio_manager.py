@@ -22,13 +22,13 @@ class TestAudioManager:
 
     def test_text_to_speech(self):
         audio_manager = AudioManager(self.language)
-        output_path = "tests/resources/test_output.wav"
+        output_path = "tests/output/test_output.wav"
         text = "Hello, how are you today? How's the weather today?"
         audio_manager.text_to_speech(text, output_path)
 
     @pytest.mark.asyncio
     async def test_atext_to_speech(self):
         audio_manager = AudioManager(self.language)
-        output_path = "tests/resources/test_output_async.wav"
+        output_path = "tests/output/test_output_async.wav"
         text = "Hello, how are you today? How's the weather today?"
         await audio_manager.atext_to_speech(text, output_path)

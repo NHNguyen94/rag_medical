@@ -27,7 +27,7 @@ class TestChatClient:
 
     def test_text_to_speech(self):
         text = "This is a test for text to speech."
-        audio_path = "tests/resources/test_audio_output_chat_client.wav"
+        audio_path = "tests/output/test_audio_output_chat_client.wav"
         response = self.client.text_to_speech(text=text, audio_path=audio_path)
         print(f"Text to speech response: {response}")
         # assert isinstance(response, Dict)
