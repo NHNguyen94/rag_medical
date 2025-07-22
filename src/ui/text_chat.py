@@ -20,6 +20,12 @@ def main_app():
         st.session_state.messages = []
         st.rerun()
 
+    # enable or diable question recommendation
+    st.sidebar.markdown("### Settings")
+    st.sidebar.checkbox(
+        "Enable Question Recommendation", key="enable_recommendation", value=True
+    )
+
     selected_domain = st.selectbox("Select a medical domain", ChatBotConfig.DOMAINS)
     chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
     user_id = st.session_state.get("hashed_username", "default_user_id")
@@ -84,14 +90,15 @@ def main_app():
         st.session_state.messages.append({"role": "user", "content": prompt})
         handle_chat_response(chat_client, user_id, prompt, selected_domain)
 
-    if st.session_state.followup_questions:
-        st.divider()
-        st.markdown("Related")
-        for idx, q in enumerate(st.session_state.followup_questions):
-            if st.button(f"➕ {q}", key=f"followup_{idx}"):
-                st.session_state.messages.append({"role": "user", "content": q})
-                if handle_chat_response(chat_client, user_id, q, selected_domain):
-                    st.rerun()
+    if st.session_state.enable_recommendation:
+        if st.session_state.followup_questions:
+            st.divider()
+            st.markdown("Related")
+            for idx, q in enumerate(st.session_state.followup_questions):
+                if st.button(f"➕ {q}", key=f"followup_{idx}"):
+                    st.session_state.messages.append({"role": "user", "content": q})
+                    if handle_chat_response(chat_client, user_id, q, selected_domain):
+                        st.rerun()
 
     with st.sidebar:
         st.header("Retrieved Documents")

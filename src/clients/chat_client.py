@@ -8,12 +8,13 @@ class ChatClient:
         self.api_url = f"{base_url.rstrip('/')}/{api_version}/chatbot"
         # self.client = httpx.AsyncClient()
 
-    def chat(self, user_id: str, message: str, selected_domain: str) -> Dict:
+    def chat(self, user_id: str, message: str, selected_domain: str, use_qr: bool) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
             "user_id": user_id,
             "message": message,
             "selected_domain": selected_domain,
+            "use_qr": use_qr,
         }
 
         response = requests.post(endpoint, json=payload)

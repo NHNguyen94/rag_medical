@@ -57,7 +57,7 @@ async def get_response(
         chat_request: BaseChatRequest,
         request: Request,
         force_use_tools: bool,
-        use_cot: bool,
+        use_cot: bool
 ):
     try:
         # TODO: Implement the all the features here
@@ -68,6 +68,7 @@ async def get_response(
         topic_clustering_service = request.app.state.topic_clustering_service
         topic_cluster_model = request.app.state.topic_cluster_model
 
+        use_qr = chat_request.use_qr
         question_recommendation_service = request.app.state.question_recomm_service
 
         index_cancer = request.app.state.index_cancer
@@ -155,10 +156,13 @@ async def get_response(
         qr_model_name = f"qr_{predicted_topic_no}"
         print(f"qr_model_name: {qr_model_name}")
         qr_model = getattr(request.app.state, qr_model_name)
-        question_recommendations = question_recommendation_service.predict(
-            input_question=chat_msg,
-            model=qr_model
-        )
+        if use_qr:
+            question_recommendations = question_recommendation_service.predict(
+                input_question=chat_msg,
+                model=qr_model
+            )
+        else:
+            question_recommendations = []
 
         await chat_bot_service.append_history(
             message=chat_msg,
@@ -168,12 +172,6 @@ async def get_response(
             recommended_questions=question_recommendations
         )
 
-        print("question_recommendations", question_recommendations)
-        if isinstance(question_recommendations, list):
-            print("question_recommendations is list")
-        else:
-            print("question_recommendations is not list")
-            question_recommendations = [question_recommendations]
         response = ChatResponse(
             response=response,
             nearest_documents=nearest_documents,
