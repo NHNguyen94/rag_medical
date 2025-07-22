@@ -172,34 +172,10 @@ class FineTuningPipeline:
 
         return model_inputs
 
-    def debug_batch(self, datasets):
-        """Debug what's actually being fed to the model"""
-        from torch.utils.data import DataLoader
-
-        # Create a simple data loader
-        train_loader = DataLoader(
-            datasets["train"], batch_size=2, collate_fn=lambda x: x
-        )
-
-        # Test forward pass with this batch
-        self.model.eval()
-        with torch.no_grad():
-            try:
-                # Move to device
-                batch_device = {k: v.to(self.device) for k, v in collated_batch.items()}
-                outputs = self.model(**batch_device)
-                print(f"Forward pass loss: {outputs.loss.item()}")
-            except Exception as e:
-                print(f"Forward pass failed: {e}")
-
     def train(self):
         """Train the model."""
         # Prepare dataset
         datasets = self.prepare_training_data()
-
-        print("=== DEBUGGING BATCHES ===")
-        self.debug_batch(datasets)
-        print("=== END DEBUGGING ===")
 
         # Training arguments
         training_args = Seq2SeqTrainingArguments(
