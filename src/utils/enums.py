@@ -102,6 +102,8 @@ class EmotionRecognitionConfig:
 
 class QuestionRecommendConfig:
     BASE_DIR = Path(__file__).resolve().parent.parent
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    MODEL_NAME = "google/flan-t5-base"
     FINE_TUNE_DATA_DIR = BASE_DIR / "data" / "fine_tune_dataset" / "OtherQA.csv"
     PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
     MODEL_DATA_DIR = BASE_DIR / "data" / "processed"

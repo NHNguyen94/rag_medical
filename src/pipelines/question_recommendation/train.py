@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from src.pipelines.question_recommendation.fine_tune import FineTuningPipeline
+from src.core_managers.question_recomm_manager import FineTuningPipeline
 from src.utils.enums import QuestionRecommendConfig
 
 
@@ -10,7 +10,7 @@ def main():
     parser.add_argument('--dataset', type=int, required=True,
                         help='Dataset number (0=cancer, 1=diabetes, etc.)')
     args = parser.parse_args()
-    model_name = "google/flan-t5-base"
+    model_name = QuestionRecommendConfig.MODEL_NAME
     data_dir = QuestionRecommendConfig.DATASET_NUMBER_MAPPING[args.dataset]
     output_dir = QuestionRecommendConfig.MODEL_DATA_DIR
     save_dir = QuestionRecommendConfig.MODEL_PATH

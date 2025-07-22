@@ -19,7 +19,7 @@ class QuestionGenerator:
         self.output_dir = Path(output_dir)
         self.faiss_index = faiss_index
         self.questions_mapping = questions_mapping
-        self.model_name = "google/flan-t5-base"
+        self.model_name = QuestionRecommendConfig.MODEL_NAME
         self.temperature = temperature
 
     def get_similar_questions(self, query_embedding, k: int = 5) -> List[str]:
