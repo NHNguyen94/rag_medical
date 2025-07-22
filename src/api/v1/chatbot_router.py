@@ -11,6 +11,7 @@ from src.api.v1.models import (
     TranscribeResponse,
 )
 from src.services.audio_service import AudioService
+from src.services.cache_service import CacheService
 from src.services.chat_bot_service import ChatBotService
 from src.utils.enums import ChatBotConfig
 
@@ -51,12 +52,32 @@ async def chat(
     force_use_tools: bool = False,
     use_cot: bool = True,
 ):
-    return await get_response(
+    cache_service = CacheService()
+
+    cache_request = {
+        "chat_request": chat_request.model_dump(),
+        "force_use_tools": force_use_tools,
+        "use_cot": use_cot,
+    }
+
+    cached_response = cache_service.get_cached_response(cache_request)
+    if cached_response:
+        logger.info("Returning cached response")
+        return ChatResponse(**cached_response)
+
+    response = await get_response(
         chat_request=chat_request,
         request=request,
         force_use_tools=force_use_tools,
         use_cot=use_cot,
     )
+
+    cache_service.cache_request_and_response(
+        request=cache_request,
+        response=response.model_dump(),
+    )
+    logger.info("Returning new response")
+    return response
 
 
 async def get_response(
