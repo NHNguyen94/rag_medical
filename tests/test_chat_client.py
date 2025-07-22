@@ -24,7 +24,6 @@ class TestChatClient:
         assert isinstance(response, Dict)
         assert "transcription" in response
 
-
     def test_text_to_speech(self):
         text = "This is a test for text to speech."
         audio_path = "tests/output/test_audio_output_chat_client.wav"
