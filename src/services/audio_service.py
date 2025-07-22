@@ -6,14 +6,16 @@ audio_config = AudioConfig()
 
 class AudioService:
     def __init__(
-            self,
-            language: str = audio_config.DEFAULT_LANGUAGE,
-            whisper_model_name: str = audio_config.DEFAULT_WHISPER_MODEL
+        self,
+        language: str = audio_config.DEFAULT_LANGUAGE,
+        whisper_model_name: str = audio_config.DEFAULT_WHISPER_MODEL,
     ):
         self.audio_manager = AudioManager(
-            language=language,
-            whisper_model_name=whisper_model_name
+            language=language, whisper_model_name=whisper_model_name
         )
 
     async def atranscribe(self, audio_path: str) -> str:
         return await self.audio_manager.atranscribe(audio_path)
+
+    async def atext_to_speech(self, text: str, output_path: str) -> None:
+        return await self.audio_manager.atext_to_speech(text, output_path)

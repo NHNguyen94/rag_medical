@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import requests
 
@@ -8,12 +8,21 @@ class ChatClient:
         self.api_url = f"{base_url.rstrip('/')}/{api_version}/chatbot"
         # self.client = httpx.AsyncClient()
 
-    def chat(self, user_id: str, message: str, selected_domain: str) -> Dict:
+    def chat(
+        self,
+        user_id: str,
+        message: str,
+        selected_domain: str,
+        customized_sys_prompt_path: Optional[str] = None,
+        customize_index_path: Optional[str] = None,
+    ) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
             "user_id": user_id,
             "message": message,
             "selected_domain": selected_domain,
+            "customized_sys_prompt_path": customized_sys_prompt_path,
+            "customize_index_path": customize_index_path,
         }
 
         response = requests.post(endpoint, json=payload)
@@ -40,9 +49,7 @@ class ChatClient:
 
     def transcribe(self, audio_file: str) -> Dict:
         endpoint = f"{self.api_url}/transcribe"
-        payload = {
-            "audio_file": audio_file
-        }
+        payload = {"audio_file": audio_file}
 
         response = requests.post(endpoint, json=payload)
 
@@ -75,3 +82,14 @@ class ChatClient:
     #         return response.json()["response"]
     #     else:
     #         raise Exception(f"Error {response.status_code}: {response.text}")
+
+    def text_to_speech(self, text: str, audio_path: str) -> Dict:
+        endpoint = f"{self.api_url}/text_to_speech"
+        payload = {"text": text, "audio_path": audio_path}
+
+        response = requests.post(endpoint, json=payload)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Error {response.status_code}: {response.text}")
