@@ -5,7 +5,7 @@ from src.api.v1.models import (
     SystemPromptRequest,
     SystemPromptResponse,
     IngestCustomFileRequest,
-    IngestCustomFileResponse
+    IngestCustomFileResponse,
 )
 from src.services.ingestion_service import IngestionService
 from src.utils.enums import IngestionConfig
@@ -31,7 +31,7 @@ def ingest_custom_file(ingest_custom_file_request: IngestCustomFileRequest):
     ingestion_service.ingest_data(
         data_path=ingest_custom_file_request.file_dir_path,
         index_path=ingest_custom_file_request.index_dir_path,
-        col_name_to_ingest=IngestionConfig.COL_NAME_TO_INGEST
+        col_name_to_ingest=IngestionConfig.COL_NAME_TO_INGEST,
     )
 
     return IngestCustomFileResponse(

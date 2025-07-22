@@ -9,6 +9,7 @@ from src.ui.utils import (
     login_or_signup,
     handle_chat_response_with_voice,
     define_customized_sys_prompt_path,
+    define_customized_index_file_path,
 )
 from src.utils.enums import ChatBotConfig, AudioConfig
 from src.utils.date_time_manager import DateTimeManager
@@ -36,6 +37,13 @@ def main_app():
         st.info(f"Using custom system prompt from:\n`{customized_sys_prompt_path}`")
     else:
         customized_sys_prompt_path = None
+
+    use_custom_index = st.toggle("Use customized index", value=False)
+    if use_custom_index:
+        customize_index_path = define_customized_index_file_path(user_id)
+        st.info(f"Using custom index from:\n`{customize_index_path}`")
+    else:
+        customize_index_path = None
 
     if "messages" not in st.session_state:
         st.session_state.messages = [
@@ -86,7 +94,12 @@ def main_app():
         st.chat_message("user").markdown(prompt)
         st.session_state.messages.append({"role": "user", "content": prompt})
         handle_chat_response_with_voice(
-            chat_client, user_id, prompt, selected_domain, customized_sys_prompt_path
+            chat_client,
+            user_id,
+            prompt,
+            selected_domain,
+            customized_sys_prompt_path,
+            customize_index_path,
         )
 
     if st.session_state.followup_questions:
@@ -96,7 +109,12 @@ def main_app():
             if st.button(f"➕ {q}", key=f"followup_{idx}"):
                 st.session_state.messages.append({"role": "user", "content": q})
                 if handle_chat_response_with_voice(
-                    chat_client, user_id, q, selected_domain, customized_sys_prompt_path
+                    chat_client,
+                    user_id,
+                    q,
+                    selected_domain,
+                    customized_sys_prompt_path,
+                    customize_index_path,
                 ):
                     st.rerun()
 

@@ -33,10 +33,7 @@ class AdminClient:
 
     def ingest_custom_file(self, file_path: str, index_path: str) -> Dict:
         endpoint = f"{self.api_url}/ingest_custom_file"
-        payload = {
-            "file_dir_path": file_path,
-            "index_dir_path": index_path
-        }
+        payload = {"file_dir_path": file_path, "index_dir_path": index_path}
 
         # print(f"\n\n\n Payload for ingest_custom_file: {payload}")
 

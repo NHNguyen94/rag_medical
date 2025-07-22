@@ -23,6 +23,7 @@ class ChatBotService:
         force_use_tools: bool,
         use_cot: bool,
         customized_sys_prompt_path: Optional[str] = None,
+        customize_index_path: Optional[str] = None,
     ):
         self.user_id = user_id
         self.chat_history_manager = ChatHistoryManager()
@@ -37,7 +38,10 @@ class ChatBotService:
         self.system_prompt_template = self.prompt_manager.make_system_prompt(
             self.prompt_manager.get_system_prompt()
         )
-        self.index = index
+        if customize_index_path:
+            self.index = self.vector_store_manager.load_index(customize_index_path)
+        else:
+            self.index = index
         self.agent = AgentManager(
             index=self.index,
             chat_model=chat_bot_config.DEFAULT_CHAT_MODEL,

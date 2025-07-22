@@ -6,6 +6,7 @@ from src.clients.admin_client import AdminClient
 from src.ui.utils import (
     login_or_signup,
     generate_customized_csv_file_path,
+    define_customized_index_file_path,
 )
 from src.utils.directory_manager import DirectoryManager
 from src.utils.enums import AdminConfig, IngestionConfig
@@ -48,7 +49,7 @@ def main_app():
         if st.button("Ingest File"):
             try:
                 # delete all indexes to load new one
-                cutomized_index_dir = f"{AdminConfig.CUSTOMIZED_INDEX_DIR}/{user_id}"
+                cutomized_index_dir = define_customized_index_file_path(user_id)
                 if directory_manager.check_if_dir_exists(cutomized_index_dir):
                     directory_manager.delete_non_empty_dir(cutomized_index_dir)
 
