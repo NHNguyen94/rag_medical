@@ -8,6 +8,7 @@ from src.api.v1.api import router as v1_router
 from src.core_managers.vector_store_manager import VectorStoreManager
 from src.database.models import create_tables
 from src.services.emotion_recognition_service import EmotionRecognitionService
+from src.services.question_service import QuestionService
 from src.services.topic_clustering_service import TopicClusteringService
 from src.utils.enums import IngestionConfig, ChatBotConfig
 
@@ -33,8 +34,10 @@ async def load_model_background(
 async def lifespan(app: FastAPI):
     emotion_recognition_service = EmotionRecognitionService()
     topic_clustering_service = TopicClusteringService()
+    question_recomm_service = QuestionService()
     app.state.emotion_recognition_service = emotion_recognition_service
     app.state.topic_clustering_service = topic_clustering_service
+    app.state.question_recomm_service = question_recomm_service
 
     index_path = IngestionConfig.INDEX_PATH
     index_cancer = vt_store.build_or_load_index(f"{index_path}/{ChatBotConfig.CANCER}")
@@ -76,8 +79,17 @@ async def lifespan(app: FastAPI):
     app.state.emotion_model = emotion_model
     app.state.emotion_vocab = emotion_vocab
 
+
     topic_cluster_model = await topic_clustering_service.async_load_model()
     app.state.topic_cluster_model = topic_cluster_model
+
+    qr_cancer = await question_recomm_service.async_load_model(0)
+    qr_diabetes = await question_recomm_service.async_load_model(1)
+    qr_disease_cntrl_prev = await question_recomm_service.async_load_model(2)
+
+    app.state.qr_0 = qr_cancer
+    app.state.qr_1 = qr_diabetes
+    app.state.qr_2 = qr_disease_cntrl_prev
 
     await create_tables()
     yield

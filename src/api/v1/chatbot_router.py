@@ -55,6 +55,8 @@ async def get_response(
         topic_clustering_service = request.app.state.topic_clustering_service
         topic_cluster_model = request.app.state.topic_cluster_model
 
+        question_recommendation_service = request.app.state.question_recomm_service
+
         index_cancer = request.app.state.index_cancer
         index_diabetes = request.app.state.index_diabetes
         index_disease_control_and_prevention = (
@@ -137,19 +139,32 @@ async def get_response(
             synthesized_response=synthesized_response,
         )
 
-        # follow_up_questions = question_recomend_service.get_follow_up_question(chat_request.message, domain)
+        qr_model_name = f"qr_{predicted_topic_no}"
+        print(f"qr_model_name: {qr_model_name}")
+        qr_model = getattr(request.app.state, qr_model_name)
+        question_recommendations = question_recommendation_service.predict(
+            input_question=chat_msg,
+            model=qr_model
+        )
+
         await chat_bot_service.append_history(
             message=chat_msg,
             response_str=response,
             nearest_documents=nearest_documents,
             predicted_emotion=str(predicted_emotion.item()),
-            # recommended_questions=follow_up_questions
+            recommended_questions=question_recommendations
         )
 
+        print("question_recommendations", question_recommendations)
+        if isinstance(question_recommendations, list):
+            print("question_recommendations is list")
+        else:
+            print("question_recommendations is not list")
+            question_recommendations = [question_recommendations]
         response = ChatResponse(
             response=response,
             nearest_documents=nearest_documents,
-            # recommended_questions=follow_up_questions
+            recommended_questions=question_recommendations
         )
 
         return response
