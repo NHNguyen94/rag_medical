@@ -51,6 +51,36 @@ class QuestionService:
         model_output = [self.tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
         return model_output[0].split("|")
 
+    def ai_predict(self, topic: str):
+        model = AutoModelForSeq2SeqLM.from_pretrained(self.model_name).to(self.device)
+        model.eval()
+        print("Model is on:", next(model.parameters()).device)
+        prompt = f"Generate one medical question about {topic}."
+        inputs = self.tokenizer(
+            prompt,
+            return_tensors="pt",
+            padding=True,
+            truncation=True,
+            max_length=64
+        ).to(self.device)
+
+        print("Input IDs on:", inputs["input_ids"].device)
+
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_length=64,
+                num_return_sequences=1,
+                do_sample=True,
+                top_k=50,
+                top_p=0.9,
+                temperature=0.8
+            )
+
+        question = self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+        return question.strip()
+
+
 
 
 

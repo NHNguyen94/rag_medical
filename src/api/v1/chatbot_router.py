@@ -6,6 +6,8 @@ from src.api.v1.models.chat_request import ChatRequest, BaseChatRequest
 from src.api.v1.models.chat_response import ChatResponse
 from src.api.v1.models.transcribe_request import TranscribeRequest
 from src.api.v1.models.transcribe_response import TranscribeResponse
+from src.api.v1.models.ai_question_request import AiquestionRequest
+from src.api.v1.models.ai_question_response import AiquestionResponse
 from src.services.chat_bot_service import ChatBotService
 from src.utils.enums import ChatBotConfig
 
@@ -38,6 +40,17 @@ async def chat(
         force_use_tools=force_use_tools,
         use_cot=use_cot,
     )
+
+@router.post("/ai-question", response_model=AiquestionResponse)
+async def get_ai_question(
+        question_request: AiquestionRequest,
+        request: Request
+):
+    question_recommendation_service = request.app.state.question_recomm_service
+    question = question_recommendation_service.ai_predict(question_request.topic)
+
+    print("From backend", question)
+    return AiquestionResponse(recommended_question=question)
 
 
 async def get_response(
