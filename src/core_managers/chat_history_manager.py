@@ -90,3 +90,6 @@ class ChatHistoryManager:
             recommended_questions=recommended_questions,
             predicted_emotion=predicted_emotion,
         )
+
+    async def delete_chat_history(self, user_id: str) -> None:
+        await self.db_service_manager.delete_chat_history(user_id)
