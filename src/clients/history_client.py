@@ -17,3 +17,13 @@ class HistoryClient:
             return response.json()
         else:
             raise Exception(f"Error {response.status_code}: {response.text}")
+
+    def get_chat_history(self, user_id: str, limit: int = 10):
+        response = requests.get(f"{self.api_url}/chat-history/{user_id}", params={"limit": limit})
+        response.raise_for_status()
+        return response.json()
+
+    def delete_single_chat_message(self, chat_id: str):
+        response = requests.delete(f"{self.api_url}/chat-history/message/{chat_id}")
+        response.raise_for_status()
+        return response.json()

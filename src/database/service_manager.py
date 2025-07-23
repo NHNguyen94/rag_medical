@@ -1,6 +1,6 @@
 from typing import List
 
-from sqlmodel import select
+from sqlmodel import select, desc, delete
 
 from src.database.models import ChatHistory, Users
 from src.database.session_manager import SessionManager
@@ -82,5 +82,32 @@ class ServiceManager:
         async with self.session_manager.get_async_session() as session:
             await session.execute(
                 ChatHistory.__table__.delete().where(ChatHistory.user_id == user_id)
+            )
+            await session.commit()
+
+    async def get_latest_chat_history(self, user_id: str, limit: int = 10) -> list[dict]:
+        async with self.session_manager.get_async_session() as session:
+            result = await session.execute(
+                select(ChatHistory)
+                .where(ChatHistory.user_id == user_id)
+                .order_by(desc(ChatHistory.created_at))
+                .limit(limit)
+            )
+            rows = result.scalars().all()
+            return [
+                {
+                    "id": str(row.id),
+                    "user_id": str(row.user_id),
+                    "message": row.message,
+                    "response": row.response,
+                    "created_at": row.created_at.isoformat(),
+                }
+                for row in rows
+            ]
+
+    async def delete_single_chat(self, chat_id: str) -> None:
+        async with self.session_manager.get_async_session() as session:
+            await session.execute(
+                delete(ChatHistory).where(ChatHistory.id == chat_id)
             )
             await session.commit()
