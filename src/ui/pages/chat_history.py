@@ -1,9 +1,13 @@
 import os
-from datetime import datetime
-
+import pandas as pd
+import io
+import base64
 import streamlit as st
 
-from src.clients.history_client import HistoryClient
+from fpdf import FPDF
+from datetime import datetime
+
+from src.clients.history_client import HistoryClient, ChatPDF, ChatExportManager
 from src.ui.utils import login_or_signup
 
 
@@ -13,6 +17,7 @@ def chat_history_app():
     st.title("🧹 Manage Chat History")
 
     history_client = HistoryClient(base_url=os.getenv("API_URL"), api_version="v1")
+    export_manager = ChatExportManager()
 
     user_id = st.session_state.get("hashed_username", "default_user_id")
 
@@ -26,12 +31,33 @@ def chat_history_app():
         except Exception as e:
             st.error(f"❌ Failed to delete chat history: {e}")
 
-    limit = st.selectbox("Select number of messages to display", [5, 10, 20, 50], index=1)
-    st.markdown("### 🕓 Your Last 10 Messages")
-
     try:
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col1:
+            limit = st.selectbox("Select number of messages to display", [5, 10, 20, 50], index=1)
+
         history = history_client.get_chat_history(user_id=user_id, limit=limit)
         if history:
+            df = export_manager.generate_chat_dataframe(history)
+
+            with col2:
+                excel_data = export_manager.export_to_excel(df)
+                st.download_button(
+                    label="📄 Export to Excel",
+                    data=excel_data,
+                    file_name="chat_history.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+            with col3:
+                pdf_data = export_manager.export_to_pdf(df)
+                st.download_button(
+                    label="📑 Export to PDF",
+                    data=pdf_data,
+                    file_name="chat_history.pdf",
+                    mime="application/pdf"
+                )
+
             for idx, chat in enumerate(history):
                 with st.container():
                     col1, col2 = st.columns([0.95, 0.05])
