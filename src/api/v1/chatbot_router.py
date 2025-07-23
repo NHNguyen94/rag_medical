@@ -10,10 +10,10 @@ from src.api.v1.models import (
     TextToSpeechRequest,
     TextToSpeechResponse,
     TranscribeRequest,
-    TranscribeResponse,
-    AiquestionRequest,
-    AiquestionResponse
+    TranscribeResponse
 )
+from src.api.v1.models.ai_question_request import AiquestionRequest
+from src.api.v1.models.ai_question_response import AiquestionResponse
 from src.services.audio_service import AudioService
 from src.services.cache_service import CacheService
 from src.services.chat_bot_service import ChatBotService
