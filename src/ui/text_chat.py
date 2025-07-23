@@ -95,7 +95,7 @@ def main_app():
                 st.rerun()
         else:
             if st.session_state.get("handle_prefilled_now"):
-                handle_chat_response(
+                handle_chat_response_with_voice(
                     chat_client,
                     user_id,
                     st.session_state.prefilled_prompt,
