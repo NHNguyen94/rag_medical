@@ -77,3 +77,10 @@ class ServiceManager:
             await session.commit()
             await session.refresh(user)
             return user
+
+    async def delete_chat_history(self, user_id: str) -> None:
+        async with self.session_manager.get_async_session() as session:
+            await session.execute(
+                ChatHistory.__table__.delete().where(ChatHistory.user_id == user_id)
+            )
+            await session.commit()
