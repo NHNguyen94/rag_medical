@@ -13,21 +13,23 @@ from datasets import Dataset
 import torch
 import pandas as pd
 
-from src.pipelines.question_recommendation.data_processor import QuestionDataProcessor
-from src.pipelines.question_recommendation.question_generator import QuestionGenerator
 from src.utils.enums import QuestionRecommendConfig
+from src.services.question_generator_service import QuestionGenerator
+from src.services.question_processor_service import QuestionDataProcessor
 
 
 class FineTuningPipeline:
     def __init__(
-        self,
-        model_name: str = "google/flan-t5-base",
-        data_dir: str = QuestionRecommendConfig.FINE_TUNE_DATA_DIR,
-        output_dir: str = QuestionRecommendConfig.MODEL_DIR,
-        max_length: int = 256,
-        batch_size: int = 2,
-        learning_rate: float = 2e-5,
-        num_epochs: int = 3,
+            self,
+            model_name: str = None,
+            data_dir: str = None,
+            output_dir: str = None,
+            model_save_path: str = None,
+            model_save_name: str = None,
+            max_length: int = 256,
+            batch_size: int = 2,
+            learning_rate: float = 1e-5,
+            num_epochs: int = 3,
     ):
         self.model_name = model_name
         self.data_dir = Path(data_dir)
@@ -36,16 +38,19 @@ class FineTuningPipeline:
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.num_epochs = num_epochs
+        self.model_save_path = model_save_path
+        self.model_save_name = model_save_name
 
         # Initialize components
-        self.data_processor = QuestionDataProcessor(data_dir=data_dir)
+        self.data_processor = QuestionDataProcessor(data_dir=self.data_dir, output_dir=self.output_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
         # Create output directory
-        self.output_dir.mkdir(parents=True, exist_ok=True)
+        # if not self.output_dir.exists():
+        #     self.output_dir.mkdir(parents=True, exist_ok=True)
 
     def prepare_training_data(self) -> Dict[str, Dataset]:
         """Prepare the dataset for training."""
@@ -61,15 +66,17 @@ class FineTuningPipeline:
         # Generate training pairs
         training_data = []
         for idx, question in tqdm(
-            enumerate(processed_data["questions"]),
-            total=len(processed_data["questions"]),
-            desc="Generating training data",
+                enumerate(processed_data["questions"]),
+                total=len(processed_data["questions"]),
+                desc="Generating training data",
         ):
             question_embedding = processed_data["embeddings"][idx]
 
             follow_up_questions = question_generator.generate_follow_up_questions(
                 question_embedding, num_questions=4
             )
+            if not follow_up_questions:
+                print(f"Warning: No follow-ups for question at idx {idx}")
 
             training_data.append(
                 {
@@ -78,6 +85,12 @@ class FineTuningPipeline:
                     "follow_up_combined": " | ".join(follow_up_questions),
                 }
             )
+
+        print(f"Sample training data:")
+        for i in range(min(3, len(training_data))):
+            print(f"Input: {training_data[i]['input']}")
+            print(f"Output: {training_data[i]['output']}")
+            print("---")
 
         # Convert to DataFrame for inspection
         df = pd.DataFrame(training_data)
@@ -111,6 +124,10 @@ class FineTuningPipeline:
         print(f"First few input IDs: {sample['input_ids'][:10]}")
         print(f"First few labels: {sample['labels'][:10]}")
 
+        val_labels = tokenized_dataset['validation']['labels']
+        all_nan = all(all(tok == -100 for tok in seq) for seq in val_labels)
+        print(f"Validation all -100? {all_nan}")
+
         labels_flat = [
             label for labels in tokenized_dataset["train"]["labels"] for label in labels
         ]
@@ -130,12 +147,13 @@ class FineTuningPipeline:
 
         # Join the list of questions with a separator
         formatted_outputs = [" | ".join(questions) for questions in examples["output"]]
+        print(f"Formatted target sample: {formatted_outputs[:2]}")
 
         labels = self.tokenizer(
             text_target=formatted_outputs,
             max_length=self.max_length,
             padding="max_length",
-            truncation=True,
+            truncation=True
         )
 
         labels_input_ids = labels["input_ids"].copy()
@@ -148,15 +166,21 @@ class FineTuningPipeline:
         ]
 
         model_inputs["labels"] = labels_input_ids
+        for i, seq in enumerate(labels_input_ids):
+            if all(label == -100 for label in seq):
+                print(f"Warning: All labels ignored at index {i}!")
+
         return model_inputs
 
     def train(self):
         """Train the model."""
+        # Prepare dataset
         datasets = self.prepare_training_data()
 
         # Training arguments
         training_args = Seq2SeqTrainingArguments(
             output_dir=str(self.output_dir),
+            # evaluation_strategy="epoch",
             eval_steps=100,
             do_eval=True,
             do_train=True,
@@ -164,7 +188,7 @@ class FineTuningPipeline:
             eval_strategy="steps",
             save_strategy="steps",
             logging_strategy="steps",
-            logging_steps=10,
+            logging_steps=100,
             learning_rate=self.learning_rate,
             per_device_train_batch_size=self.batch_size,
             per_device_eval_batch_size=self.batch_size,
@@ -172,7 +196,7 @@ class FineTuningPipeline:
             weight_decay=0.01,
             save_total_limit=3,
             predict_with_generate=False,
-            fp16=True,
+            fp16=False,
             logging_dir=str(self.output_dir / "logs"),
             load_best_model_at_end=True,
             log_level="info",
@@ -205,5 +229,4 @@ class FineTuningPipeline:
         print(f"Final validation loss: {metrics['eval_loss']:.4f}")
 
         # Save the model
-        trainer.save_model(str(self.output_dir))
-        self.tokenizer.save_pretrained(str(self.output_dir))
+        torch.save(self.model.state_dict(), self.model_save_path / self.model_save_name)

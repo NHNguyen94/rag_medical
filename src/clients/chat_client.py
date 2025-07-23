@@ -1,5 +1,4 @@
 from typing import Dict, Optional
-
 import requests
 
 
@@ -15,6 +14,7 @@ class ChatClient:
         selected_domain: str,
         customized_sys_prompt_path: Optional[str] = None,
         customize_index_path: Optional[str] = None,
+        use_qr: bool = True
     ) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
@@ -23,6 +23,7 @@ class ChatClient:
             "selected_domain": selected_domain,
             "customized_sys_prompt_path": customized_sys_prompt_path,
             "customize_index_path": customize_index_path,
+            "use_qr": use_qr,
         }
 
         response = requests.post(endpoint, json=payload)
@@ -57,6 +58,31 @@ class ChatClient:
             return response.json()
         else:
             raise Exception(f"Error {response.status_code}: {response.text}")
+
+    def get_ai_question(self, user_id: str, topic: str) -> dict:
+        endpoint = f"{self.api_url}/ai-question"
+        payload = {"user_id": user_id, "topic": topic}
+
+        try:
+            response = requests.post(endpoint, json=payload, timeout=30)
+            response.raise_for_status()
+            response = response.json()
+            return response
+        except Exception as e:
+            print("Failed to fetch topic-based questions:", e)
+            return { recommended_question: "what are the health effects of obesity?" }
+
+    #
+    # async def achat(self, user_id: str, message: str, selected_domain: str) -> str:
+    #     endpoint = f"{self.api_url}/chat"
+    #     payload = {"user_id": user_id, "message": message, "domain": selected_domain}
+    #
+    #     response = await self.client.post(endpoint, json=payload)
+    #
+    #     if response.status_code == 200:
+    #         return response.json()["response"]
+    #     else:
+    #         raise Exception(f"Error {response.status_code}: {response.text}")
 
     def text_to_speech(self, text: str, audio_path: str) -> Dict:
         endpoint = f"{self.api_url}/text_to_speech"

@@ -10,8 +10,10 @@ from src.api.v1.models import (
     TextToSpeechRequest,
     TextToSpeechResponse,
     TranscribeRequest,
-    TranscribeResponse,
+    TranscribeResponse
 )
+from src.api.v1.models.ai_question_request import AiquestionRequest
+from src.api.v1.models.ai_question_response import AiquestionResponse
 from src.services.audio_service import AudioService
 from src.services.cache_service import CacheService
 from src.services.chat_bot_service import ChatBotService
@@ -85,6 +87,16 @@ async def chat(
     logger.info("Returning new response")
     return response
 
+@router.post("/ai-question", response_model=AiquestionResponse)
+async def get_ai_question(
+        question_request: AiquestionRequest,
+        request: Request
+):
+    question_recommendation_service = request.app.state.question_recomm_service
+    question = question_recommendation_service.ai_predict(question_request.topic)
+
+    return AiquestionResponse(recommended_question=question)
+
 
 async def get_response(
     chat_request: BaseChatRequest,
@@ -102,6 +114,9 @@ async def get_response(
 
         topic_clustering_service = request.app.state.topic_clustering_service
         topic_cluster_model = request.app.state.topic_cluster_model
+
+        use_qr = chat_request.use_qr
+        question_recommendation_service = request.app.state.question_recomm_service
 
         index_cancer = request.app.state.index_cancer
         index_diabetes = request.app.state.index_diabetes
@@ -185,19 +200,29 @@ async def get_response(
             synthesized_response=synthesized_response,
         )
 
-        # follow_up_questions = question_recomend_service.get_follow_up_question(chat_request.message, domain)
+        qr_model_name = f"qr_{predicted_topic_no}"
+        print(f"qr_model_name: {qr_model_name}")
+        qr_model = getattr(request.app.state, qr_model_name)
+        if use_qr:
+            question_recommendations = question_recommendation_service.predict(
+                input_question=chat_msg,
+                model=qr_model
+            )
+        else:
+            question_recommendations = []
+
         await chat_bot_service.append_history(
             message=chat_msg,
             response_str=response,
             nearest_documents=nearest_documents,
             predicted_emotion=str(predicted_emotion.item()),
-            # recommended_questions=follow_up_questions
+            recommended_questions=question_recommendations
         )
 
         response = ChatResponse(
             response=response,
             nearest_documents=nearest_documents,
-            # recommended_questions=follow_up_questions
+            recommended_questions=question_recommendations
         )
 
         return response

@@ -109,10 +109,34 @@ class EmotionRecognitionConfig:
 
 class QuestionRecommendConfig:
     BASE_DIR = Path(__file__).resolve().parent.parent
-    print(f"BASE_DIR: {BASE_DIR}")
-    FINE_TUNE_DATA_DIR = BASE_DIR / "data" / "fine_tune_dataset" / "CancerQA.csv"
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    MODEL_NAME = "google/flan-t5-base"
+    FINE_TUNE_DATA_DIR = BASE_DIR / "data" / "fine_tune_dataset" / "OtherQA.csv"
     PROCESSED_DATA_DIR = BASE_DIR / "data" / "processed"
-    MODEL_DIR = BASE_DIR / "data" / "processed"
+    MODEL_DATA_DIR = BASE_DIR / "data" / "processed"
+    MODEL_PATH = BASE_DIR / "ml_models"/ "model_files"
+    DATASET_NUMBER_MAPPING = {
+        0: BASE_DIR / "data" / "fine_tune_dataset" / "CancerQA.csv",
+        1: BASE_DIR / "data" / "fine_tune_dataset" / "Diabetes_and_Digestive_and_Kidney_DiseasesQA.csv",
+        2: BASE_DIR / "data" / "fine_tune_dataset" / "Disease_Control_and_PreventionQA.csv",
+        3: BASE_DIR / "data" / "fine_tune_dataset" / "Genetic_and_Rare_DiseasesQA.csv",
+        4: BASE_DIR / "data" / "fine_tune_dataset" / "growth_hormone_receptorQA.csv",
+        5: BASE_DIR / "data" / "fine_tune_dataset" / "Heart_Lung_and_BloodQA.csv",
+        6: BASE_DIR / "data" / "fine_tune_dataset" / "Neurological_Disorders_and_StrokeQA.csv",
+        7: BASE_DIR / "data" / "fine_tune_dataset" / "SeniorHealthQA.csv",
+        8: BASE_DIR / "data" / "fine_tune_dataset" / "OtherQA.csv",
+    }
+    MODEL_SAVE_NAME = {
+        0: "flant5_cancer.pth",
+        1: "flant5_diabetes.pth",
+        2: "flant5_disease_control_prev.pth",
+        3: "flant5_genetic_hormone_receptor.pth",
+        4: "flant5_growth_hormone_receptor.pth",
+        5: "flant5_heart_lung_blood.pth",
+        6: "flant5_neurological.pth",
+        7: "flant5_senior_health.pth",
+        8: "flant5_other.pth"
+    }
 
 
 class TopicClusteringConfig:
