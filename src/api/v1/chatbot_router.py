@@ -80,6 +80,13 @@ async def chat(
         customize_index_path=customize_index_path,
     )
 
+    cache_service.cache_request_and_response(
+        request=cache_request,
+        response=response.model_dump(),
+    )
+    logger.info("Returning new response")
+    return response
+
 @router.post("/ai-question", response_model=AiquestionResponse)
 async def get_ai_question(
         question_request: AiquestionRequest,

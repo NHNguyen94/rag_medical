@@ -85,23 +85,23 @@ async def lifespan(app: FastAPI):
 
     qr_cancer = await question_recomm_service.async_load_model(0)
     qr_diabetes = await question_recomm_service.async_load_model(1)
-    # qr_disease_cntrl_prev = await question_recomm_service.async_load_model(2)
-    # qr_genetic_hormone = await question_recomm_service.async_load_model(3)
-    # qr_growth_hormone = await question_recomm_service.async_load_model(4)
-    # qr_heart_lung = await question_recomm_service.async_load_model(5)
-    # qr_neurological = await question_recomm_service.async_load_model(6)
+    qr_disease_cntrl_prev = await question_recomm_service.async_load_model(2)
+    qr_genetic_hormone = await question_recomm_service.async_load_model(3)
+    qr_growth_hormone = await question_recomm_service.async_load_model(4)
+    qr_heart_lung = await question_recomm_service.async_load_model(5)
+    qr_neurological = await question_recomm_service.async_load_model(6)
     qr_senior_health = await question_recomm_service.async_load_model(7)
-    # qr_other = await question_recomm_service.async_load_model(8)
+    qr_other = await question_recomm_service.async_load_model(8)
 
     app.state.qr_0 = qr_cancer
     app.state.qr_1 = qr_diabetes
-    # app.state.qr_2 = qr_disease_cntrl_prev
-    # app.state.qr_3 = qr_genetic_hormone
-    # app.state.qr_4 = qr_growth_hormone
-    # app.state.qr_5 = qr_heart_lung
-    # app.state.qr_6 = qr_neurological
+    app.state.qr_2 = qr_disease_cntrl_prev
+    app.state.qr_3 = qr_genetic_hormone
+    app.state.qr_4 = qr_growth_hormone
+    app.state.qr_5 = qr_heart_lung
+    app.state.qr_6 = qr_neurological
     app.state.qr_7 = qr_senior_health
-    # app.state.qr_8 = qr_other
+    app.state.qr_8 = qr_other
 
     await create_tables()
     yield
