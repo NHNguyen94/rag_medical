@@ -74,14 +74,15 @@ def handle_chat_response(
 ):
     try:
         response_data = chat_client.chat(
-            user_id=user_id, 
-            message=message, 
-            selected_domain=selected_domain, 
+            user_id=user_id,
+            message=message,
+            selected_domain=selected_domain,
             disable_emotion_recognition=disable_emotion_recognition,
             model_name=selected_model,
             customized_sys_prompt_path=customized_sys_prompt_path,
             bypass_cache=bypass_cache,
             language=language,
+            use_qr=st.session_state.enable_recommendation
         )
         st.session_state.retrieved_documents = response_data.get(
             "nearest_documents", []
