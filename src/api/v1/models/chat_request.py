@@ -5,8 +5,10 @@ from typing import Optional
 class BaseChatRequest(BaseModel):
     user_id: str
     selected_domain: str
+
     model_name: Optional[str] = None
     disable_emotion_recognition: Optional[bool] = False
+    use_qr: bool = True
 
 
 class ChatRequest(BaseChatRequest):

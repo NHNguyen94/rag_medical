@@ -185,3 +185,4 @@ cython_debug/
 src/.DS_Store
 /tests/output/
 /redis_data/
+/src/ml_models/model_files/
