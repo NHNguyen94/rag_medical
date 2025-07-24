@@ -17,14 +17,20 @@ def main():
 
     st.set_page_config(page_title="AI Medical Assistant", page_icon="🧠")
 
-    st.sidebar.title("Select Chat Mode")
-    chat_mode = st.sidebar.radio(
-        "Choose input type:", ("Text Chat 📝", "Voice Chat 🎤")
-    )
+    # Removed sidebar rendering here to avoid duplication
+    # st.sidebar.title("Select Chat Mode")
+    # chat_mode = st.sidebar.radio(
+    #     "Choose input type:", ("Text Chat 📝", "Voice Chat 🎤")
+    # )
 
-    if chat_mode.startswith("Text"):
+    # Use a simple session state or default to text chat
+    if 'chat_mode' not in st.session_state:
+        st.session_state['chat_mode'] = 'Text Chat 📝'
+
+    # You can set chat_mode from the sidebar in text_chat.py/voice_chat.py
+    if st.session_state['chat_mode'].startswith("Text"):
         run_text_chat()
-    elif chat_mode.startswith("Voice"):
+    elif st.session_state['chat_mode'].startswith("Voice"):
         run_voice_chat()
 
 
