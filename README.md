@@ -1,4 +1,13 @@
-# Train vector store
+# To run the project, please follow these steps:
+
+Note: This application is supported for MacOS and Linux only
+
+## 1. Install dependencies
+- Create conda env with Python 3.11
+- Run `pip install poetry`
+- Run `poetry install` to install all dependencies
+
+## 2. Create vector store
 
 - Download all datasets from here: https://www.kaggle.com/datasets/gvaldenebro/cancer-q-and-a-dataset/data
 - Create src/data folder
@@ -9,19 +18,23 @@
 - Run `make ingest-data` to ingest data into the vector store
 - You will need to wait for the process, it will take long time (~ 1-2 hours)
 
-# Emotion detection
+## 3. Train model for Emotion detection
 
 - Download the dataset here: https://www.kaggle.com/datasets/parulpandey/emotion-dataset/data
 - Run `make train-emotion` to train the model
+- Run `make eval-emotion` to evaluate the model
 - Run `make run-emotion` to run the model for examples
 
-# Topic clustering
+
+## 4. Train model for Topic clustering
 
 - Run `ingest-medical-data` to ingest medical Q&A data for topic clustering
 - Run `make train-topic` to train the model
+- Run `make eval-topic` to evaluate the model
 - Run `make run-topic` to run the model for examples
 
-# Question recommendation
+
+## 5. Train models for Question recommendation
 1. Create or ensure all directories exist.
 - mkdir src/data/fine_tune_dataset
 - mkdir src/data/processed
@@ -57,3 +70,9 @@ Where:
 - Trained model: `ml_models/model_files/flant5_<domain>.pth` (e.g., ) `flant5_cancer.pth`
 - Training data: `data/processed/training_data.csv`
 - Question mappings: `data/processed/questions_mapping.json`
+
+
+## 6. Run the application
+- Run `docker compose up` to start the docker containers with all services
+- Run `make run-backend` in another terminal to start the backend server
+- Run `make run-frontend` in another terminal to start the frontend server
