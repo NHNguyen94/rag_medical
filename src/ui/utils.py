@@ -9,6 +9,8 @@ from src.clients.chat_client import ChatClient
 from src.utils.enums import AudioConfig, AdminConfig
 from src.utils.helpers import hash_string, get_unique_id
 
+import requests
+
 dotenv.load_dotenv()
 
 
@@ -60,11 +62,26 @@ def login_or_signup():
 
 
 def handle_chat_response(
-    chat_client: ChatClient, user_id: str, message: str, selected_domain: str
+    chat_client: ChatClient, 
+    user_id: str, 
+    message: str, 
+    selected_domain: str, 
+    disable_emotion_recognition: bool = False,
+    selected_model: Optional[str] = None,
+    customized_sys_prompt_path: Optional[str] = None,
+    bypass_cache: bool = False,
+    language: str = "English",
 ):
     try:
         response_data = chat_client.chat(
-            user_id=user_id, message=message, selected_domain=selected_domain
+            user_id=user_id, 
+            message=message, 
+            selected_domain=selected_domain, 
+            disable_emotion_recognition=disable_emotion_recognition,
+            model_name=selected_model,
+            customized_sys_prompt_path=customized_sys_prompt_path,
+            bypass_cache=bypass_cache,
+            language=language,
         )
         st.session_state.retrieved_documents = response_data.get(
             "nearest_documents", []
@@ -90,6 +107,7 @@ def handle_chat_response_with_voice(
     selected_domain: str,
     customized_sys_prompt_path: Optional[str] = None,
     customize_index_path: Optional[str] = None,
+    model_name: Optional[str] = None,  # New parameter
 ):
     try:
         response_data = chat_client.chat(
@@ -98,6 +116,7 @@ def handle_chat_response_with_voice(
             selected_domain=selected_domain,
             customized_sys_prompt_path=customized_sys_prompt_path,
             customize_index_path=customize_index_path,
+            model_name=model_name,  # Pass to chat client
         )
         st.session_state.retrieved_documents = response_data.get(
             "nearest_documents", []
@@ -115,8 +134,57 @@ def handle_chat_response_with_voice(
             audio_path=output_tts_path,
         )
 
-        with st.chat_message("assistant"):
-            st.markdown(response)
+        if "messages" not in st.session_state or not st.session_state.messages:
+            st.session_state.messages = [
+          {
+              "role": "assistant",
+              "content": "Hello, I'm your AI medical assistant. How can I help you today?",
+          }
+      ]
+
+        for idx, message in enumerate(st.session_state.messages):
+            with st.chat_message(message["role"]):
+                st.markdown(message["content"])
+                if message["role"] == "assistant":
+                    feedback_key = f"feedback_{hash_string(message['content'])}_{idx}"
+                    feedback_given = st.session_state.get(feedback_key, None)
+                    if feedback_given is None:
+                        col1, col2, col3 = st.columns([1, 1, 3])
+                        like_clicked = col1.button("👍", key=f"like_{hash_string(message['content'])}_{idx}")
+                        dislike_clicked = col2.button("👎", key=f"dislike_{hash_string(message['content'])}_{idx}")
+                        if like_clicked or dislike_clicked:
+                            feedback_type = "like" if like_clicked else "dislike"
+                            st.session_state[feedback_key] = feedback_type
+                            send_feedback_to_backend(user_id, message["content"], message["content"], feedback_type)
+                            if like_clicked:
+                                st.success("Thank you for your feedback!")
+                            else:
+                                st.warning("Sorry this answer did not help you.")
+                    elif feedback_given == "like":
+                        st.success("Thank you for your feedback!")
+                    elif feedback_given == "dislike":
+                        st.warning("Sorry this answer did not help you.")
+                        if st.button("Try Again", key=f"regen_{hash_string(message['content'])}_{idx}"):
+                            with st.spinner("Generating a new answer..."):
+                                # Find the previous user message before this assistant message
+                                user_message = None
+                                for prev in reversed(st.session_state.messages[:idx]):
+                                    if prev["role"] == "user":
+                                        user_message = prev["content"]
+                                        break
+                                if user_message:
+                                    # Re-run the chat with the same user message
+                                    chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
+                                    handle_chat_response_with_voice(
+                                        chat_client,
+                                        user_id,
+                                        user_message,
+                                        selected_domain,
+                                        customized_sys_prompt_path,
+                                        customize_index_path,
+                                    )
+                                    st.rerun()
+
         st.session_state.messages.append({"role": "assistant", "content": response})
 
         st.audio(output_tts_path, format=AudioConfig.AUDIO_FORMAT)
@@ -139,3 +207,21 @@ def generate_customized_csv_file_path(user_id: str) -> str:
 
 def define_customized_index_file_path(user_id: str) -> str:
     return f"{AdminConfig.CUSTOMIZED_INDEX_DIR}/{user_id}"
+
+
+def send_feedback_to_backend(user_id, message, response, feedback_type):
+    api_url = os.getenv("API_URL", "http://localhost:8000")  # Adjust as needed
+    endpoint = f"{api_url}/v1/chatbot/feedback"
+    payload = {
+        "user_id": user_id,
+        "message": message,
+        "response": response,
+        "feedback_type": feedback_type,
+    }
+    try:
+        r = requests.post(endpoint, json=payload, timeout=5)
+        r.raise_for_status()
+        return r.json().get("success", False)
+    except Exception as e:
+        print(f"Error sending feedback: {e}")
+        return False
