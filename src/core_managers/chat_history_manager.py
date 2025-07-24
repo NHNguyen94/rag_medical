@@ -90,3 +90,15 @@ class ChatHistoryManager:
             recommended_questions=recommended_questions,
             predicted_emotion=predicted_emotion,
         )
+
+    async def delete_chat_history(self, user_id: str) -> None:
+        await self.db_service_manager.delete_chat_history(user_id)
+
+    async def get_user_chat_history(self, user_id: str, limit: int = 10) -> None:
+        history = await self.db_service_manager.get_latest_chat_history(user_id, limit)
+        return history
+
+    async def delete_single_chat_message(self, user_id: str) -> None:
+        await self.db_service_manager.delete_single_chat(user_id)
+
+
