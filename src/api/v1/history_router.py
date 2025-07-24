@@ -1,7 +1,11 @@
 from fastapi import APIRouter
 from typing import List
 
-from src.api.v1.models import HistoryDeleteResponse, HistoryDeleteRequest, ChatHistoryResponse
+from src.api.v1.models import (
+    HistoryDeleteResponse,
+    HistoryDeleteRequest,
+    ChatHistoryResponse,
+)
 from src.core_managers.chat_history_manager import ChatHistoryManager
 
 router = APIRouter(tags=["history"])

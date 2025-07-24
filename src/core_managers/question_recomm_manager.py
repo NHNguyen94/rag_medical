@@ -20,16 +20,16 @@ from src.services.question_processor_service import QuestionDataProcessor
 
 class FineTuningPipeline:
     def __init__(
-            self,
-            model_name: str = None,
-            data_dir: str = None,
-            output_dir: str = None,
-            model_save_path: str = None,
-            model_save_name: str = None,
-            max_length: int = 256,
-            batch_size: int = 2,
-            learning_rate: float = 1e-5,
-            num_epochs: int = 3,
+        self,
+        model_name: str = None,
+        data_dir: str = None,
+        output_dir: str = None,
+        model_save_path: str = None,
+        model_save_name: str = None,
+        max_length: int = 256,
+        batch_size: int = 2,
+        learning_rate: float = 1e-5,
+        num_epochs: int = 3,
     ):
         self.model_name = model_name
         self.data_dir = Path(data_dir)
@@ -42,7 +42,9 @@ class FineTuningPipeline:
         self.model_save_name = model_save_name
 
         # Initialize components
-        self.data_processor = QuestionDataProcessor(data_dir=self.data_dir, output_dir=self.output_dir)
+        self.data_processor = QuestionDataProcessor(
+            data_dir=self.data_dir, output_dir=self.output_dir
+        )
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -66,9 +68,9 @@ class FineTuningPipeline:
         # Generate training pairs
         training_data = []
         for idx, question in tqdm(
-                enumerate(processed_data["questions"]),
-                total=len(processed_data["questions"]),
-                desc="Generating training data",
+            enumerate(processed_data["questions"]),
+            total=len(processed_data["questions"]),
+            desc="Generating training data",
         ):
             question_embedding = processed_data["embeddings"][idx]
 
@@ -124,7 +126,7 @@ class FineTuningPipeline:
         print(f"First few input IDs: {sample['input_ids'][:10]}")
         print(f"First few labels: {sample['labels'][:10]}")
 
-        val_labels = tokenized_dataset['validation']['labels']
+        val_labels = tokenized_dataset["validation"]["labels"]
         all_nan = all(all(tok == -100 for tok in seq) for seq in val_labels)
         print(f"Validation all -100? {all_nan}")
 
@@ -153,7 +155,7 @@ class FineTuningPipeline:
             text_target=formatted_outputs,
             max_length=self.max_length,
             padding="max_length",
-            truncation=True
+            truncation=True,
         )
 
         labels_input_ids = labels["input_ids"].copy()

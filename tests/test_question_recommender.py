@@ -5,8 +5,9 @@ from src.services.question_service import QuestionService
 
 
 qr_service = QuestionService()
-class TestQuestionRecommender:
 
+
+class TestQuestionRecommender:
     def test_cancer_question_recommender(self):
         model = qr_service.load_model(0)
         question = "What are the causes cancer?"

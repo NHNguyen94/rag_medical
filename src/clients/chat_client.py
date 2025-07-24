@@ -14,7 +14,7 @@ class ChatClient:
         selected_domain: str,
         customized_sys_prompt_path: Optional[str] = None,
         customize_index_path: Optional[str] = None,
-        use_qr: bool = True
+        use_qr: bool = True,
     ) -> Dict:
         endpoint = f"{self.api_url}/chat"
         payload = {
@@ -25,6 +25,7 @@ class ChatClient:
             "customize_index_path": customize_index_path,
             "use_qr": use_qr,
         }
+        print(f"\n\nPayload for chat request: {payload}\n")
 
         response = requests.post(endpoint, json=payload)
 
@@ -70,7 +71,7 @@ class ChatClient:
             return response
         except Exception as e:
             print("Failed to fetch topic-based questions:", e)
-            return { recommended_question: "what are the health effects of obesity?" }
+            return {recommended_question: "what are the health effects of obesity?"}
 
     #
     # async def achat(self, user_id: str, message: str, selected_domain: str) -> str:

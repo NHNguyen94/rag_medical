@@ -3,6 +3,7 @@ from src.utils.enums import QuestionRecommendConfig
 
 qr_config = QuestionRecommendConfig()
 
+
 def run_inference(text: str) -> None:
     qr_service = QuestionService()
     model_path = qr_config.MODEL_PATH
@@ -13,9 +14,7 @@ def run_inference(text: str) -> None:
 
 
 if __name__ == "__main__":
-    texts = [
-        "What are the symptoms of diabetes?"
-    ]
+    texts = ["What are the symptoms of diabetes?"]
 
     for question in texts:
         run_inference(question)

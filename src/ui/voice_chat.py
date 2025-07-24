@@ -11,7 +11,7 @@ from src.ui.utils import (
     define_customized_sys_prompt_path,
     define_customized_index_file_path,
 )
-from src.utils.enums import ChatBotConfig, AudioConfig
+from src.utils.enums import ChatBotConfig, AudioConfig, AdminConfig
 from src.utils.date_time_manager import DateTimeManager
 from src.utils.helpers import clean_document_text
 
@@ -34,6 +34,9 @@ def main_app():
     use_custom_prompt = st.toggle("Use customized system prompt", value=False)
     if use_custom_prompt:
         customized_sys_prompt_path = define_customized_sys_prompt_path(user_id)
+        customized_sys_prompt_path = os.path.join(
+            AdminConfig.CUSTOMIZED_SYSTEM_PROMPT_DIR, customized_sys_prompt_path
+        )
         st.info(f"Using custom system prompt from:\n`{customized_sys_prompt_path}`")
     else:
         customized_sys_prompt_path = None
@@ -83,7 +86,7 @@ def main_app():
 
         # st.success(f"Audio saved: {wav_path}")
         # put this here to not block the session state
-        st.audio(wav_path, format=AudioConfig.AUDIO_FORMAT)
+        # st.audio(wav_path, format=AudioConfig.AUDIO_FORMAT)
 
         prompt = chat_client.transcribe(wav_path).get("transcription")
         print(f"Transcribed prompt: {prompt}")

@@ -100,5 +100,3 @@ class ChatHistoryManager:
 
     async def delete_single_chat_message(self, user_id: str) -> None:
         await self.db_service_manager.delete_single_chat(user_id)
-
-

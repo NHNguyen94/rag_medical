@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 
+
 class HistoryDeleteRequest(BaseModel):
     user_id: str
 
