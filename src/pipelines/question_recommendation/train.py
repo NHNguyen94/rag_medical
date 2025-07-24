@@ -7,8 +7,12 @@ from src.utils.enums import QuestionRecommendConfig
 def main():
     # Configuration
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=int, required=True,
-                        help='Dataset number (0=cancer, 1=diabetes, etc.)')
+    parser.add_argument(
+        "--dataset",
+        type=int,
+        required=True,
+        help="Dataset number (0=cancer, 1=diabetes, etc.)",
+    )
     args = parser.parse_args()
     model_name = QuestionRecommendConfig.MODEL_NAME
     data_dir = QuestionRecommendConfig.DATASET_NUMBER_MAPPING[args.dataset]
@@ -18,12 +22,15 @@ def main():
 
     print(QuestionRecommendConfig.DATASET_NUMBER_MAPPING[args.dataset])
     print("dataset number:", args.dataset)
-    print("model save name:" , model_save_name)
-
+    print("model save name:", model_save_name)
 
     # Initialize pipeline
     pipeline = FineTuningPipeline(
-        model_name=model_name, data_dir=data_dir, output_dir=output_dir, model_save_path = save_dir, model_save_name= model_save_name
+        model_name=model_name,
+        data_dir=data_dir,
+        output_dir=output_dir,
+        model_save_path=save_dir,
+        model_save_name=model_save_name,
     )
 
     # Train model

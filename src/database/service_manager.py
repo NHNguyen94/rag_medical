@@ -85,7 +85,9 @@ class ServiceManager:
             )
             await session.commit()
 
-    async def get_latest_chat_history(self, user_id: str, limit: int = 10) -> list[dict]:
+    async def get_latest_chat_history(
+        self, user_id: str, limit: int = 10
+    ) -> list[dict]:
         async with self.session_manager.get_async_session() as session:
             result = await session.execute(
                 select(ChatHistory)
@@ -107,7 +109,5 @@ class ServiceManager:
 
     async def delete_single_chat(self, chat_id: str) -> None:
         async with self.session_manager.get_async_session() as session:
-            await session.execute(
-                delete(ChatHistory).where(ChatHistory.id == chat_id)
-            )
+            await session.execute(delete(ChatHistory).where(ChatHistory.id == chat_id))
             await session.commit()

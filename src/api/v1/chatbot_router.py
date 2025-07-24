@@ -10,7 +10,7 @@ from src.api.v1.models import (
     TextToSpeechRequest,
     TextToSpeechResponse,
     TranscribeRequest,
-    TranscribeResponse
+    TranscribeResponse,
 )
 from src.api.v1.models.ai_question_request import AiquestionRequest
 from src.api.v1.models.ai_question_response import AiquestionResponse
@@ -55,8 +55,6 @@ async def chat(
     # Disable tool to manually retrieve documents
     force_use_tools: bool = False,
     use_cot: bool = True,
-    customized_sys_prompt_path: Optional[str] = None,
-    customize_index_path: Optional[str] = None,
 ):
     cache_service = CacheService()
 
@@ -76,8 +74,8 @@ async def chat(
         request=request,
         force_use_tools=force_use_tools,
         use_cot=use_cot,
-        customized_sys_prompt_path=customized_sys_prompt_path,
-        customize_index_path=customize_index_path,
+        customized_sys_prompt_path=chat_request.customized_sys_prompt_path,
+        customize_index_path=chat_request.customize_index_path,
     )
 
     cache_service.cache_request_and_response(
@@ -87,11 +85,9 @@ async def chat(
     logger.info("Returning new response")
     return response
 
+
 @router.post("/ai-question", response_model=AiquestionResponse)
-async def get_ai_question(
-        question_request: AiquestionRequest,
-        request: Request
-):
+async def get_ai_question(question_request: AiquestionRequest, request: Request):
     question_recommendation_service = request.app.state.question_recomm_service
     question = question_recommendation_service.ai_predict(question_request.topic)
 
@@ -205,8 +201,7 @@ async def get_response(
         qr_model = getattr(request.app.state, qr_model_name)
         if use_qr:
             question_recommendations = question_recommendation_service.predict(
-                input_question=chat_msg,
-                model=qr_model
+                input_question=chat_msg, model=qr_model
             )
         else:
             question_recommendations = []
@@ -216,13 +211,13 @@ async def get_response(
             response_str=response,
             nearest_documents=nearest_documents,
             predicted_emotion=str(predicted_emotion.item()),
-            recommended_questions=question_recommendations
+            recommended_questions=question_recommendations,
         )
 
         response = ChatResponse(
             response=response,
             nearest_documents=nearest_documents,
-            recommended_questions=question_recommendations
+            recommended_questions=question_recommendations,
         )
 
         return response

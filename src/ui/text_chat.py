@@ -10,7 +10,7 @@ from src.ui.utils import (
     define_customized_sys_prompt_path,
     define_customized_index_file_path,
 )
-from src.utils.enums import ChatBotConfig
+from src.utils.enums import ChatBotConfig, AdminConfig
 from src.utils.helpers import clean_document_text
 
 torch.classes.__path__ = []
@@ -38,6 +38,9 @@ def main_app():
     use_custom_prompt = st.toggle("Use customized system prompt", value=False)
     if use_custom_prompt:
         customized_sys_prompt_path = define_customized_sys_prompt_path(user_id)
+        customized_sys_prompt_path = os.path.join(
+            AdminConfig.CUSTOMIZED_SYSTEM_PROMPT_DIR, customized_sys_prompt_path
+        )
         st.info(f"Using custom system prompt from:\n`{customized_sys_prompt_path}`")
     else:
         customized_sys_prompt_path = None
@@ -67,13 +70,21 @@ def main_app():
 
     with st.sidebar:
         st.markdown("### 💡 What's on your mind?")
-        with st.expander("Need inspiration? Pick a topic and get AI-generated questions!"):
-            topic = st.selectbox("Choose a topic", ChatBotConfig.DOMAINS, key="topic_picker")
+        with st.expander(
+            "Need inspiration? Pick a topic and get AI-generated questions!"
+        ):
+            topic = st.selectbox(
+                "Choose a topic", ChatBotConfig.DOMAINS, key="topic_picker"
+            )
             if st.button("✨ Generate Questions"):
                 with st.spinner("Generating questions..."):
-                    topic_response = chat_client.get_ai_question(user_id=user_id, topic=topic)
+                    topic_response = chat_client.get_ai_question(
+                        user_id=user_id, topic=topic
+                    )
                     if topic_response and "recommended_question" in topic_response:
-                        st.session_state.prefilled_prompt = topic_response["recommended_question"] # 👈 Set prefill
+                        st.session_state.prefilled_prompt = topic_response[
+                            "recommended_question"
+                        ]  # 👈 Set prefill
                         st.session_state.show_prefilled = True
                         st.rerun()
 
@@ -85,9 +96,12 @@ def main_app():
             prompt = st.text_input(
                 "✏️ Edit or send the AI-generated question:",
                 value=st.session_state.prefilled_prompt,
-                key="prefilled_input"
+                key="prefilled_input",
             )
-            if st.button("Send", key="send_prefilled_btn") and not st.session_state.submitted_prefilled:
+            if (
+                st.button("Send", key="send_prefilled_btn")
+                and not st.session_state.submitted_prefilled
+            ):
                 st.session_state.submitted_prefilled = True
                 st.session_state.prefilled_prompt = prompt
                 st.session_state.messages.append({"role": "user", "content": prompt})
@@ -99,7 +113,9 @@ def main_app():
                     chat_client,
                     user_id,
                     st.session_state.prefilled_prompt,
-                    selected_domain
+                    selected_domain,
+                    customized_sys_prompt_path,
+                    customize_index_path,
                 )
                 # Reset state
                 st.session_state.show_prefilled = False
@@ -135,7 +151,9 @@ def main_app():
                         customized_sys_prompt_path,
                         customize_index_path,
                     ):
-                        st.rerun()
+                        pass
+                        # disable rerun to avoid issue with tts when playing audio
+                        # st.rerun()
 
     with st.sidebar:
         st.header("Retrieved Documents")

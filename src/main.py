@@ -79,7 +79,6 @@ async def lifespan(app: FastAPI):
     app.state.emotion_model = emotion_model
     app.state.emotion_vocab = emotion_vocab
 
-
     topic_cluster_model = await topic_clustering_service.async_load_model()
     app.state.topic_cluster_model = topic_cluster_model
 

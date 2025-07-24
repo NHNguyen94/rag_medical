@@ -1,13 +1,9 @@
 import os
-import pandas as pd
-import io
-import base64
-import streamlit as st
-
-from fpdf import FPDF
 from datetime import datetime
 
-from src.clients.history_client import HistoryClient, ChatPDF, ChatExportManager
+import streamlit as st
+
+from src.clients.history_client import HistoryClient, ChatExportManager
 from src.ui.utils import login_or_signup
 
 
@@ -34,7 +30,9 @@ def chat_history_app():
     try:
         col1, col2, col3 = st.columns([1, 1, 1])
         with col1:
-            limit = st.selectbox("Select number of messages to display", [5, 10, 20, 50], index=1)
+            limit = st.selectbox(
+                "Select number of messages to display", [5, 10, 20, 50], index=1
+            )
 
         history = history_client.get_chat_history(user_id=user_id, limit=limit)
         if history:
@@ -46,7 +44,7 @@ def chat_history_app():
                     label="📄 Export to Excel",
                     data=excel_data,
                     file_name="chat_history.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
 
             with col3:
@@ -55,7 +53,7 @@ def chat_history_app():
                     label="📑 Export to PDF",
                     data=pdf_data,
                     file_name="chat_history.pdf",
-                    mime="application/pdf"
+                    mime="application/pdf",
                 )
 
             for idx, chat in enumerate(history):
@@ -73,10 +71,14 @@ def chat_history_app():
                             st.markdown(chat["response"])
 
                     with col2:
-                        delete_button = st.button("🗑️", key=f"delete_{chat['id']}", help="Delete this chat")
+                        delete_button = st.button(
+                            "🗑️", key=f"delete_{chat['id']}", help="Delete this chat"
+                        )
                         if delete_button:
                             try:
-                                history_client.delete_single_chat_message(chat_id=chat["id"])
+                                history_client.delete_single_chat_message(
+                                    chat_id=chat["id"]
+                                )
                                 st.success("Deleted chat successfully.")
                                 st.rerun()
                             except Exception as e:
@@ -85,6 +87,7 @@ def chat_history_app():
             st.info("No chat history found.")
     except Exception as e:
         st.error(f"Failed to fetch chat history: {e}")
+
 
 def run():
     if st.session_state.get("authenticated"):

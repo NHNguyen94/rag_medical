@@ -38,6 +38,7 @@ class ChatBotService:
         self.system_prompt_template = self.prompt_manager.make_system_prompt(
             self.prompt_manager.get_system_prompt()
         )
+        print(f"\n\nSystem prompt template: {self.system_prompt_template}\n")
         if customize_index_path:
             self.index = self.vector_store_manager.load_index(customize_index_path)
         else:

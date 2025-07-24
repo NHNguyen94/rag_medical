@@ -32,7 +32,6 @@ class QuestionDataProcessor:
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model.to(self.device)
 
-
     def load_datasets(self) -> pd.DataFrame:
         file_path = self.data_dir
         df = pd.read_csv(Path(file_path))

@@ -1,12 +1,12 @@
-import pandas as pd
 import io
-import base64
-
-from fpdf import FPDF
-from typing import Dict, Optional
-
-import requests
 from datetime import datetime
+from typing import Dict
+
+import pandas as pd
+import requests
+from fpdf import FPDF
+
+from src.utils.helpers import sanitize_text
 
 
 class HistoryClient:
@@ -25,7 +25,9 @@ class HistoryClient:
             raise Exception(f"Error {response.status_code}: {response.text}")
 
     def get_chat_history(self, user_id: str, limit: int = 10):
-        response = requests.get(f"{self.api_url}/chat-history/{user_id}", params={"limit": limit})
+        response = requests.get(
+            f"{self.api_url}/chat-history/{user_id}", params={"limit": limit}
+        )
         response.raise_for_status()
         return response.json()
 
@@ -44,7 +46,12 @@ class ChatPDF(FPDF):
         # This method is automatically called by FPDF for every page
         self.set_y(-20)
         self.set_font("Arial", "I", 8)
-        self.cell(0, 5, f"Exported on: {self.export_time}   |   Page {self.page_no()}", align="C")
+        self.cell(
+            0,
+            5,
+            f"Exported on: {self.export_time}   |   Page {self.page_no()}",
+            align="C",
+        )
 
 
 class ChatExportManager:
@@ -52,19 +59,25 @@ class ChatExportManager:
         pass
 
     def generate_chat_dataframe(self, history: list) -> pd.DataFrame:
-        return pd.DataFrame([
-            {
-                "Message": chat["message"],
-                "Response": chat["response"],
-                "Timestamp": datetime.fromisoformat(chat["created_at"]).strftime("%Y-%m-%d %H:%M")
-            }
-            for chat in history
-        ])
+        return pd.DataFrame(
+            [
+                {
+                    "Message": chat["message"],
+                    "Response": chat["response"],
+                    "Timestamp": datetime.fromisoformat(chat["created_at"]).strftime(
+                        "%Y-%m-%d %H:%M"
+                    ),
+                }
+                for chat in history
+            ]
+        )
 
     def export_to_excel(self, df: pd.DataFrame) -> bytes:
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name="Chat History", engine='openpyxl')
+        with pd.ExcelWriter(output, engine="openpyxl") as writer:
+            df.to_excel(
+                writer, index=False, sheet_name="Chat History", engine="openpyxl"
+            )
         return output.getvalue()
 
     def export_to_pdf(self, df: pd.DataFrame) -> io.BytesIO:
@@ -89,8 +102,10 @@ class ChatExportManager:
 
             pdf.set_font("Arial", "", 11)
             pdf.cell(0, 10, f"Time: {row['Timestamp']}", ln=True)
-            pdf.multi_cell(0, 10, f"You: {row['Message']}")
-            pdf.multi_cell(0, 10, f"Bot: {row['Response']}")
+            # pdf.multi_cell(0, 10, f"You: {row['Message']}")
+            # pdf.multi_cell(0, 10, f"Bot: {row['Response']}")
+            pdf.multi_cell(0, 10, f"You: {sanitize_text(row['Message'])}")
+            pdf.multi_cell(0, 10, f"Bot: {sanitize_text(row['Response'])}")
             pdf.cell(0, 10, "-" * 60, ln=True)
 
         pdf_bytes = pdf.output(dest="S").encode("latin-1")

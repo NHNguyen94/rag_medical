@@ -173,3 +173,17 @@ def round_all_values_in_df(df: pd.DataFrame, decimals: int = 2) -> pd.DataFrame:
     for col in cols:
         df[col] = df[col].apply(lambda x: round(x, decimals))
     return df
+
+
+def sanitize_text(text: str) -> str:
+    return (
+        text.replace("’", "'")
+        .replace("‘", "'")
+        .replace("“", '"')
+        .replace("”", '"')
+        .replace("–", "-")
+        .replace("—", "-")
+        .replace("…", "...")
+        .encode("latin-1", "ignore")
+        .decode("latin-1")
+    )
