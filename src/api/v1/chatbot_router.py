@@ -2,6 +2,7 @@ from typing import Optional
 
 from fastapi import APIRouter, Request
 from loguru import logger
+import json
 
 from src.api.v1.models import (
     ChatRequest,
@@ -10,7 +11,11 @@ from src.api.v1.models import (
     TextToSpeechRequest,
     TextToSpeechResponse,
     TranscribeRequest,
+    TranscribeResponse,
+    FeedbackRequest,
+    FeedbackResponse,
     TranscribeResponse
+
 )
 from src.api.v1.models.ai_question_request import AiquestionRequest
 from src.api.v1.models.ai_question_response import AiquestionResponse
@@ -48,6 +53,36 @@ async def transcribe(
     )
 
 
+@router.post("/feedback", response_model=FeedbackResponse)
+async def submit_feedback(feedback_request: FeedbackRequest):
+    try:
+        from src.database.models import ResponseFeedback
+        from src.database.session_manager import SessionManager
+        
+        session_manager = SessionManager()
+        async with session_manager.get_async_session() as session:
+            feedback = ResponseFeedback(
+                user_id=feedback_request.user_id,
+                message=feedback_request.message,
+                response=feedback_request.response,
+                feedback_type=feedback_request.feedback_type,
+            )
+            session.add(feedback)
+            await session.commit()
+            
+        logger.info(f"Feedback submitted: {feedback_request.feedback_type} by user {feedback_request.user_id}")
+        return FeedbackResponse(
+            success=True,
+            message=f"Feedback submitted successfully"
+        )
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {e}")
+        return FeedbackResponse(
+            success=False,
+            message=f"Error submitting feedback: {str(e)}"
+        )
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     chat_request: ChatRequest,
@@ -57,6 +92,7 @@ async def chat(
     use_cot: bool = True,
     customized_sys_prompt_path: Optional[str] = None,
     customize_index_path: Optional[str] = None,
+    disable_emotion_recognition: Optional[bool] = False,
 ):
     cache_service = CacheService()
 
@@ -64,7 +100,16 @@ async def chat(
         "chat_request": chat_request.model_dump(),
         "force_use_tools": force_use_tools,
         "use_cot": use_cot,
+        "disable_emotion_recognition": disable_emotion_recognition,
     }
+    
+    # Add cache_buster to cache_request if present in chat_request
+    if hasattr(chat_request, 'cache_buster') and chat_request.cache_buster:
+        cache_request["cache_buster"] = chat_request.cache_buster
+        logger.info(f"[DEBUG] Cache buster: {chat_request.cache_buster}")
+
+    logger.info(f"[DEBUG] Cache key: {json.dumps(cache_request, sort_keys=True)}")
+    logger.info(f"[DEBUG] User message: {chat_request.message}")
 
     cached_response = cache_service.get_cached_response(cache_request)
     if cached_response:
@@ -78,6 +123,9 @@ async def chat(
         use_cot=use_cot,
         customized_sys_prompt_path=customized_sys_prompt_path,
         customize_index_path=customize_index_path,
+        model_name=chat_request.model_name,
+        disable_emotion_recognition=disable_emotion_recognition,
+        language=chat_request.language,
     )
 
     cache_service.cache_request_and_response(
@@ -105,8 +153,12 @@ async def get_response(
     use_cot: bool,
     customized_sys_prompt_path: Optional[str] = None,
     customize_index_path: Optional[str] = None,
+    model_name: Optional[str] = None,
+    disable_emotion_recognition: Optional[bool] = False,
+    language: Optional[str] = "English",
 ):
     try:
+        predicted_emotion = ""
         # TODO: Implement the all the features here
         emotion_recognition_service = request.app.state.emotion_recognition_service
         emotion_model = request.app.state.emotion_model
@@ -163,6 +215,9 @@ async def get_response(
             use_cot=use_cot,
             customized_sys_prompt_path=customized_sys_prompt_path,
             customize_index_path=customize_index_path,
+            model_name=model_name,
+            language=language,
+            user_emotion=predicted_emotion if not disable_emotion_recognition and predicted_emotion else None,
         )
 
         chat_msg = chat_request.message
@@ -180,11 +235,19 @@ async def get_response(
                 logger.info(f"Predicted topic: {predicted_topic}")
                 break
 
-        predicted_emotion = emotion_recognition_service.predict(
-            text=chat_msg,
-            model=emotion_model,
-            vocab=emotion_vocab,
-        )
+        if disable_emotion_recognition:
+            predicted_emotion = ""
+            logger.info(f"Emotion recognition DISABLED for user {chat_request.user_id}")
+        else:
+            predicted_emotion = emotion_recognition_service.predict(
+                text=chat_msg,
+                model=emotion_model,
+                vocab=emotion_vocab,
+            )
+            logger.info(f"Emotion recognition ENABLED for user {chat_request.user_id}, predicted emotion: {predicted_emotion}")
+
+        logger.info(f"[DEBUG] Passing emotion to ChatBotService: {predicted_emotion}")
+
         nearest_nodes = await chat_bot_service.retrieve_related_nodes(message=chat_msg)
         nearest_documents = await chat_bot_service.aget_nearest_documents(
             nearest_nodes=nearest_nodes
@@ -227,4 +290,9 @@ async def get_response(
 
         return response
     except Exception as e:
-        print(f"Error when getting the response: {e}")
+        logger.error(f"[ERROR] Exception in get_response: {e}")
+        fallback_response = ChatResponse(
+            response="Sorry, something went wrong. Please try again later.",
+            nearest_documents=[],
+        )
+        return fallback_response

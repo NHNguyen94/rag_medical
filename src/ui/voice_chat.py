@@ -13,7 +13,7 @@ from src.ui.utils import (
 )
 from src.utils.enums import ChatBotConfig, AudioConfig
 from src.utils.date_time_manager import DateTimeManager
-from src.utils.helpers import clean_document_text
+from src.utils.helpers import clean_document_text, hash_string
 
 datetime_manager = DateTimeManager()
 torch.classes.__path__ = []
@@ -45,7 +45,7 @@ def main_app():
     else:
         customize_index_path = None
 
-    if "messages" not in st.session_state:
+    if "messages" not in st.session_state or not st.session_state.messages:
         st.session_state.messages = [
             {
                 "role": "assistant",
@@ -57,9 +57,46 @@ def main_app():
     if "retrieved_documents" not in st.session_state:
         st.session_state.retrieved_documents = []
 
-    for message in st.session_state.messages:
+    for idx, message in enumerate(st.session_state.messages):
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
+            if message["role"] == "assistant":
+                feedback_key = f"feedback_{hash_string(message['content'])}_{idx}"
+                feedback_given = st.session_state.get(feedback_key, None)
+                if feedback_given is None:
+                    col1, col2, col3 = st.columns([1, 1, 3])
+                    like_clicked = col1.button("👍", key=f"like_{hash_string(message['content'])}_{idx}")
+                    dislike_clicked = col2.button("👎", key=f"dislike_{hash_string(message['content'])}_{idx}")
+                    if like_clicked or dislike_clicked:
+                        feedback_type = "like" if like_clicked else "dislike"
+                        st.session_state[feedback_key] = feedback_type
+                        if like_clicked:
+                            st.success("Thank you for your feedback!")
+                        else:
+                            st.warning("Sorry this answer did not help you.")
+                elif feedback_given == "like":
+                    st.success("Thank you for your feedback!")
+                elif feedback_given == "dislike":
+                    st.warning("Sorry this answer did not help you.")
+                    if st.button("Try Again", key=f"regen_{hash_string(message['content'])}_{idx}"):
+                        with st.spinner("Generating a new answer..."):
+                            # Find the previous user message before this assistant message
+                            user_message = None
+                            for prev in reversed(st.session_state.messages[:idx]):
+                                if prev["role"] == "user":
+                                    user_message = prev["content"]
+                                    break
+                            if user_message:
+                                chat_client = ChatClient(base_url=os.getenv("API_URL"), api_version="v1")
+                                handle_chat_response_with_voice(
+                                    chat_client,
+                                    user_id,
+                                    user_message,
+                                    selected_domain,
+                                    customized_sys_prompt_path,
+                                    customize_index_path,
+                                )
+                                st.rerun()
 
     st.markdown("Click below to record your message:")
 
